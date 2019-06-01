@@ -2,7 +2,7 @@ import * as request from "request";
 
 const url = "https://api.pushed.co/1/push";
 
-const sendPushMessage = (message: string) => {
+export const sendPushMessage = (message: string) => {
     const formData = {
         app_key: "6MHfu13fe8x87a8xhhU6",
         app_secret: "FgEq6GBXyaN5ItNuEDxYGzeYWwHj5hAMjGsp5jI4dfXFnCFeSYmPjVhLhCsMdllb",
@@ -16,8 +16,4 @@ const sendPushMessage = (message: string) => {
         }
         console.log("Upload successful!  Server responded with:", body);
     });
-  };
-
-module.exports = {
-    sendPushMessage,
   };

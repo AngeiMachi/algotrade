@@ -1,4 +1,4 @@
-import { MAX_QUOTES  } from "./consts";
+import { MAX_QUOTES  } from "./config";
 import { StockStats } from "./stock-stats";
 
 interface IQuotes {
