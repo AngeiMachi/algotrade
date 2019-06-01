@@ -1,17 +1,17 @@
 // const alpha = require('alphavantage')({ key: 'M2ADSGO7ANB9QO3O' });
 // const alpha2 = require('alphavantage')({ key: 'S5AMKCFQEKG7S7DW' });
-import {StockReader} from "./stock-reader";
+import { START_RECORD_TIME } from "./config";
 
 import * as algotrader from "algotrader";
-
-const startRecordTime = 45 * 60000 + 3000;
+import * as pushed from "./pushed";
+import {StockReader} from "./stock-reader";
 
 const Scheduler = new algotrader.Algorithm.Scheduler(() => {
     const sr = new StockReader( 'M2ADSGO7ANB9QO3O' ,[ 'AAPL' ,'BA','AMZN', 'GOOGL' ]);
     sr.initiateStockWatch();
 });
 
-Scheduler.onMarketOpen(startRecordTime );
+Scheduler.onMarketOpen( START_RECORD_TIME );
 
 //pushed.sendPushMessage("Hello Angel Macho");
 

@@ -1,4 +1,4 @@
-import {  VOLUME_THRESHOLD_ALARM } from "./consts";
+import {  VOLUME_THRESHOLD_ALARM } from "./config";
 
 export class StockStats {
     private quote: string;
