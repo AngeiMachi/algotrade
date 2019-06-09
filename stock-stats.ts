@@ -27,6 +27,6 @@ export class StockStats {
     }
 
     private didPassVolumeThreshold(volume: number): boolean {
-        return (volume > this.avg * VOLUME_THRESHOLD_ALARM && this.iteration>= MINIMUM_INTERVALS_TO_CALCULATE_AVERAGE);
+        return (volume > this.avg * VOLUME_THRESHOLD_ALARM && this.iteration >= MINIMUM_INTERVALS_TO_CALCULATE_AVERAGE);
     }
 }

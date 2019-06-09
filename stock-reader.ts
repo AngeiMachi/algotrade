@@ -12,7 +12,7 @@ export class StockReader {
     private quotes: IQuotes = {};
 
     constructor(key: string, quotes: string[]= []) {
-       this.alphaAPI = require('alphavantage')({ key });
+       this.alphaAPI = require("alphavantage")({ key });
 
        this.initializeQuotes(quotes);
     }
@@ -44,25 +44,26 @@ export class StockReader {
     private iterateStocks() {
         Object.keys(this.quotes).forEach((quote) => {
             const quoteStockStats: StockStats = this.quotes[quote];
-            this.alphaAPI.data.intraday(quote,'compact','json','5min').then( (data: any) => {
+            this.alphaAPI.data.intraday(quote, "compact", "json", "5min").then( (data: any) => {
                 const stockInterval: IStockIntervalData = this.getStockLastIntervalData(data);
-                quoteStockStats.recordNewStockInterval(stockInterval);
+                 quoteStockStats.recordNewStockInterval(stockInterval);
             });
         });
     }
 
-    private getStockLastIntervalData(data: any): IStockIntervalData{
-        const stockLastInterval = data["Time Series (5min)"][Object.keys(data["Time Series (5min)"])[1]];
+    private getStockLastIntervalData(data: any): IStockIntervalData {
+        const timeSeries = data["Time Series (5min)"];
+        const stockLastInterval = timeSeries[Object.keys(timeSeries)[Object.keys.length - 1]];
         return this.convertAlphaVantageFormat(stockLastInterval);
     }
 
     private convertAlphaVantageFormat(stockIntervalData: any): IStockIntervalData {
         const convertedStockIntervalData: IStockIntervalData = {
-            open :  Object.values(stockIntervalData)[0] as number ,
-            high :  Object.values(stockIntervalData)[1] as number,
-            low :  Object.values(stockIntervalData)[2] as number,
-            close :  Object.values(stockIntervalData)[3] as number,
-            volume :  Object.values(stockIntervalData)[4] as number,
+            open :  Number(Object.values(stockIntervalData)[0]) ,
+            high :  Number(Object.values(stockIntervalData)[1]),
+            low :  Number(Object.values(stockIntervalData)[2]),
+            close :  Number(Object.values(stockIntervalData)[3]),
+            volume :  Number(Object.values(stockIntervalData)[4]),
         };
 
         return convertedStockIntervalData;
