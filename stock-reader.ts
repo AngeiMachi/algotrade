@@ -1,5 +1,8 @@
-import { MAX_QUOTES  } from "./config";
+// tslint:disable-next-line: ordered-imports
+import { MAX_QUOTES , INTERVAL_TIME  } from "./config";
 import { StockStats } from "./stock-stats";
+// tslint:disable-next-line: ordered-imports
+import { IStockIntervalData } from "./models/stock-interval-data.model";
 
 interface IQuotes {
     [key: string]: StockStats;
@@ -25,7 +28,7 @@ export class StockReader {
         if  (Object.keys(this.quotes).length > 0) {
             const interval = setInterval( () => {
                 this.iterateStocks();
-            }, 50 * 1000);
+            }, INTERVAL_TIME);
         } else {
             throw Error("No Stocks were initialized");
         }
@@ -41,11 +44,28 @@ export class StockReader {
     private iterateStocks() {
         Object.keys(this.quotes).forEach((quote) => {
             const quoteStockStats: StockStats = this.quotes[quote];
-            this.alphaAPI.data.intraday(quote,'compact','json','5min').then( (data:any) => {
-                const stockInterval = data["Time Series (5min)"][Object.keys(data["Time Series (5min)"])[1]];
+            this.alphaAPI.data.intraday(quote,'compact','json','5min').then( (data: any) => {
+                const stockInterval: IStockIntervalData = this.getStockLastIntervalData(data);
                 quoteStockStats.recordNewStockInterval(stockInterval);
             });
         });
     }
-}
 
+    private getStockLastIntervalData(data: any): IStockIntervalData{
+        const stockLastInterval = data["Time Series (5min)"][Object.keys(data["Time Series (5min)"])[1]];
+        return this.convertAlphaVantageFormat(stockLastInterval);
+    }
+
+    private convertAlphaVantageFormat(stockIntervalData: any): IStockIntervalData {
+        const convertedStockIntervalData: IStockIntervalData = {
+            open :  Object.values(stockIntervalData)[0] as number ,
+            high :  Object.values(stockIntervalData)[1] as number,
+            low :  Object.values(stockIntervalData)[2] as number,
+            close :  Object.values(stockIntervalData)[3] as number,
+            volume :  Object.values(stockIntervalData)[4] as number,
+        };
+
+        return convertedStockIntervalData;
+    }
+
+}

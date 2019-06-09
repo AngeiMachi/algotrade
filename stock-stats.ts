@@ -1,4 +1,5 @@
-import {  VOLUME_THRESHOLD_ALARM } from "./config";
+import {  VOLUME_THRESHOLD_ALARM , MINIMUM_INTERVALS_TO_CALCULATE_AVERAGE } from "./config";
+import { IStockIntervalData } from "./models/stock-interval-data.model";
 
 export class StockStats {
     private quote: string;
@@ -13,19 +14,19 @@ export class StockStats {
         this.avg = 0;
     }
 
-    public recordNewStockInterval(stockInterval: any) {
+    public recordNewStockInterval(stockInterval: IStockIntervalData) {
         console.log(stockInterval);
-        const volume = stockInterval ;
+        const {volume} = stockInterval ;
 
-        if (this.didPassVolumeThreshold(volume)) {
+        if (this.didPassVolumeThreshold( volume )) {
             console.log(this.quote + " quote passed threshold");
         }
         this.volumeSum += volume;
-        this.iteration ++;
+        this.iteration++;
         this.avg = this.volumeSum / this.iteration;
     }
 
     private didPassVolumeThreshold(volume: number): boolean {
-        return (volume > this.avg * VOLUME_THRESHOLD_ALARM );
+        return (volume > this.avg * VOLUME_THRESHOLD_ALARM && this.iteration>= MINIMUM_INTERVALS_TO_CALCULATE_AVERAGE);
     }
 }
