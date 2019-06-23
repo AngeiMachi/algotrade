@@ -2,9 +2,8 @@
 // const alpha2 = require('alphavantage')({ key: 'S5AMKCFQEKG7S7DW' });
 import {StockReader} from "./stock-reader";
 
-
-const sr = new StockReader( 'M2ADSGO7ANB9QO3O' ,[ 'AAPL' , 'BA' ]);
-sr.initiateStockWatch();
+const sr = new StockReader( "M2ADSGO7ANB9QO3O" ,[ "AAPL" , "BA" ]);
+sr.initializeQuotesData();
 
 //pushed.sendPushMessage("Hello Angel Macho");
 

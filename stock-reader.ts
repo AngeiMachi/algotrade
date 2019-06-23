@@ -1,12 +1,17 @@
 // tslint:disable-next-line: ordered-imports
-import { MAX_QUOTES , INTERVAL_TIME  } from "./config";
+import { MAX_QUOTES , INTERVAL_TIME , INTERVAL_PROPERTY_NAME } from "./config";
 import { StockStats } from "./stock-stats";
 // tslint:disable-next-line: ordered-imports
 import { IStockIntervalData } from "./models/stock-interval-data.model";
+import moment from "moment";
 
 interface IQuotes {
     [key: string]: StockStats;
 }
+interface IStockIntervals {
+    [key: string]: IStockIntervalData;
+}
+
 export class StockReader {
     private alphaAPI: any;
     private quotes: IQuotes = {};
@@ -17,11 +22,15 @@ export class StockReader {
        this.initializeQuotes(quotes);
     }
 
-    /*
-     * Re-initialize stocks to watch
-     */
-    public setStocksToWatch(quotes: string[]) {
-        this.initializeQuotes(quotes);
+    public initializeQuotesData() {
+
+        for (const quote of  Object.keys(this.quotes)) {
+            this.alphaAPI.data.intraday(quote, "compact", "json", "5min").then( (data: any) => {
+                const quoteIntervals = data[INTERVAL_PROPERTY_NAME] ;
+                this.quotes[quote].InitializeStockData(quoteIntervals);
+            });
+            break;
+        }
     }
 
     public initiateStockWatch() {
@@ -46,13 +55,13 @@ export class StockReader {
             const quoteStockStats: StockStats = this.quotes[quote];
             this.alphaAPI.data.intraday(quote, "compact", "json", "5min").then( (data: any) => {
                 const stockInterval: IStockIntervalData = this.getStockLastIntervalData(data);
-                 quoteStockStats.recordNewStockInterval(stockInterval);
+                quoteStockStats.recordNewStockInterval(stockInterval);
             });
         });
     }
 
     private getStockLastIntervalData(data: any): IStockIntervalData {
-        const timeSeries = data["Time Series (5min)"];
+        const timeSeries = data[ INTERVAL_PROPERTY_NAME ];
         const stockLastInterval = timeSeries[Object.keys(timeSeries)[Object.keys.length - 1]];
         return this.convertAlphaVantageFormat(stockLastInterval);
     }
