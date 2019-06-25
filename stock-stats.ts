@@ -5,6 +5,7 @@ export class StockStats {
     private quote: string;
     private volumeSum: number;
     private iteration: number;
+    private volumeIteration: number;
     private avg: number;
     private todayDate: string;
     private stockIntervals: IStockFullIntervalData[] = [];
@@ -13,10 +14,11 @@ export class StockStats {
         this.quote = quote;
         this.volumeSum = 0;
         this.iteration = 0;
+        this.volumeIteration = 0; 
         this.avg = 0;
 
         // this.todayDate = moment(new Date()).format("YYYY-MM-DD");
-        this.todayDate = "2019-06-21"; // for testing
+        this.todayDate = "2019-06-24"; // for testing
     }
 
     public InitializeStockData(quoteIntervals: IAlphaVantageIntervals ) {
@@ -31,12 +33,13 @@ export class StockStats {
         });
     }
 
-    public recordNewStockInterval(stockInterval: IStockIntervalData) {
+    public recordNewStockInterval(stockInterval: IStockFullIntervalData) {
         console.log(stockInterval);
 
-        this.calculateAverageVolume(stockInterval as IStockFullIntervalData);
+        this.calculateAverageVolume(stockInterval);
 
-        
+        this.iteration++;
+
         
     }
 
@@ -44,8 +47,8 @@ export class StockStats {
         if (this.iteration >= MINIMUM_INTERVALS_TO_CALCULATE_AVERAGE_VOLUME) {
             const {volume} = stockInterval ;
             this.volumeSum += volume;
-            this.iteration++;
-            this.avg = this.volumeSum / this.iteration;
+            this.volumeIteration++;
+            this.avg = this.volumeSum / this.volumeIteration;
 
             if (this.didPassVolumeThreshold( volume )) {
                 console.log(this.quote + " quote passed threshold");
