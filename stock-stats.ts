@@ -2,6 +2,7 @@ import moment from "moment-timezone";
 
 import {  VOLUME_THRESHOLD_ALARM , MINIMUM_INTERVALS_TO_CALCULATE_AVERAGE_VOLUME } from "./config";
 import { IStockIntervalData, IAlphaVantageIntervals, IStockFullIntervalData } from "./models/stock-interval-data.model";
+import {BuyDirection} from "./models/enums";
 
 export class StockStats {
     private quote: string;
@@ -16,6 +17,7 @@ export class StockStats {
     private isInBuyMode: boolean;
     private boughtInterval: IStockFullIntervalData = {} as IStockFullIntervalData;
     private ratioPower: number;
+    private buyDiraction: BuyDirection;
 
     constructor(quote: string) {
         this.quote = quote;
@@ -26,9 +28,10 @@ export class StockStats {
 
         this.isInBuyMode = false;
         this.ratioPower = 0;
+        this.buyDiraction =BuyDirection.NONE;
 
         // this.todayDate = moment(new Date()).format("YYYY-MM-DD");
-        this.todayDate = "2019-06-25"; // for testing
+        this.todayDate = "2019-06-26"; // for testing
     }
 
     public InitializeStockData(quoteIntervals: IAlphaVantageIntervals ) {
@@ -60,11 +63,16 @@ export class StockStats {
             this.avg = this.volumeSum / this.volumeInterval;
 
             if (this.didPassVolumeThreshold( volume )) {
-
-                this.boughtInterval = {...stockInterval };
-                this.isInBuyMode = true;
-                this.ratioPower = this.getVolumeRatioPower(volume);
-                console.log(this.quote + " quote passed threshold by " + this.ratioPower * 100 + "% at " + stockInterval.time );
+                this.buyDiraction = this.getBuyDirection(stockInterval);
+                if (this.buyDiraction !=BuyDirection.NONE) {
+                    this.boughtInterval = {...stockInterval };
+                    this.isInBuyMode = true;
+                    this.ratioPower = this.getVolumeRatioPower(volume);
+                    const today = moment().isoWeekday();
+                    const nextWeekendDate = moment().isoWeekday(today+5+(7 - today)).format("MMM Do YY");
+                
+                    console.log("*** " +this.quote + " *** passed threshold by " + this.ratioPower * 100 + "% at " + moment(stockInterval.time).format('HH:mm:ss(MMMM Do YYYY)') + "\nCan buy "+ BuyDirection[this.buyDiraction] +"S of the "+nextWeekendDate);
+                }
             }
         }
     }
@@ -77,6 +85,26 @@ export class StockStats {
         const ratio = volume / this.avg;
         return +ratio.toFixed(2);
     }
+    private getBuyDirection(stockInterval: IStockFullIntervalData): BuyDirection {
+        if (stockInterval.close>stockInterval.open) {
+            // checks if inverted hammer - if so , there is hesitation - don't buy Call
+            if ((stockInterval.high-stockInterval.close)>(stockInterval.close-stockInterval.open)) {
+                return BuyDirection.NONE;
+            }
+            return BuyDirection.Call;
+        }
+        else if (stockInterval.open>stockInterval.close) {
+            // checks if hammer - if so , there is hesitation - don't buy put 
+            if ((stockInterval.close-stockInterval.low)>(stockInterval.open-stockInterval.close)) {
+                return BuyDirection.NONE;
+            }
+            return BuyDirection.Put
+        }
+        else {
+            return BuyDirection.NONE
+        }
+    }
+    
 
     private convertAlphaVantageFormat(stockIntervalData: IAlphaVantageIntervals, key: string): IStockFullIntervalData {
         const nasdaqTime = moment.tz(key, "America/New_York");
