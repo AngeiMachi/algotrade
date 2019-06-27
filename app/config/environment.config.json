@@ -1,0 +1,16 @@
+{
+    "AlphaVantageAPIKeys":[
+        {
+            "quotes":["BA","AAPL"],
+            "key": "M2ADSGO7ANB9QO3O"
+        },
+        {
+            "quotes":[],
+            "key": "SDNN0HEHB06GNTFB"
+        },
+        {
+            "quotes":[],
+            "key": "S5AMKCFQEKG7S7DW"
+        }
+    ]
+}

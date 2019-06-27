@@ -1,5 +1,5 @@
 // tslint:disable-next-line: ordered-imports
-import { MAX_QUOTES , INTERVAL_TIME , INTERVAL_PROPERTY_NAME } from "../config/globals.config";
+import { MAX_QUOTES , INTERVAL_TIME , INTERVAL_PROPERTY_NAME } from "./config/globals.config";
 import { StockStats } from "./stock-stats";
 // tslint:disable-next-line: ordered-imports
 import { IStockIntervalData, IAlphaVantageIntervals, IStockFullIntervalData } from "./models/stock-interval-data.model";

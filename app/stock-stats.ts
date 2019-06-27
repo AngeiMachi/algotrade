@@ -1,6 +1,6 @@
 import moment from "moment-timezone";
 
-import {  VOLUME_THRESHOLD_ALARM , MINIMUM_INTERVALS_TO_CALCULATE_AVERAGE_VOLUME } from "../config/globals.config";
+import {  VOLUME_THRESHOLD_ALARM , MINIMUM_INTERVALS_TO_CALCULATE_AVERAGE_VOLUME } from "./config/globals.config";
 import { IStockIntervalData, IAlphaVantageIntervals, IStockFullIntervalData } from "./models/stock-interval-data.model";
 import {BuyDirection} from "./models/enums";
 import * as pushed from "./pushed";
