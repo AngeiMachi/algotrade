@@ -1,12 +1,10 @@
-// const alpha = require('alphavantage')({ key: 'M2ADSGO7ANB9QO3O' });
-// const alpha2 = require('alphavantage')({ key: 'S5AMKCFQEKG7S7DW' });
-//SDNN0HEHB06GNTFB
 import {StockReader} from "./stock-reader";
+import * as environmentConfig from "../config/environment.Config.json";
 
-const sr = new StockReader( "M2ADSGO7ANB9QO3O" ,[ "BA" , "AAPL" ]);
+const sr = new StockReader( environmentConfig.AlphaVantageAPIKeys[0].key , [...environmentConfig.AlphaVantageAPIKeys[0].quotes]);
 sr.initializeQuotesData();
 
-//pushed.sendPushMessage("Hello Angel Macho");
+
 
 /*var j = schedule.scheduleJob({hour: 10, minute: 30}, () =>{
     let startTime = new Date(Date.now());

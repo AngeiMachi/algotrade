@@ -1,9 +1,9 @@
 import moment from "moment-timezone";
 
-import {  VOLUME_THRESHOLD_ALARM , MINIMUM_INTERVALS_TO_CALCULATE_AVERAGE_VOLUME } from "./config";
+import {  VOLUME_THRESHOLD_ALARM , MINIMUM_INTERVALS_TO_CALCULATE_AVERAGE_VOLUME } from "../config/globals.config";
 import { IStockIntervalData, IAlphaVantageIntervals, IStockFullIntervalData } from "./models/stock-interval-data.model";
 import {BuyDirection} from "./models/enums";
-
+import * as pushed from "./pushed";
 export class StockStats {
     private quote: string;
     private volumeSum: number;
@@ -12,7 +12,6 @@ export class StockStats {
     private avg: number;
     private todayDate: string;
     private stockIntervals: IStockFullIntervalData[] = [];
-
 
     private isInBuyMode: boolean;
     private boughtInterval: IStockFullIntervalData = {} as IStockFullIntervalData;
@@ -31,7 +30,7 @@ export class StockStats {
         this.buyDirection = BuyDirection.NONE;
 
         // this.todayDate = moment(new Date()).format("YYYY-MM-DD");
-        this.todayDate = "2019-06-26"; // for testing
+        this.todayDate = "2019-06-27"; // for testing
     }
 
     public InitializeStockData(quoteIntervals: IAlphaVantageIntervals ) {
@@ -85,9 +84,12 @@ export class StockStats {
         const today = moment().isoWeekday();
         const nextFridayDate = moment().isoWeekday(today + 5 + (7 - today)).format("MMM Do YY");
 
-        console.log("*** " + this.quote + " *** passed threshold by " + this.ratioPower * 100 + "% at "
-         + moment(this.boughtInterval.time).format("HH:mm:ss(MMMM Do YYYY)")
-         + "\nCan buy " + BuyDirection[this.buyDirection] + "S of the " + nextFridayDate);
+        const buyMessage = "*** " + this.quote + " *** passed threshold by " + this.ratioPower * 100 + "% at "
+        + moment(this.boughtInterval.time).format("HH:mm:ss(MMMM Do YYYY)")
+        + "\nCan buy " + BuyDirection[this.buyDirection] + "S of the " + nextFridayDate;
+
+        pushed.sendPushMessage(buyMessage);
+        console.log(buyMessage);
     }
 
     private didPassVolumeThreshold(volume: number): boolean {

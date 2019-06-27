@@ -1,5 +1,5 @@
 // tslint:disable-next-line: ordered-imports
-import { MAX_QUOTES , INTERVAL_TIME , INTERVAL_PROPERTY_NAME } from "./config";
+import { MAX_QUOTES , INTERVAL_TIME , INTERVAL_PROPERTY_NAME } from "../config/globals.config";
 import { StockStats } from "./stock-stats";
 // tslint:disable-next-line: ordered-imports
 import { IStockIntervalData, IAlphaVantageIntervals, IStockFullIntervalData } from "./models/stock-interval-data.model";
@@ -22,7 +22,7 @@ export class StockReader {
        this.initializeQuotes(quotes);
     }
 
-    // TODO: return a promise  -  use promise all 
+    // TODO: return a promise  -  use promise all
     public initializeQuotesData() {
         for (const quote of  Object.keys(this.quotes)) {
             this.alphaAPI.data.intraday(quote, "compact", "json", "5min").then( (data: any) => {
