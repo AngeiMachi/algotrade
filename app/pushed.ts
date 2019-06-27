@@ -1,13 +1,18 @@
+import * as environmentConfig from "./config/environment.Config.json";
 import * as request from "request";
 
 const url = "https://api.pushed.co/1/push";
 
+const pushedConfig = {
+    app_key: environmentConfig.PushedNotifications.appKey,
+    app_secret: environmentConfig.PushedNotifications.appSecret,
+    target_type: environmentConfig.PushedNotifications.targetType,
+};
+
 export const sendPushMessage = (message: string) => {
     const formData = {
-        app_key: "6MHfu13fe8x87a8xhhU6",
-        app_secret: "FgEq6GBXyaN5ItNuEDxYGzeYWwHj5hAMjGsp5jI4dfXFnCFeSYmPjVhLhCsMdllb",
+        ...pushedConfig,
         content: message,
-        target_type: "app",
     };
 
     request.post({url, formData}, (err: string, httpResponse: any, body: any) => {
