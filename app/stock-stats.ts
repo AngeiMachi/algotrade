@@ -106,13 +106,13 @@ export class StockStats {
             if ((stockInterval.high - stockInterval.close) > (stockInterval.close - stockInterval.open)) {
                 return BuyDirection.NONE;
             }
-            return BuyDirection.Call;
+            return BuyDirection.CALL;
         } else if (stockInterval.open > stockInterval.close) {
             // checks if hammer - if so , there is hesitation - don't buy put 
             if ((stockInterval.close - stockInterval.low) > (stockInterval.open - stockInterval.close)) {
                 return BuyDirection.NONE;
             }
-            return BuyDirection.Put;
+            return BuyDirection.PUT;
         } else {
             return BuyDirection.NONE;
         }

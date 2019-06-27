@@ -1,5 +1,5 @@
 export enum BuyDirection {
     NONE = 0 ,
-    Call = 1,
-    Put = 2
+    CALL = 1,
+    PUT = 2,
 }
