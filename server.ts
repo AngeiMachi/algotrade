@@ -1,5 +1,6 @@
 // const alpha = require('alphavantage')({ key: 'M2ADSGO7ANB9QO3O' });
 // const alpha2 = require('alphavantage')({ key: 'S5AMKCFQEKG7S7DW' });
+//SDNN0HEHB06GNTFB
 import {StockReader} from "./stock-reader";
 
 const sr = new StockReader( "M2ADSGO7ANB9QO3O" ,[ "BA" , "AAPL" ]);

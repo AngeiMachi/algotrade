@@ -24,7 +24,6 @@ export class StockReader {
 
     // TODO: return a promise  -  use promise all 
     public initializeQuotesData() {
-
         for (const quote of  Object.keys(this.quotes)) {
             this.alphaAPI.data.intraday(quote, "compact", "json", "5min").then( (data: any) => {
                 const quoteIntervals = data[INTERVAL_PROPERTY_NAME] ;
