@@ -22,6 +22,7 @@ export class StockReader {
        this.initializeQuotes(quotes);
     }
 
+    // TODO: return a promise  -  use promise all 
     public initializeQuotesData() {
 
         for (const quote of  Object.keys(this.quotes)) {
