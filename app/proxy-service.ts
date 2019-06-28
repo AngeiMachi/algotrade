@@ -7,8 +7,6 @@ export class ProxyService {
 
     private alphaAPI: any;
 
-    private mockIntervals: IAlphaVantageIntervals;
-    private mockMetaData: any;
     private mockDataResponse: any = {};
     private mockDataResponseValues: any[];
     private mockDataResponseKeys: any[];
@@ -19,7 +17,6 @@ export class ProxyService {
     constructor(key: string) {
        this.alphaAPI = require("alphavantage")({ key });
        this.currentInterval = MINIMUM_INTERVALS_TO_CALCULATE_AVERAGE_VOLUME;
-       this.mockIntervals = {};
        this.isMockLoaded = false;
 
        this.mockDataResponse[INTERVAL_PROPERTY_NAME] = {};
@@ -47,6 +44,7 @@ export class ProxyService {
     private async prepareMockData(quote: string): Promise<any> {
         try {
             let quoteMockResponse: any;
+            const mockIntervals: IAlphaVantageIntervals = {};
 
             await this.alphaAPI.data.intraday(quote, "compact", "json", "5min").then( (data: any) => {
                 quoteMockResponse = data ;
@@ -54,13 +52,12 @@ export class ProxyService {
 
             Object.keys(quoteMockResponse[INTERVAL_PROPERTY_NAME]).reverse().forEach((key) => {
                 if (key.includes(this.todayDate)) {
-                  this.mockIntervals[key] = quoteMockResponse[INTERVAL_PROPERTY_NAME][key];
+                  mockIntervals[key] = quoteMockResponse[INTERVAL_PROPERTY_NAME][key];
                 }
             });
-            this.mockMetaData = quoteMockResponse[METADATA_PROPERTY_NAME];
 
-            this.mockDataResponseValues = Object.values(this.mockIntervals);
-            this.mockDataResponseKeys = Object.keys(this.mockIntervals);
+            this.mockDataResponseValues = Object.values(mockIntervals);
+            this.mockDataResponseKeys = Object.keys(mockIntervals);
 
             for (let i = 0 ; i < this.currentInterval ; i++) {
                 this.mockDataResponse[ INTERVAL_PROPERTY_NAME][this.mockDataResponseKeys[i]] = this.mockDataResponseValues[i];
@@ -80,12 +77,10 @@ export class ProxyService {
                 if (this.mockDataResponseKeys[this.currentInterval]) {
                     this.mockDataResponse[ INTERVAL_PROPERTY_NAME][this.mockDataResponseKeys[this.currentInterval]] =
                                                                    this.mockDataResponseValues[this.currentInterval];
-                    this.mockMetaData["3. Last Refreshed"] = this.mockDataResponseKeys[this.currentInterval];
-                    this.mockDataResponse[ METADATA_PROPERTY_NAME ] = this.mockMetaData;
+                    this.mockDataResponse[ METADATA_PROPERTY_NAME ] ["3. Last Refreshed"] = this.mockDataResponseKeys[this.currentInterval];
 
                     this.currentInterval++;
                 }
-
                 resolve(this.mockDataResponse);
             } catch (err) {
                 return reject(err);
