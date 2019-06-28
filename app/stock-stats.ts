@@ -57,7 +57,6 @@ export class StockStats {
               this.stockIntervals.push(this.convertAlphaVantageFormat(quoteIntervals[key], key)) ;
             }
           });
-
     }
 
     private calculateAverageVolume(stockInterval: IStockFullIntervalData) {

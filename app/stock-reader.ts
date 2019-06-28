@@ -4,6 +4,7 @@ import { StockStats } from "./stock-stats";
 // tslint:disable-next-line: ordered-imports
 import { IStockIntervalData, IAlphaVantageIntervals, IStockFullIntervalData } from "./models/stock-interval-data.model";
 import moment from "moment";
+import { ProxyService } from "./proxy-service";
 
 interface IQuotes {
     [key: string]: StockStats;
@@ -13,11 +14,11 @@ interface IStockIntervals {
 }
 
 export class StockReader {
-    private alphaAPI: any;
+    private proxyService: any;
     private quotes: IQuotes = {};
 
     constructor(key: string, quotes: string[]= []) {
-       this.alphaAPI = require("alphavantage")({ key });
+       this.proxyService = new ProxyService( key );
 
        this.initializeQuotes(quotes);
     }
@@ -25,7 +26,7 @@ export class StockReader {
     // TODO: return a promise  -  use promise all
     public initializeQuotesData() {
         for (const quote of  Object.keys(this.quotes)) {
-            this.alphaAPI.data.intraday(quote, "compact", "json", "5min").then( (data: any) => {
+            this.proxyService.getIntraday(quote).then( (data: any) => {
                 const quoteIntervals = data[INTERVAL_PROPERTY_NAME] ;
                 this.quotes[quote].InitializeStockData(quoteIntervals);
             });
@@ -53,7 +54,7 @@ export class StockReader {
     private iterateStocks() {
         Object.keys(this.quotes).forEach((quote) => {
             const quoteStockStats: StockStats = this.quotes[quote];
-            this.alphaAPI.data.intraday(quote, "compact", "json", "5min").then( (data: any) => {
+            this.proxyService.getIntraday(quote).then( (data: any) => {
                 const stockInterval: IStockFullIntervalData = this.getStockLastIntervalData(data);
                 quoteStockStats.recordNewStockInterval(stockInterval);
             });
