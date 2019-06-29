@@ -2,7 +2,9 @@ import {StockReader} from "./stock-reader";
 import * as environmentConfig from "./config/environment.Config.json";
 
 const sr = new StockReader( environmentConfig.AlphaVantageAPIKeys[0].key , [...environmentConfig.AlphaVantageAPIKeys[0].quotes]);
-sr.initializeQuotesData();
+sr.initializeQuotesData().then(() => {
+ sr.initiateStockWatch();
+});
 
 
 
@@ -21,7 +23,7 @@ alpha.data.batch([`msft`, `aapl`]).then(data => {
   console.log(data);
 });
 
-alpha2.data.intraday('aapl','compact','json','5min').then(data => {
+alpha2.y('aapl','compact','json','5min').then(data => {
     console.log(data);
 });
 

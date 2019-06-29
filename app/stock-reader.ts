@@ -1,10 +1,15 @@
-// tslint:disable-next-line: ordered-imports
-import { MAX_QUOTES , INTERVAL_TIME , INTERVAL_PROPERTY_NAME } from "./config/globals.config";
-import { StockStats } from "./stock-stats";
-// tslint:disable-next-line: ordered-imports
-import { IStockIntervalData, IAlphaVantageIntervals, IStockFullIntervalData } from "./models/stock-interval-data.model";
+
 import moment from "moment";
+import { MAX_QUOTES ,
+        INTERVAL_TIME ,
+        INTERVAL_PROPERTY_NAME ,
+        METADATA_PROPERTY_NAME ,
+        LAST_REFRESHED_PROPERTY_NAME,
+    } from "./config/globals.config";
+import { StockStats } from "./stock-stats";
+import { IStockIntervalData, IAlphaVantageIntervals, IStockFullIntervalData } from "./models/stock-interval-data.model";
 import { ProxyService } from "./proxy-service";
+import { convertAlphaVantageFormat } from "./utils/utils";
 
 interface IQuotes {
     [key: string]: StockStats;
@@ -23,14 +28,22 @@ export class StockReader {
        this.initializeQuotes(quotes);
     }
 
-    // TODO: return a promise  -  use promise all
-    public initializeQuotesData() {
-        for (const quote of  Object.keys(this.quotes)) {
-            this.proxyService.getIntraday(quote).then( (data: any) => {
-                const quoteIntervals = data[INTERVAL_PROPERTY_NAME] ;
-                this.quotes[quote].InitializeStockData(quoteIntervals);
-            });
-            break; // TODO: need to remove
+    public async initializeQuotesData(): Promise<any> {
+
+        try {
+            const promises = [];
+
+            for (const quote of  Object.keys(this.quotes)) {
+                const promise = this.proxyService.getIntraday(quote).then( (data: any) => {
+                    const quoteIntervals = data[INTERVAL_PROPERTY_NAME] ;
+                    this.quotes[quote].InitializeStockData(quoteIntervals);
+                });
+                promises.push( promise );
+            }
+            await Promise.all(promises);
+            return Promise.resolve();
+        } catch (err) {
+            Promise.reject(err);
         }
     }
 
@@ -63,20 +76,11 @@ export class StockReader {
 
     private getStockLastIntervalData(data: any): IStockFullIntervalData {
         const timeSeries = data[ INTERVAL_PROPERTY_NAME ];
-        const stockLastInterval = timeSeries[Object.keys(timeSeries)[Object.keys.length - 1]];
-        return this.convertAlphaVantageFormat(stockLastInterval, "" );
+        const lastIntervalIndex = data[ METADATA_PROPERTY_NAME ][LAST_REFRESHED_PROPERTY_NAME]
+        const stockLastInterval = timeSeries[lastIntervalIndex];
+        return convertAlphaVantageFormat(stockLastInterval, lastIntervalIndex );
     }
 
-    private convertAlphaVantageFormat(stockIntervalData: IAlphaVantageIntervals, key: string): IStockFullIntervalData {
-        const convertedStockIntervalData: IStockFullIntervalData = {
-            open :  Number(Object.values(stockIntervalData)[0]) ,
-            high :  Number(Object.values(stockIntervalData)[1]),
-            low :  Number(Object.values(stockIntervalData)[2]),
-            close :  Number(Object.values(stockIntervalData)[3]),
-            volume :  Number(Object.values(stockIntervalData)[4]),
-            time: new Date(key),
-        };
-        return convertedStockIntervalData;
-    }
+    
 
 }

@@ -19,6 +19,5 @@ export const sendPushMessage = (message: string) => {
         if (err) {
             return console.error("pushing message:" + message +  "failed:", err);
         }
-        console.log("Upload successful!  Server responded with:", body);
     });
   };

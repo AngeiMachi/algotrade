@@ -1,36 +1,31 @@
 import moment from "moment-timezone";
 
-import {  VOLUME_THRESHOLD_ALARM , MINIMUM_INTERVALS_TO_CALCULATE_AVERAGE_VOLUME } from "./config/globals.config";
-import { IStockIntervalData, IAlphaVantageIntervals, IStockFullIntervalData } from "./models/stock-interval-data.model";
-import {BuyDirection} from "./models/enums";
+import * as environmentConfig from "./config/environment.Config.json";
 import * as pushed from "./pushed";
+import { getCurrentTradingDay, convertAlphaVantageFormat } from "./utils/utils.js";
+
+import {  VOLUME_THRESHOLD_ALARM , MINIMUM_INTERVALS_TO_CALCULATE_AVERAGE_VOLUME } from "./config/globals.config";
+import {  IAlphaVantageIntervals, IStockFullIntervalData } from "./models/stock-interval-data.model";
+import { BuyDirectionEnum } from "./models/enums";
+
 export class StockStats {
     private quote: string;
-    private volumeSum: number;
-    private interval: number;
-    private volumeInterval: number;
-    private avg: number;
+    private volumeSum: number = 0;
+    private interval: number = 0;
+    private volumeInterval: number = 0;
+    private avg: number = 0;
     private todayDate: string;
     private stockIntervals: IStockFullIntervalData[] = [];
 
-    private isInBuyMode: boolean;
+    private isInBuyMode: boolean = false;
     private boughtInterval: IStockFullIntervalData = {} as IStockFullIntervalData;
-    private ratioPower: number;
-    private buyDirection: BuyDirection;
+    private ratioPower: number = 0 ;
+    private buyDirection: BuyDirectionEnum = BuyDirectionEnum.NONE;
 
     constructor(quote: string) {
         this.quote = quote;
-        this.volumeSum = 0;
-        this.interval = 0;
-        this.volumeInterval = 0;
-        this.avg = 0;
 
-        this.isInBuyMode = false;
-        this.ratioPower = 0;
-        this.buyDirection = BuyDirection.NONE;
-
-        // this.todayDate = moment(new Date()).format("YYYY-MM-DD");
-        this.todayDate = "2019-06-27"; // for testing
+        this.todayDate = getCurrentTradingDay();
     }
 
     public InitializeStockData(quoteIntervals: IAlphaVantageIntervals ) {
@@ -43,18 +38,19 @@ export class StockStats {
     }
 
     public recordNewStockInterval(stockInterval: IStockFullIntervalData) {
-        console.log(stockInterval);
 
         this.calculateAverageVolume(stockInterval);
+
+        this.composeAndPrintCurrentStats(stockInterval);
 
         this.interval++;
 
     }
 
     private InitializeStockIntervalsSoFar(quoteIntervals: IAlphaVantageIntervals) {
-        Object.keys(quoteIntervals).reverse().forEach((key) => {
+        Object.keys(quoteIntervals).forEach((key) => {
             if (key.includes(this.todayDate)) {
-              this.stockIntervals.push(this.convertAlphaVantageFormat(quoteIntervals[key], key)) ;
+              this.stockIntervals.push( convertAlphaVantageFormat(quoteIntervals[key], key)) ;
             }
           });
     }
@@ -68,7 +64,7 @@ export class StockStats {
 
             if (this.didPassVolumeThreshold( volume )) {
                 this.buyDirection = this.getBuyDirection(stockInterval);
-                if (this.buyDirection !== BuyDirection.NONE) {
+                if (this.buyDirection !== BuyDirectionEnum.NONE) {
                     this.boughtInterval = {...stockInterval };
                     this.isInBuyMode = true;
                     this.ratioPower = this.getVolumeRatioPower(volume);
@@ -85,10 +81,19 @@ export class StockStats {
 
         const buyMessage = "*** " + this.quote + " *** passed threshold by " + this.ratioPower * 100 + "% at "
         + moment(this.boughtInterval.time).format("HH:mm:ss(MMMM Do YYYY)")
-        + "\nCan buy " + BuyDirection[this.buyDirection] + "S of the " + nextFridayDate;
+        + "\nCan buy " + BuyDirectionEnum[this.buyDirection] + "S of the " + nextFridayDate;
 
         pushed.sendPushMessage(buyMessage);
         console.log(buyMessage);
+    }
+
+    private composeAndPrintCurrentStats(stockInterval: IStockFullIntervalData) {
+
+         const stats = {quote: this.quote, interval: moment(stockInterval.time).format("HH:mm:ss") , ...stockInterval,
+                        intervalNumber: this.interval, volumeIntervalNumber: this.volumeInterval ,
+                        volumeSum: this.volumeSum, avg: this.avg };
+
+         console.log (stats );
     }
 
     private didPassVolumeThreshold(volume: number): boolean {
@@ -99,37 +104,22 @@ export class StockStats {
         const ratio = volume / this.avg;
         return +ratio.toFixed(2);
     }
-    private getBuyDirection(stockInterval: IStockFullIntervalData): BuyDirection {
+    private getBuyDirection(stockInterval: IStockFullIntervalData): BuyDirectionEnum {
         if (stockInterval.close > stockInterval.open) {
             // checks if inverted hammer - if so , there is hesitation - don't buy Call
             if ((stockInterval.high - stockInterval.close) > (stockInterval.close - stockInterval.open)) {
-                return BuyDirection.NONE;
+                return BuyDirectionEnum.NONE;
             }
-            return BuyDirection.CALL;
+            return BuyDirectionEnum.CALL;
         } else if (stockInterval.open > stockInterval.close) {
             // checks if hammer - if so , there is hesitation - don't buy put 
             if ((stockInterval.close - stockInterval.low) > (stockInterval.open - stockInterval.close)) {
-                return BuyDirection.NONE;
+                return BuyDirectionEnum.NONE;
             }
-            return BuyDirection.PUT;
+            return BuyDirectionEnum.PUT;
         } else {
-            return BuyDirection.NONE;
+            return BuyDirectionEnum.NONE;
         }
     }
 
-    private convertAlphaVantageFormat(stockIntervalData: IAlphaVantageIntervals, key: string): IStockFullIntervalData {
-        const nasdaqTime = moment.tz(key, "America/New_York");
-        const israelTime = nasdaqTime.clone().tz("Asia/Jerusalem");
-
-        const convertedStockIntervalData: IStockFullIntervalData = {
-            open :  Number(Object.values(stockIntervalData)[0]) ,
-            high :  Number(Object.values(stockIntervalData)[1]),
-            low :  Number(Object.values(stockIntervalData)[2]),
-            close :  Number(Object.values(stockIntervalData)[3]),
-            volume :  Number(Object.values(stockIntervalData)[4]),
-            time: new Date( israelTime.format("YYYY-MM-DD HH:mm:ss") ),
-        };
-
-        return convertedStockIntervalData;
-    }
 }
