@@ -2,10 +2,9 @@ import * as environmentConfig from "./../config/environment.Config.json";
 import moment from "moment-timezone";
 import { IAlphaVantageIntervals , IStockFullIntervalData } from "../models/stock-interval-data.model";
 
-
 export function getCurrentTradingDay() {
     let mockDataDate: string;
-    if (environmentConfig.Mock.IsMock && environmentConfig.Mock.MockDataDate) {
+    if (environmentConfig.Mock.IsMock || environmentConfig.Mock.MockDataDate) {
         mockDataDate = environmentConfig.Mock.MockDataDate;
     } else {
         mockDataDate = moment(new Date()).format("YYYY-MM-DD");

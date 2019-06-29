@@ -5,7 +5,6 @@ import { getCurrentTradingDay } from "./utils/utils.js";
 import { INTERVAL_PROPERTY_NAME , METADATA_PROPERTY_NAME , LAST_REFRESHED_PROPERTY_NAME } from "./config/globals.config";
 import { IAlphaVantageIntervals } from "./models/stock-interval-data.model";
 
-
 export class ProxyService {
 
     private alphaAPI: any;
@@ -50,7 +49,7 @@ export class ProxyService {
                 quoteMockResponse = data ;
             });
 
-            Object.keys(quoteMockResponse[INTERVAL_PROPERTY_NAME]).reverse().forEach((key) => {
+            Object.keys(quoteMockResponse[INTERVAL_PROPERTY_NAME]).forEach((key) => {
                 if (key.includes(this.mockDataDate)) {
                   mockIntervals[key] = quoteMockResponse[INTERVAL_PROPERTY_NAME][key];
                 }

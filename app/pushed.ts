@@ -10,14 +10,17 @@ const pushedConfig = {
 };
 
 export const sendPushMessage = (message: string) => {
-    const formData = {
-        ...pushedConfig,
-        content: message,
-    };
+    if (environmentConfig.ShouldUsePushNotifications) {
+        const formData = {
+            ...pushedConfig,
+            content: message,
+        };
 
-    request.post({url, formData}, (err: string, httpResponse: any, body: any) => {
-        if (err) {
-            return console.error("pushing message:" + message +  "failed:", err);
-        }
-    });
+        request.post({url, formData}, (err: string, httpResponse: any, body: any) => {
+            if (err) {
+                return console.error("pushing message:" + message +  "failed:", err);
+            }
+        });
+    }
+
   };

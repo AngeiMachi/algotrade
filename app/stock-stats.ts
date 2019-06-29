@@ -48,7 +48,7 @@ export class StockStats {
     }
 
     private InitializeStockIntervalsSoFar(quoteIntervals: IAlphaVantageIntervals) {
-        Object.keys(quoteIntervals).forEach((key) => {
+        Object.keys(quoteIntervals).reverse().forEach((key) => {
             if (key.includes(this.todayDate)) {
               this.stockIntervals.push( convertAlphaVantageFormat(quoteIntervals[key], key)) ;
             }
