@@ -48,7 +48,14 @@ export class StockStats {
     }
 
     private InitializeStockIntervalsSoFar(quoteIntervals: IAlphaVantageIntervals) {
-        Object.keys(quoteIntervals).reverse().forEach((key) => {
+        let intervalKeys = Object.keys(quoteIntervals).filter( (key) => key.includes(this.todayDate));
+
+        // patch fix to handles a bug - different behavior between real data and mock
+        if (!intervalKeys[0].includes("09:35:00")) {
+            intervalKeys = intervalKeys.reverse();
+        }
+
+        intervalKeys.forEach((key) => {
             if (key.includes(this.todayDate)) {
               this.stockIntervals.push( convertAlphaVantageFormat(quoteIntervals[key], key)) ;
             }

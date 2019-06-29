@@ -68,19 +68,24 @@ export class StockReader {
         Object.keys(this.quotes).forEach((quote) => {
             const quoteStockStats: StockStats = this.quotes[quote];
             this.proxyService.getIntraday(quote).then( (data: any) => {
-                const stockInterval: IStockFullIntervalData = this.getStockLastIntervalData(data);
+                const stockInterval: IStockFullIntervalData = this.getStockLatestIntervalData(data);
                 quoteStockStats.recordNewStockInterval(stockInterval);
+                if (this.isLastInterval(data)) {
+                    delete this.quotes[quote];
+                    console.log("Terminating quote" + quote);
+                }
             });
         });
     }
 
-    private getStockLastIntervalData(data: any): IStockFullIntervalData {
+    private getStockLatestIntervalData(data: any): IStockFullIntervalData {
         const timeSeries = data[ INTERVAL_PROPERTY_NAME ];
-        const lastIntervalIndex = data[ METADATA_PROPERTY_NAME ][LAST_REFRESHED_PROPERTY_NAME]
+        const lastIntervalIndex = data[ METADATA_PROPERTY_NAME ][LAST_REFRESHED_PROPERTY_NAME];
         const stockLastInterval = timeSeries[lastIntervalIndex];
         return convertAlphaVantageFormat(stockLastInterval, lastIntervalIndex );
     }
 
-    
-
+    private isLastInterval(data: any): boolean {
+        return data[ METADATA_PROPERTY_NAME ][ LAST_REFRESHED_PROPERTY_NAME ].includes("16:00");
+    }
 }

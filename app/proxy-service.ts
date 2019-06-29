@@ -55,8 +55,8 @@ export class ProxyService {
                 }
             });
 
-            this.mockDataResponseValues = Object.values(mockIntervals);
-            this.mockDataResponseKeys = Object.keys(mockIntervals);
+            this.mockDataResponseValues = Object.values(mockIntervals).reverse();
+            this.mockDataResponseKeys = Object.keys(mockIntervals).reverse();
 
             for (let i = 0 ; i < this.currentInterval ; i++) {
                 this.mockDataResponse[ INTERVAL_PROPERTY_NAME][this.mockDataResponseKeys[i]] = this.mockDataResponseValues[i];
