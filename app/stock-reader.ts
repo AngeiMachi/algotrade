@@ -29,7 +29,6 @@ export class StockReader {
     }
 
     public async initializeQuotesData(): Promise<any> {
-
         try {
             const promises = [];
 
@@ -49,8 +48,11 @@ export class StockReader {
 
     public initiateStockWatch() {
         if  (Object.keys(this.quotes).length > 0) {
-            const interval = setInterval( () => {
+            const iterateStockInterval = setInterval( () => {
                 this.iterateStocks();
+                if  (Object.keys(this.quotes).length === 0) {
+                    clearInterval(iterateStockInterval);
+                }
             }, INTERVAL_TIME);
         } else {
             throw Error("No Stocks were initialized");
@@ -72,7 +74,7 @@ export class StockReader {
                 quoteStockStats.recordNewStockInterval(stockInterval);
                 if (this.isLastInterval(data)) {
                     delete this.quotes[quote];
-                    console.log("Terminating quote" + quote);
+                    console.log("Terminating quote " + quote);
                 }
             });
         });
