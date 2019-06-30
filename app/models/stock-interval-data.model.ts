@@ -1,3 +1,6 @@
+
+import {StockStats} from '../stock-stats';
+
 export interface IStockIntervalData {
     open: number;
     high: number;
@@ -14,4 +17,8 @@ export interface IAlphaVantageInterval {
 }
 export interface IAlphaVantageIntervals {
     [key: string]: IAlphaVantageInterval;
+}
+
+export interface IQuotes {
+    [key: string]: StockStats;
 }
