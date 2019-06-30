@@ -64,19 +64,27 @@ export class StockStats {
 
     private calculateAverageVolume(stockInterval: IStockFullIntervalData) {
         if (this.interval >= MINIMUM_INTERVALS_TO_CALCULATE_AVERAGE_VOLUME) {
-            const {volume} = stockInterval ;
-            this.volumeSum += volume;
+            this.volumeSum += stockInterval.volume;
             this.volumeInterval++;
             this.avg = this.volumeSum / this.volumeInterval;
 
-            if (this.didPassVolumeThreshold( volume )) {
-                this.buyDirection = this.getBuyDirection(stockInterval);
-                if (this.buyDirection !== BuyDirectionEnum.NONE) {
-                    this.boughtInterval = {...stockInterval };
-                    this.isInBuyMode = true;
-                    this.ratioPower = this.getVolumeRatioPower(volume);
+            if (this.didPassVolumeThreshold( stockInterval )) {
+                const currentBuyDirection = this.getBuyDirection(stockInterval);
+                const currentRatioPower = this.getVolumeRatioPower(stockInterval.volume);
 
-                    this.composeAndPrintBuyMessage();
+                if (!this.isInBuyMode) {
+                    if (currentBuyDirection !== BuyDirectionEnum.NONE) {
+                        this.buyDirection = currentBuyDirection;
+                        this.boughtInterval = {...stockInterval };
+                        this.isInBuyMode = true;
+                        this.ratioPower = currentRatioPower
+    
+                        this.composeAndPrintBuyMessage();
+                    }
+                } else if (this.isInBuyMode) {
+                    if (currentBuyDirection!=this.buyDirection && currentBuyDirection!== BuyDirectionEnum.NONE) {
+                        this.composeAndPrintSellMessage();
+                    }
                 }
             }
         }
@@ -94,6 +102,15 @@ export class StockStats {
         console.log(buyMessage);
     }
 
+    private composeAndPrintSellMessage() {
+        const today = moment().isoWeekday();
+        const nextFridayDate = moment().isoWeekday(today + 5 + (7 - today)).format("MMM Do YY");
+
+        console.log("*** " + this.quote + " *** passed threshold by " + this.ratioPower * 100 + "% at "
+         + moment(this.boughtInterval.time).format("HH:mm:ss(MMMM Do YYYY)") 
+         + "\Shoul Sell " + BuyDirectionEnum[this.buyDirection] + "S of the " + nextFridayDate + "due to opposit direction volume volatility");
+    }
+
     private composeAndPrintCurrentStats(stockInterval: IStockFullIntervalData) {
 
          const stats = {quote: this.quote, interval: moment(stockInterval.time).format("HH:mm:ss") , ...stockInterval,
@@ -103,8 +120,17 @@ export class StockStats {
          console.log (stats );
     }
 
-    private didPassVolumeThreshold(volume: number): boolean {
+    private didPassVolumeThreshold(stockInterval: IStockFullIntervalData): boolean {
+
+        if (this.isTradeClosingTime(stockInterval)) {
+            return false;
+        };
+        const {volume} = stockInterval;
         return ( volume > this.avg * VOLUME_THRESHOLD_ALARM && !this.isInBuyMode);
+    }
+
+    private isTradeClosingTime(stockInterval: IStockFullIntervalData) : boolean {
+        return (stockInterval.time.getHours()>22 && stockInterval.time.getMinutes()>45);
     }
 
     private getVolumeRatioPower(volume: number): number {

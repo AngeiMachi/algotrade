@@ -1,5 +1,6 @@
 
 import moment from "moment";
+
 import { MAX_QUOTES ,
         INTERVAL_TIME ,
         INTERVAL_PROPERTY_NAME ,
@@ -7,19 +8,13 @@ import { MAX_QUOTES ,
         LAST_REFRESHED_PROPERTY_NAME,
     } from "./config/globals.config";
 import { StockStats } from "./stock-stats";
-import { IStockIntervalData, IAlphaVantageIntervals, IStockFullIntervalData } from "./models/stock-interval-data.model";
+import { IQuotes, IStockFullIntervalData } from "./models/stock-interval-data.model";
 import { ProxyService } from "./proxy-service";
 import { convertAlphaVantageFormat } from "./utils/utils";
 
-interface IQuotes {
-    [key: string]: StockStats;
-}
-interface IStockIntervals {
-    [key: string]: IStockIntervalData;
-}
 
 export class StockReader {
-    private proxyService: any;
+    private proxyService: ProxyService;
     private quotes: IQuotes = {};
 
     constructor(key: string, quotes: string[]= []) {
@@ -29,10 +24,8 @@ export class StockReader {
     }
 
     public async initializeQuotesData(): Promise<any> {
-
         try {
             const promises = [];
-
             for (const quote of  Object.keys(this.quotes)) {
                 const promise = this.proxyService.getIntraday(quote).then( (data: any) => {
                     const quoteIntervals = data[INTERVAL_PROPERTY_NAME] ;
@@ -72,7 +65,7 @@ export class StockReader {
                 quoteStockStats.recordNewStockInterval(stockInterval);
                 if (this.isLastInterval(data)) {
                     delete this.quotes[quote];
-                    console.log("Terminating quote" + quote);
+                    console.log("Terminating quote " + quote);
                 }
             });
         });

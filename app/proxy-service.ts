@@ -40,6 +40,19 @@ export class ProxyService {
         }
     }
 
+    public async getHistoricalData(quote: string): Promise< any > {
+        let quoteMockResponse: any; 
+        
+        await this.alphaAPI.data.intraday(quote, "full", "json", "5min").then( (data: any) => {
+            quoteMockResponse = data ;
+            Object.keys(data[INTERVAL_PROPERTY_NAME]).forEach((key,index,value)=>{
+                let k=key;
+                let i = index;
+                let v = value;
+            });
+        });
+    }
+
     private async prepareMockData(quote: string): Promise<any> {
         try {
             let quoteMockResponse: any;
