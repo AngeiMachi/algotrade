@@ -41,16 +41,35 @@ export class ProxyService {
     }
 
     public async getHistoricalData(quote: string): Promise< any > {
-        let quoteMockResponse: any; 
-        
-        await this.alphaAPI.data.intraday(quote, "full", "json", "5min").then( (data: any) => {
-            quoteMockResponse = data ;
-            Object.keys(data[INTERVAL_PROPERTY_NAME]).forEach((key,index,value)=>{
-                let k=key;
-                let i = index;
-                let v = value;
+        try {
+            const quoteHistoricalDataResponse: any[] = [];
+
+            await this.alphaAPI.data.intraday(quote, "full", "json", "5min").then( (data: any) => {
+                let tradingDayDate: string = "";
+                let lastRefreshedTime: string = "";
+                let tradingDayIntervals: IAlphaVantageIntervals = { };
+                const quoteMetadata = data[METADATA_PROPERTY_NAME];
+                Object.keys(data[INTERVAL_PROPERTY_NAME]).reverse().forEach((key, index) => {
+                    if (key.substring(0, 10) !== tradingDayDate) {
+                        if ( tradingDayDate) {
+                            quoteMetadata[LAST_REFRESHED_PROPERTY_NAME] = lastRefreshedTime;
+                            quoteHistoricalDataResponse.push({"Meta Data": {...quoteMetadata},
+                                                            "Time Series (5min)": { ...tradingDayIntervals} } );
+                            tradingDayIntervals = {};
+                        }
+                        tradingDayDate = key.substring(0, 10) ;
+                    }
+                    tradingDayIntervals[key] = data[INTERVAL_PROPERTY_NAME][key];
+                    lastRefreshedTime = key;
+                });
+                quoteMetadata[LAST_REFRESHED_PROPERTY_NAME] = lastRefreshedTime;
+                quoteHistoricalDataResponse.push({"Meta Data": {...quoteMetadata},
+                                                "Time Series (5min)": { ...tradingDayIntervals} } );
             });
-        });
+            return Promise.resolve(quoteHistoricalDataResponse);
+        } catch ( err) {
+            Promise.reject(err);
+        }
     }
 
     private async prepareMockData(quote: string): Promise<any> {

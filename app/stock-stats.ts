@@ -22,10 +22,14 @@ export class StockStats {
     private ratioPower: number = 0 ;
     private buyDirection: BuyDirectionEnum = BuyDirectionEnum.NONE;
 
-    constructor(quote: string) {
+    constructor(quote: string, todayDate: string= "") {
         this.quote = quote;
 
-        this.todayDate = getCurrentTradingDay();
+        if (todayDate) {
+            this.todayDate = todayDate;
+        } else {
+            this.todayDate = getCurrentTradingDay();
+        }
     }
 
     public InitializeStockData(quoteIntervals: IAlphaVantageIntervals ) {
