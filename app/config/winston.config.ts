@@ -1,9 +1,9 @@
-import * as appRoot from 'app-root-path';
-import winston  from 'winston';
+import * as appRoot from "app-root-path";
+import winston from "winston";
 
 const options = {
     file: {
-      level: 'info',
+      level: "debug",
       filename: `${appRoot.path}/logs/app.log`,
       handleExceptions: true,
       json: true,
@@ -12,17 +12,17 @@ const options = {
       colorize: true,
     },
     console: {
-      level: 'debug',
+      level: "debug",
       handleExceptions: true,
       json: true,
       colorize: true,
     },
   };
 
-  export const logger = winston.createLogger({
+export const logger = winston.createLogger({
     transports: [
       new winston.transports.File(options.file),
-      new winston.transports.Console(options.console)
+      new winston.transports.Console(options.console),
     ],
     exitOnError: false, // do not exit on handled exceptions
   });

@@ -44,7 +44,7 @@ export class ProxyService {
         try {
             const quoteHistoricalDataResponse: any[] = [];
 
-            const data = await this.alphaAPI.data.intraday(quote, "compact", "json", "5min");
+            const data = await this.alphaAPI.data.intraday(quote, "full", "json", "5min");
             let tradingDayDate: string = "";
             let lastRefreshedTime: string = "";
             let tradingDayIntervals: IAlphaVantageIntervals = { };
