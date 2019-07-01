@@ -7,6 +7,7 @@ import { getCurrentTradingDay, convertAlphaVantageFormat } from "./utils/utils.j
 import {  VOLUME_THRESHOLD_ALARM , MINIMUM_INTERVALS_TO_CALCULATE_AVERAGE_VOLUME } from "./config/globals.config";
 import {  IAlphaVantageIntervals, IStockFullIntervalData } from "./models/stock-interval-data.model";
 import { BuyDirectionEnum } from "./models/enums";
+import { logger } from "./config/winston.config.js";
 
 export class StockStats {
     private quote: string;
@@ -45,7 +46,7 @@ export class StockStats {
 
         this.calculateAverageVolume(stockInterval);
 
-        this.composeAndPrintCurrentStats(stockInterval);
+        //this.composeAndPrintCurrentStats(stockInterval);
 
         this.interval++;
 
@@ -103,14 +104,14 @@ export class StockStats {
         + "\nCan buy " + BuyDirectionEnum[this.buyDirection] + "S of the " + nextFridayDate;
 
         pushed.sendPushMessage(buyMessage);
-        console.log(buyMessage);
+        logger.debug(buyMessage);
     }
 
     private composeAndPrintSellMessage() {
         const today = moment().isoWeekday();
         const nextFridayDate = moment().isoWeekday(today + 5 + (7 - today)).format("MMM Do YY");
 
-        console.log("*** " + this.quote + " *** passed threshold by " + this.ratioPower * 100 + "% at "
+        logger.debug("*** " + this.quote + " *** passed threshold by " + this.ratioPower * 100 + "% at "
          + moment(this.boughtInterval.time).format("HH:mm:ss(MMMM Do YYYY)") 
          + "\Shoul Sell " + BuyDirectionEnum[this.buyDirection] + "S of the " + nextFridayDate + "due to opposit direction volume volatility");
     }
@@ -121,7 +122,7 @@ export class StockStats {
                         intervalNumber: this.interval, volumeIntervalNumber: this.volumeInterval ,
                         volumeSum: this.volumeSum, avg: this.avg };
 
-         console.log (stats );
+         logger.info ( stats );
     }
 
     private didPassVolumeThreshold(stockInterval: IStockFullIntervalData): boolean {
@@ -129,12 +130,23 @@ export class StockStats {
         if (this.isTradeClosingTime(stockInterval)) {
             return false;
         };
+        
         const {volume} = stockInterval;
-        return ( volume > this.avg * VOLUME_THRESHOLD_ALARM && !this.isInBuyMode);
+        if ( volume > this.avg * VOLUME_THRESHOLD_ALARM && !this.isInBuyMode) {
+           return (this.getPrecentageMove(stockInterval) > 1 );
+        } else {
+            return false;
+        }
     }
 
     private isTradeClosingTime(stockInterval: IStockFullIntervalData) : boolean {
         return (stockInterval.time.getHours()>22 && stockInterval.time.getMinutes()>45);
+    }
+
+    private getPrecentageMove(stockInterval: IStockFullIntervalData) : Number {
+        const percentage = +(Math.abs(stockInterval.open-stockInterval.close) / stockInterval.open).toFixed(2) ;
+
+        return (percentage * 100)
     }
 
     private getVolumeRatioPower(volume: number): number {

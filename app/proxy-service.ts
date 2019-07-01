@@ -44,29 +44,31 @@ export class ProxyService {
         try {
             const quoteHistoricalDataResponse: any[] = [];
 
-            await this.alphaAPI.data.intraday(quote, "full", "json", "5min").then( (data: any) => {
-                let tradingDayDate: string = "";
-                let lastRefreshedTime: string = "";
-                let tradingDayIntervals: IAlphaVantageIntervals = { };
-                const quoteMetadata = data[METADATA_PROPERTY_NAME];
-                Object.keys(data[INTERVAL_PROPERTY_NAME]).reverse().forEach((key, index) => {
-                    if (key.substring(0, 10) !== tradingDayDate) {
-                        if ( tradingDayDate) {
-                            quoteMetadata[LAST_REFRESHED_PROPERTY_NAME] = lastRefreshedTime;
-                            quoteHistoricalDataResponse.push({"Meta Data": {...quoteMetadata},
-                                                            "Time Series (5min)": { ...tradingDayIntervals} } );
-                            tradingDayIntervals = {};
-                        }
-                        tradingDayDate = key.substring(0, 10) ;
+            const data = await this.alphaAPI.data.intraday(quote, "compact", "json", "5min");
+            let tradingDayDate: string = "";
+            let lastRefreshedTime: string = "";
+            let tradingDayIntervals: IAlphaVantageIntervals = { };
+            const quoteMetadata = data[METADATA_PROPERTY_NAME];
+            
+            Object.keys(data[INTERVAL_PROPERTY_NAME]).reverse().forEach((key, index) => {
+                if (key.substring(0, 10) !== tradingDayDate) {
+                    if ( tradingDayDate) {
+                        quoteMetadata[LAST_REFRESHED_PROPERTY_NAME] = lastRefreshedTime;
+                        quoteHistoricalDataResponse.push({"Meta Data": {...quoteMetadata},
+                                                        "Time Series (5min)": { ...tradingDayIntervals} } );
+                        tradingDayIntervals = {};
                     }
-                    tradingDayIntervals[key] = data[INTERVAL_PROPERTY_NAME][key];
-                    lastRefreshedTime = key;
-                });
-                quoteMetadata[LAST_REFRESHED_PROPERTY_NAME] = lastRefreshedTime;
-                quoteHistoricalDataResponse.push({"Meta Data": {...quoteMetadata},
-                                                "Time Series (5min)": { ...tradingDayIntervals} } );
+                        tradingDayDate = key.substring(0, 10) ;
+                }
+                tradingDayIntervals[key] = data[INTERVAL_PROPERTY_NAME][key];
+                lastRefreshedTime = key;
             });
+            quoteMetadata[LAST_REFRESHED_PROPERTY_NAME] = lastRefreshedTime;
+            quoteHistoricalDataResponse.push({"Meta Data": {...quoteMetadata},
+                                                "Time Series (5min)": { ...tradingDayIntervals} } );
+
             return Promise.resolve(quoteHistoricalDataResponse);
+            
         } catch ( err) {
             Promise.reject(err);
         }
