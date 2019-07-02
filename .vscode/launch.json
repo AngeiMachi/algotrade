@@ -10,7 +10,8 @@
             "request": "launch",
             "preLaunchTask": "tsc",
             "name": "Launch Program",
-            "program": "${workspaceFolder}\\dist\\server.js"
+            "program": "${workspaceFolder}\\dist\\server.js",
+            "outputCapture": "std"
         }
     ]
 }

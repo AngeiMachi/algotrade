@@ -4,9 +4,10 @@ import * as environmentConfig from "./config/environment.Config.json";
 import * as pushed from "./pushed";
 import { getCurrentTradingDay, convertAlphaVantageFormat } from "./utils/utils.js";
 
-import {  VOLUME_THRESHOLD_ALARM , MINIMUM_INTERVALS_TO_CALCULATE_AVERAGE_VOLUME } from "./config/globals.config";
+import {  VOLUME_THRESHOLD_ALARM , MINIMUM_INTERVALS_TO_CALCULATE_AVERAGE_VOLUME, PERCENTAGE_CHANGE_THRESHOLD } from "./config/globals.config";
 import {  IAlphaVantageIntervals, IStockFullIntervalData } from "./models/stock-interval-data.model";
 import { BuyDirectionEnum } from "./models/enums";
+import { logger } from "./config/winston.config.js";
 
 export class StockStats {
     private quote: string;
@@ -21,11 +22,16 @@ export class StockStats {
     private boughtInterval: IStockFullIntervalData = {} as IStockFullIntervalData;
     private ratioPower: number = 0 ;
     private buyDirection: BuyDirectionEnum = BuyDirectionEnum.NONE;
+    private percentageChange: number = 0;
 
-    constructor(quote: string) {
+    constructor(quote: string, todayDate: string= "") {
         this.quote = quote;
 
-        this.todayDate = getCurrentTradingDay();
+        if (todayDate) {
+            this.todayDate = todayDate;
+        } else {
+            this.todayDate = getCurrentTradingDay();
+        }
     }
 
     public InitializeStockData(quoteIntervals: IAlphaVantageIntervals ) {
@@ -41,7 +47,7 @@ export class StockStats {
 
         this.calculateAverageVolume(stockInterval);
 
-        this.composeAndPrintCurrentStats(stockInterval);
+        //this.composeAndPrintCurrentStats(stockInterval);
 
         this.interval++;
 
@@ -77,12 +83,13 @@ export class StockStats {
                         this.buyDirection = currentBuyDirection;
                         this.boughtInterval = {...stockInterval };
                         this.isInBuyMode = true;
-                        this.ratioPower = currentRatioPower
-    
+                        this.ratioPower = currentRatioPower;
+                        this.percentageChange = this.getPercentageChange(stockInterval);
+
                         this.composeAndPrintBuyMessage();
                     }
                 } else if (this.isInBuyMode) {
-                    if (currentBuyDirection!=this.buyDirection && currentBuyDirection!== BuyDirectionEnum.NONE) {
+                    if (currentBuyDirection !== this.buyDirection && currentBuyDirection !== BuyDirectionEnum.NONE) {
                         this.composeAndPrintSellMessage();
                     }
                 }
@@ -94,21 +101,22 @@ export class StockStats {
         const today = moment().isoWeekday();
         const nextFridayDate = moment().isoWeekday(today + 5 + (7 - today)).format("MMM Do YY");
 
-        const buyMessage = "*** " + this.quote + " *** passed threshold by " + this.ratioPower * 100 + "% at "
-        + moment(this.boughtInterval.time).format("HH:mm:ss(MMMM Do YYYY)")
+        const buyMessage = "*** " + this.quote + " *** passed threshold power by " + this.ratioPower * 100 + "% with change 0f "
+        + this.percentageChange + "% at " + moment(this.boughtInterval.time).format("HH:mm:ss(MMMM Do YYYY)")
         + "\nCan buy " + BuyDirectionEnum[this.buyDirection] + "S of the " + nextFridayDate;
 
         pushed.sendPushMessage(buyMessage);
-        console.log(buyMessage);
+        logger.debug(buyMessage);
     }
 
     private composeAndPrintSellMessage() {
         const today = moment().isoWeekday();
         const nextFridayDate = moment().isoWeekday(today + 5 + (7 - today)).format("MMM Do YY");
 
-        console.log("*** " + this.quote + " *** passed threshold by " + this.ratioPower * 100 + "% at "
-         + moment(this.boughtInterval.time).format("HH:mm:ss(MMMM Do YYYY)") 
-         + "\Shoul Sell " + BuyDirectionEnum[this.buyDirection] + "S of the " + nextFridayDate + "due to opposit direction volume volatility");
+        logger.debug("*** " + this.quote + " *** passed threshold by " + this.ratioPower * 100 + "% at "
+         + moment(this.boughtInterval.time).format("HH:mm:ss(MMMM Do YYYY)")
+         + "\n Should Sell " + BuyDirectionEnum[this.buyDirection] + "S of the "
+         + nextFridayDate + "due to opposite direction volume volatility");
     }
 
     private composeAndPrintCurrentStats(stockInterval: IStockFullIntervalData) {
@@ -117,20 +125,32 @@ export class StockStats {
                         intervalNumber: this.interval, volumeIntervalNumber: this.volumeInterval ,
                         volumeSum: this.volumeSum, avg: this.avg };
 
-         console.log (stats );
+         logger.info ( stats );
     }
 
     private didPassVolumeThreshold(stockInterval: IStockFullIntervalData): boolean {
 
         if (this.isTradeClosingTime(stockInterval)) {
             return false;
-        };
+        }
+
         const {volume} = stockInterval;
-        return ( volume > this.avg * VOLUME_THRESHOLD_ALARM && !this.isInBuyMode);
+        if ( volume > this.avg * VOLUME_THRESHOLD_ALARM && !this.isInBuyMode) {
+           const percentageIntervalChange =  this.getPercentageChange(stockInterval);
+           return (percentageIntervalChange > PERCENTAGE_CHANGE_THRESHOLD );
+        } else {
+            return false;
+        }
     }
 
-    private isTradeClosingTime(stockInterval: IStockFullIntervalData) : boolean {
-        return (stockInterval.time.getHours()>22 && stockInterval.time.getMinutes()>45);
+    private isTradeClosingTime(stockInterval: IStockFullIntervalData): boolean {
+        return (stockInterval.time.getHours() >= 22 && stockInterval.time.getMinutes() >= 45 || stockInterval.time.getHours() === 23);
+    }
+
+    private getPercentageChange(stockInterval: IStockFullIntervalData): number {
+        const percentage = (Math.abs(stockInterval.open - stockInterval.close) / stockInterval.open) * 100 ;
+
+        return +percentage.toFixed(2);
     }
 
     private getVolumeRatioPower(volume: number): number {
