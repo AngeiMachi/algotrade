@@ -20,6 +20,7 @@ const options = {
   };
 
 export const logger = winston.createLogger({
+    format: winston.format.printf(debug => debug.message),
     transports: [
       new winston.transports.File(options.file),
       new winston.transports.Console(options.console),

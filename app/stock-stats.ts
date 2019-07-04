@@ -18,15 +18,19 @@ export class StockStats {
     private todayDate: string;
     private stockIntervals: IStockFullIntervalData[] = [];
 
-    private isInBuyMode: boolean = false;
-    private boughtInterval: IStockFullIntervalData = {} as IStockFullIntervalData;
+
+    private didBuy : boolean = false;
+    private isInBuyDirection: BuyDirectionEnum = BuyDirectionEnum.NONE;
+    private isInBreakOutOrDown: BuyDirectionEnum = BuyDirectionEnum.NONE;
+    private volumeChangeIntervalData: IStockFullIntervalData = {} as IStockFullIntervalData;
+    private HODIntevalData:IStockFullIntervalData = {} as IStockFullIntervalData;
+    private LODIntevalData:IStockFullIntervalData = {} as IStockFullIntervalData;
+    private boughtIntervalData:IStockFullIntervalData = {} as IStockFullIntervalData;
     private ratioPower: number = 0 ;
-    private buyDirection: BuyDirectionEnum = BuyDirectionEnum.NONE;
     private percentageChange: number = 0;
 
     constructor(quote: string, todayDate: string= "") {
         this.quote = quote;
-
         if (todayDate) {
             this.todayDate = todayDate;
         } else {
@@ -43,11 +47,19 @@ export class StockStats {
         });
     }
 
-    public recordNewStockInterval(stockInterval: IStockFullIntervalData) {
+    public recordNewStockInterval(stockInterval: IStockFullIntervalData,isLive:boolean = false) {
 
+        this.composeAndPrintCurrentIntervalStats(stockInterval,isLive);
         this.calculateAverageVolume(stockInterval);
-
-        //this.composeAndPrintCurrentStats(stockInterval);
+        this.monitorHODBreakout(stockInterval);
+        this.monitorLODBreakdown(stockInterval);
+        this.composeAndPrintBuyMessage(stockInterval);
+        if (stockInterval.time.getHours()==23 && this.didBuy) {
+            logger.debug("*** " + this.quote + " Ended with " +this.calculatePercentageChange( this.boughtIntervalData, stockInterval) + "%");
+        }
+        if (isLive) {
+            this.stockIntervals.push(stockInterval);
+        }
 
         this.interval++;
 
@@ -57,7 +69,7 @@ export class StockStats {
         let intervalKeys = Object.keys(quoteIntervals).filter( (key) => key.includes(this.todayDate));
 
         // patch fix to handles a bug - different behavior between real data and mock
-        if (!intervalKeys[0].includes("09:35:00")) {
+        if (intervalKeys[0].includes("16:00:00") || !intervalKeys[0].includes("09:35:00") ) {
             intervalKeys = intervalKeys.reverse();
         }
 
@@ -78,18 +90,15 @@ export class StockStats {
                 const currentBuyDirection = this.getBuyDirection(stockInterval);
                 const currentRatioPower = this.getVolumeRatioPower(stockInterval.volume);
 
-                if (!this.isInBuyMode) {
+                if (!this.isInBuyDirection) {
                     if (currentBuyDirection !== BuyDirectionEnum.NONE) {
-                        this.buyDirection = currentBuyDirection;
-                        this.boughtInterval = {...stockInterval };
-                        this.isInBuyMode = true;
+                        this.isInBuyDirection = currentBuyDirection;
+                        this.volumeChangeIntervalData = {...stockInterval };
                         this.ratioPower = currentRatioPower;
                         this.percentageChange = this.getPercentageChange(stockInterval);
-
-                        this.composeAndPrintBuyMessage();
                     }
-                } else if (this.isInBuyMode) {
-                    if (currentBuyDirection !== this.buyDirection && currentBuyDirection !== BuyDirectionEnum.NONE) {
+                 } else if (this.isInBuyDirection) {
+                    if (currentBuyDirection !== this.isInBuyDirection && currentBuyDirection !== BuyDirectionEnum.NONE) {
                         this.composeAndPrintSellMessage();
                     }
                 }
@@ -97,13 +106,68 @@ export class StockStats {
         }
     }
 
-    private composeAndPrintBuyMessage() {
+    private monitorHODBreakout( stockInterval: IStockFullIntervalData) {
+        if (this.interval==0) {
+            this.HODIntevalData = {...stockInterval };
+        }
+        else {
+            if (stockInterval.close > this.HODIntevalData.high && !this.isInBreakOutOrDown) {
+                this.HODIntevalData = {...stockInterval };
+                if (this.interval >= MINIMUM_INTERVALS_TO_CALCULATE_AVERAGE_VOLUME) {
+                    this.isInBreakOutOrDown = BuyDirectionEnum.CALL;
+                }        
+            }
+        }
+    }
+
+    private monitorLODBreakdown ( stockInterval: IStockFullIntervalData) {
+        if (this.interval==0) {
+            this.LODIntevalData = {...stockInterval };
+        }
+        else {
+            if (stockInterval.close < this.LODIntevalData.low && !this.isInBreakOutOrDown) {
+                this.LODIntevalData = {...stockInterval };
+                if (this.interval >= MINIMUM_INTERVALS_TO_CALCULATE_AVERAGE_VOLUME && !this.isInBreakOutOrDown) {
+                    this.isInBreakOutOrDown = BuyDirectionEnum.PUT;
+                }        
+            }
+        }
+    }
+
+    private composeAndPrintBuyMessage(stockInterval: IStockFullIntervalData) {
+        if (!this.didBuy && this.isInBreakOutOrDown === this.isInBuyDirection && this.isInBuyDirection!==BuyDirectionEnum.NONE) {
+            this.boughtIntervalData = {...stockInterval };
+            
+            let breakInterval :IStockFullIntervalData={} as IStockFullIntervalData;
+
+            if (this.isInBreakOutOrDown === BuyDirectionEnum.CALL) {
+                breakInterval = this.HODIntevalData;
+            } else if (this.isInBreakOutOrDown === BuyDirectionEnum.PUT) {
+                breakInterval = this.LODIntevalData;
+            }
+
+            const today = moment().isoWeekday();
+            const nextFridayDate = moment().isoWeekday(today + 5 + (7 - today)).format("MMM Do YY");
+
+            //+ + "buy "+ BuyDirectionEnum[this.isInBuyDirection] + "S of the " + nextFridayDate +
+            const buyMessage = "*** " + this.quote + " *** Entered Buy " + BuyDirectionEnum[this.isInBuyDirection] +" Mode  at " +   moment(stockInterval.time).format("HH:mm:ss")
+            +'\n,'+ moment(this.volumeChangeIntervalData.time).format("HH:mm:ss(MMMM Do YYYY)")+")Volume: Power=" +(this.ratioPower * 100).toFixed(2) + "%, Change=" + this.percentageChange + "%"
+            +'\n'+ moment(breakInterval.time).format("HH:mm:ss(MMMM Do YYYY)")+") Break Interval time"
+            
+            pushed.sendPushMessage(buyMessage);
+            logger.debug(buyMessage);   
+
+            this.didBuy = true;
+        }
+   }
+
+    private composeAndPrintBuyMessageBasedOnHOD() {
         const today = moment().isoWeekday();
         const nextFridayDate = moment().isoWeekday(today + 5 + (7 - today)).format("MMM Do YY");
 
-        const buyMessage = "*** " + this.quote + " *** passed threshold power by " + this.ratioPower * 100 + "% with change 0f "
-        + this.percentageChange + "% at " + moment(this.boughtInterval.time).format("HH:mm:ss(MMMM Do YYYY)")
-        + "\nCan buy " + BuyDirectionEnum[this.buyDirection] + "S of the " + nextFridayDate;
+        const buyMessage = "*** " + this.quote + " Was bought by breakout confirmation "
+         + moment(this.HODIntevalData.time).format("HH:mm:ss(MMMM Do YYYY)")
+        + " Can buy Calls of the " + nextFridayDate;
 
         pushed.sendPushMessage(buyMessage);
         logger.debug(buyMessage);
@@ -114,30 +178,38 @@ export class StockStats {
         const nextFridayDate = moment().isoWeekday(today + 5 + (7 - today)).format("MMM Do YY");
 
         logger.debug("*** " + this.quote + " *** passed threshold by " + this.ratioPower * 100 + "% at "
-         + moment(this.boughtInterval.time).format("HH:mm:ss(MMMM Do YYYY)")
-         + "\n Should Sell " + BuyDirectionEnum[this.buyDirection] + "S of the "
+         + moment(this.volumeChangeIntervalData.time).format("HH:mm:ss(MMMM Do YYYY)")
+         + "\n Should Sell " + BuyDirectionEnum[this.isInBuyDirection] + "S of the "
          + nextFridayDate + "due to opposite direction volume volatility");
     }
 
-    private composeAndPrintCurrentStats(stockInterval: IStockFullIntervalData) {
+    private composeAndPrintCurrentIntervalStats(stockInterval: IStockFullIntervalData, isLive:boolean) {
 
-         const stats = {quote: this.quote, interval: moment(stockInterval.time).format("HH:mm:ss") , ...stockInterval,
+        
+        let stats = {quote: this.quote, interval: moment(stockInterval.time).format("HH:mm:ss") , ...stockInterval,
                         intervalNumber: this.interval, volumeIntervalNumber: this.volumeInterval ,
-                        volumeSum: this.volumeSum, avg: this.avg };
+                        volumeSum: this.volumeSum, avg: this.avg } as any;
 
-         logger.info ( stats );
+        if (isLive) {
+            stats = {isLive:  moment(new Date()).format("HH:mm:ss") ,...stats } ;
+        }
+         logger.debug ( JSON.stringify(stats) );
     }
 
     private didPassVolumeThreshold(stockInterval: IStockFullIntervalData): boolean {
-
         if (this.isTradeClosingTime(stockInterval)) {
             return false;
         }
 
         const {volume} = stockInterval;
-        if ( volume > this.avg * VOLUME_THRESHOLD_ALARM && !this.isInBuyMode) {
+        if ( volume > this.avg * VOLUME_THRESHOLD_ALARM && !this.isInBuyDirection) {
            const percentageIntervalChange =  this.getPercentageChange(stockInterval);
-           return (percentageIntervalChange > PERCENTAGE_CHANGE_THRESHOLD );
+           if (this.quote=="AMZN" || this.quote=="Googl" || this.quote=="CMG") {
+               return true;
+           }
+           else {
+            return (percentageIntervalChange > PERCENTAGE_CHANGE_THRESHOLD ); 
+          }
         } else {
             return false;
         }
@@ -151,6 +223,10 @@ export class StockStats {
         const percentage = (Math.abs(stockInterval.open - stockInterval.close) / stockInterval.open) * 100 ;
 
         return +percentage.toFixed(2);
+    }
+    
+    private calculatePercentageChange(stockIntervalStart: IStockFullIntervalData, stockIntervalEnd: IStockFullIntervalData): number {
+             return +(((stockIntervalStart.close-stockIntervalEnd.close) / stockIntervalStart.close) * -100).toFixed(2);
     }
 
     private getVolumeRatioPower(volume: number): number {

@@ -11,6 +11,7 @@ import { StockStats } from "./stock-stats";
 import { IQuotes, IStockFullIntervalData } from "./models/stock-interval-data.model";
 import { ProxyService } from "./proxy-service";
 import { convertAlphaVantageFormat } from "./utils/utils";
+import { logger } from "./config/winston.config";
 
 
 export class StockReader {
@@ -41,13 +42,14 @@ export class StockReader {
     }
 
     public initiateStockWatch() {
+        let i=1;
         if  (Object.keys(this.quotes).length > 0) {
             const iterateStockInterval = setInterval( () => {
                 this.iterateStocks();
                 if  (Object.keys(this.quotes).length === 0) {
                     clearInterval(iterateStockInterval);
                 }
-            }, INTERVAL_TIME);
+            }, INTERVAL_TIME + i*1000);
         } else {
             throw Error("No Stocks were initialized");
         }
@@ -61,15 +63,17 @@ export class StockReader {
     }
 
     private iterateStocks() {
-        Object.keys(this.quotes).forEach((quote) => {
+        Object.keys(this.quotes).forEach((quote, index) => {
             const quoteStockStats: StockStats = this.quotes[quote];
             this.proxyService.getIntraday(quote).then( (data: any) => {
                 const stockInterval: IStockFullIntervalData = this.getStockLatestIntervalData(data);
-                quoteStockStats.recordNewStockInterval(stockInterval);
+                quoteStockStats.recordNewStockInterval(stockInterval,true);
                 if (this.isLastInterval(data)) {
                     delete this.quotes[quote];
-                    console.log("Terminating quote " + quote);
+                    logger.debug("Terminating quote " + quote);
                 }
+            }).catch( err => {
+                logger.error("error at Stock-Reader.iterateStocks - quote=" + quote+",index="+index+"err="+err);
             });
         });
     }
