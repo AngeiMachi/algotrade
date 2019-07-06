@@ -49,7 +49,7 @@ export class ProxyService {
             let lastRefreshedTime: string = "";
             let tradingDayIntervals: IAlphaVantageIntervals = { };
             const quoteMetadata = data[METADATA_PROPERTY_NAME];
-            
+
             Object.keys(data[INTERVAL_PROPERTY_NAME]).reverse().forEach((key, index) => {
                 if (key.substring(0, 10) !== tradingDayDate) {
                     if ( tradingDayDate) {
@@ -68,7 +68,7 @@ export class ProxyService {
                                                 "Time Series (5min)": { ...tradingDayIntervals} } );
 
             return Promise.resolve(quoteHistoricalDataResponse);
-            
+
         } catch ( err) {
             Promise.reject(err);
         }

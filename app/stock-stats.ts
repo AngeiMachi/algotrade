@@ -47,9 +47,9 @@ export class StockStats {
         });
     }
 
-    public recordNewStockInterval(stockInterval: IStockFullIntervalData,isLive:boolean = false) {
+    public recordNewStockInterval(stockInterval: IStockFullIntervalData, isLive: boolean = false) {
 
-        this.composeAndPrintCurrentIntervalStats(stockInterval,isLive);
+        this.composeAndPrintCurrentIntervalStats(stockInterval, isLive);
         this.calculateAverageVolume(stockInterval);
         this.monitorHODBreakout(stockInterval);
         this.monitorLODBreakdown(stockInterval);
@@ -68,16 +68,18 @@ export class StockStats {
     private InitializeStockIntervalsSoFar(quoteIntervals: IAlphaVantageIntervals) {
         let intervalKeys = Object.keys(quoteIntervals).filter( (key) => key.includes(this.todayDate));
 
-        // patch fix to handles a bug - different behavior between real data and mock
-        if (intervalKeys[0].includes("16:00:00") || !intervalKeys[0].includes("09:35:00") ) {
-            intervalKeys = intervalKeys.reverse();
-        }
-
-        intervalKeys.forEach((key) => {
-            if (key.includes(this.todayDate)) {
-              this.stockIntervals.push( convertAlphaVantageFormat(quoteIntervals[key], key)) ;
+        if ( intervalKeys.length > 0) {
+            // patch fix to handles a bug - different behavior between real data and mock
+            if (intervalKeys[0].includes("16:00:00") || !intervalKeys[0].includes("09:35:00") ) {
+                intervalKeys = intervalKeys.reverse();
             }
-          });
+
+            intervalKeys.forEach((key) => {
+                if (key.includes(this.todayDate)) {
+                this.stockIntervals.push( convertAlphaVantageFormat(quoteIntervals[key], key)) ;
+                }
+            });
+        }
     }
 
     private calculateAverageVolume(stockInterval: IStockFullIntervalData) {
