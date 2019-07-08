@@ -7,7 +7,7 @@ import * as TDAmeritradeAPI from "./td-ameritrade-api";
 //  sr.initiateStockWatch();
 // });
 
-TDAmeritradeAPI.getAccessToken( );
+TDAmeritradeAPI.getQuote5MinuteHistory("AMZN");
 // const shr = new StockHistoricalReader( environmentConfig.AlphaVantageAPIKeys[1].key , [...environmentConfig.AlphaVantageAPIKeys[1].quotes]);
 // shr.getQuotesHistoricalData();
 

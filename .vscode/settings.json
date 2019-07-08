@@ -2,6 +2,9 @@
     "git.ignoreLimitWarning": true,
     "cSpell.words": [
         "ADSGO",
-        "alphavantageapi"
+        "AMZN",
+        "alphavantageapi",
+        "marketdata",
+        "pricehistory"
     ]
 }

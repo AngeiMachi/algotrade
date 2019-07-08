@@ -26,17 +26,19 @@ export const getAccessToken = async () => {
     });
 };
 
-export const getQuoteHistory = async (quote:string) => {
+export const getQuote5MinuteHistory = async (quote: string) => {
     const formData = {
         frequencyType: "minute",
-        startDate:"1511490267",
-        frequency:"5",
+        startDate: "1511490267",
+        frequency: "5",
         apikey: environmentConfig.TDAmeritradeAPI.client_id,
+        needExtendedHoursData: false,
     };
 
-    request.post({ url: TD_BASE_API +"/marketdata/" + quote.toUpperCase() + "/pricehistory", qs: queryString.stringify(formData),
-        headers:{ 'Authorization': 'Bearer ' +   environmentConfig.TDAmeritradeAPI.bearer_token  }
-       
+    //https://api.tdameritrade.com/v1/marketdata/CMG/pricehistory?apikey=ANGELMALCA&frequencyType=minute&frequency=5&startDate=1530792613000&needExtendedHoursData=false 
+    request.get({ url: TD_BASE_API + "/marketdata/" + quote.toUpperCase() + "/pricehistory", qs: queryString.stringify(formData),
+        headers: { Authorization: "Bearer " +   environmentConfig.TDAmeritradeAPI.bearer_token },
+
        }, (err: string, httpResponse: any, body: any) => {
            if (err) {
                logger.error ("getAccessToken failed " + err );
@@ -44,4 +46,3 @@ export const getQuoteHistory = async (quote:string) => {
            token = body;
     });
 };
-
