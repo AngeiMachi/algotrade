@@ -25,3 +25,23 @@ export const getAccessToken = async () => {
             token = body;
     });
 };
+
+export const getQuoteHistory = async (quote:string) => {
+    const formData = {
+        frequencyType: "minute",
+        startDate:"1511490267",
+        frequency:"5",
+        apikey: environmentConfig.TDAmeritradeAPI.client_id,
+    };
+
+    request.post({ url: TD_BASE_API +"/marketdata/" + quote.toUpperCase() + "/pricehistory", qs: queryString.stringify(formData),
+        headers:{ 'Authorization': 'Bearer ' +   environmentConfig.TDAmeritradeAPI.bearer_token  }
+       
+       }, (err: string, httpResponse: any, body: any) => {
+           if (err) {
+               logger.error ("getAccessToken failed " + err );
+           }
+           token = body;
+    });
+};
+
