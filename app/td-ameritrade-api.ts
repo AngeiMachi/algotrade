@@ -1,3 +1,4 @@
+import * as _ from 'lodash';
 import * as request from "request";
 import * as environmentConfig from "./config/environment.Config.json";
 import { logger } from "./config/winston.config.js";
@@ -43,6 +44,13 @@ export const getQuote5MinuteHistory = async (quote: string) => {
            if (err) {
                logger.error ("getAccessToken failed " + err );
            }
-           token = body;
+           let response = JSON.parse(body);
+           _.groupBy(response.candles,getIntervals);    
     });
 };
+
+function getIntervals(interval) {
+    interval.datatime
+
+
+} 
