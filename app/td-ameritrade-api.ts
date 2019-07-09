@@ -1,4 +1,5 @@
-import * as _ from 'lodash';
+import * as _ from "lodash";
+import moment from "moment-timezone";
 import * as request from "request";
 import * as environmentConfig from "./config/environment.Config.json";
 import { logger } from "./config/winston.config.js";
@@ -36,7 +37,6 @@ export const getQuote5MinuteHistory = async (quote: string) => {
         needExtendedHoursData: false,
     };
 
-    //https://api.tdameritrade.com/v1/marketdata/CMG/pricehistory?apikey=ANGELMALCA&frequencyType=minute&frequency=5&startDate=1530792613000&needExtendedHoursData=false 
     request.get({ url: TD_BASE_API + "/marketdata/" + quote.toUpperCase() + "/pricehistory", qs: queryString.stringify(formData),
         headers: { Authorization: "Bearer " +   environmentConfig.TDAmeritradeAPI.bearer_token },
 
@@ -44,13 +44,13 @@ export const getQuote5MinuteHistory = async (quote: string) => {
            if (err) {
                logger.error ("getAccessToken failed " + err );
            }
-           let response = JSON.parse(body);
-           _.groupBy(response.candles,getIntervals);    
+           const response = JSON.parse(body);
+           const grouped = _.groupBy(response.candles, getIntervals);
     });
 };
 
-function getIntervals(interval) {
-    interval.datatime
-
-
-} 
+function getIntervals(interval: any) {
+    console.log( moment(interval.datetime).format("DD MMM YYYY HH:mm:ss"));
+    let x = moment(interval.datetime).format("DD MMM YYYY");
+    return x;
+}
