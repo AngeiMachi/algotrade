@@ -31,13 +31,13 @@ export const getAccessToken = async () => {
 export const getQuote5MinuteHistory = async (quote: string) => {
     const formData = {
         frequencyType: "minute",
-        startDate: "1511490267",
+        startDate: "",
         frequency: "5",
         apikey: environmentConfig.TDAmeritradeAPI.client_id,
-        needExtendedHoursData: false,
+        needExtendedHoursData: true,
     };
 
-    request.get({ url: TD_BASE_API + "/marketdata/" + quote.toUpperCase() + "/pricehistory", qs: queryString.stringify(formData),
+    request.get({ url: "https://api.tdameritrade.com/v1/marketdata/AMZN/pricehistory?apikey=ANGELMALCA&frequencyType=minute&frequency=5&startDate=1547307000000&needExtendedHoursData=false ",
         headers: { Authorization: "Bearer " +   environmentConfig.TDAmeritradeAPI.bearer_token },
 
        }, (err: string, httpResponse: any, body: any) => {
@@ -50,7 +50,7 @@ export const getQuote5MinuteHistory = async (quote: string) => {
 };
 
 function getIntervals(interval: any) {
-    console.log( moment(interval.datetime).format("DD MMM YYYY HH:mm:ss"));
-    let x = moment(interval.datetime).format("DD MMM YYYY");
+    console.log( moment(interval.datetime).format("YYYY-MM-DD HH:mm:ss"));
+    let x = moment(interval.datetime).format("YYYY-MM-DD");
     return x;
 }
