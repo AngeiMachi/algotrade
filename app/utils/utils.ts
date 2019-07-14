@@ -34,15 +34,8 @@ export function convertAlphaVantageIntervals(alphaVantageIntervals:IAlphaVantage
     const stockIntervals  = {} as IStockIntervals;
 
     Object.keys(alphaVantageIntervals).forEach((key) => {
-        stockIntervals.push( convertAlphaVantageFormat(alphaVantageIntervals[key], key)) ;
-        }
-     });
-}
+        stockIntervals[key] = convertAlphaVantageFormat(alphaVantageIntervals[key], key) ;
+    });
 
-export function wait(ms: number){
-    const start = new Date().getTime();
-    let end = start;
-    while ( end < start + ms) {
-      end = new Date().getTime();
-   }
- }
+    return stockIntervals;
+}

@@ -7,7 +7,7 @@ import * as TDAmeritradeAPI from "./td-ameritrade-api";
 //  sr.initiateStockWatch();
 // });
 
-TDAmeritradeAPI.getQuote5MinuteHistory("AMZN").then((intervals)=>{
+TDAmeritradeAPI.getQuote5MinuteHistory("AMZN").then((intervals) => {
 
     console.log("AFTER RESOVE>>>");
     const shr = new StockHistoricalReader( environmentConfig.AlphaVantageAPIKeys[1].key , [...environmentConfig.AlphaVantageAPIKeys[1].quotes]);

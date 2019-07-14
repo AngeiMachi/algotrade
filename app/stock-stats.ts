@@ -54,7 +54,7 @@ export class StockStats {
         this.monitorHODBreakout(stockInterval);
         this.monitorLODBreakdown(stockInterval);
         this.composeAndPrintBuyMessage(stockInterval);
-        if (stockInterval.time.getHours()==23 && this.didBuy) {
+        if (stockInterval.time.getHours() === 23 && this.didBuy) {
             logger.debug("*** " + this.quote + " Ended with " +this.calculatePercentageChange( this.boughtIntervalData, stockInterval) + "%");
         }
         if (isLive) {
@@ -109,29 +109,27 @@ export class StockStats {
     }
 
     private monitorHODBreakout( stockInterval: IStockFullIntervalData) {
-        if (this.interval==0) {
+        if (this.interval === 0) {
             this.HODIntevalData = {...stockInterval };
-        }
-        else {
+        } else {
             if (stockInterval.close > this.HODIntevalData.high && !this.isInBreakOutOrDown) {
                 this.HODIntevalData = {...stockInterval };
                 if (this.interval >= MINIMUM_INTERVALS_TO_CALCULATE_AVERAGE_VOLUME) {
                     this.isInBreakOutOrDown = BuyDirectionEnum.CALL;
-                }        
+                }
             }
         }
     }
 
-    private monitorLODBreakdown ( stockInterval: IStockFullIntervalData) {
-        if (this.interval==0) {
+    private monitorLODBreakdown( stockInterval: IStockFullIntervalData) {
+        if (this.interval === 0) {
             this.LODIntevalData = {...stockInterval };
-        }
-        else {
+        } else {
             if (stockInterval.close < this.LODIntevalData.low && !this.isInBreakOutOrDown) {
                 this.LODIntevalData = {...stockInterval };
                 if (this.interval >= MINIMUM_INTERVALS_TO_CALCULATE_AVERAGE_VOLUME && !this.isInBreakOutOrDown) {
                     this.isInBreakOutOrDown = BuyDirectionEnum.PUT;
-                }        
+                }
             }
         }
     }
@@ -139,8 +137,8 @@ export class StockStats {
     private composeAndPrintBuyMessage(stockInterval: IStockFullIntervalData) {
         if (!this.didBuy && this.isInBreakOutOrDown === this.isInBuyDirection && this.isInBuyDirection!==BuyDirectionEnum.NONE) {
             this.boughtIntervalData = {...stockInterval };
-            
-            let breakInterval :IStockFullIntervalData={} as IStockFullIntervalData;
+
+            let breakInterval: IStockFullIntervalData = {} as IStockFullIntervalData;
 
             if (this.isInBreakOutOrDown === BuyDirectionEnum.CALL) {
                 breakInterval = this.HODIntevalData;
@@ -155,9 +153,9 @@ export class StockStats {
             const buyMessage = "*** " + this.quote + " *** Entered Buy " + BuyDirectionEnum[this.isInBuyDirection] +" Mode  at " +   moment(stockInterval.time).format("HH:mm:ss")
             +'\n,'+ moment(this.volumeChangeIntervalData.time).format("HH:mm:ss(MMMM Do YYYY)")+")Volume: Power=" +(this.ratioPower * 100).toFixed(2) + "%, Change=" + this.percentageChange + "%"
             +'\n'+ moment(breakInterval.time).format("HH:mm:ss(MMMM Do YYYY)")+") Break Interval time"
-            
+
             pushed.sendPushMessage(buyMessage);
-            logger.debug(buyMessage);   
+            logger.debug(buyMessage);
 
             this.didBuy = true;
         }

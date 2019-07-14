@@ -3,7 +3,7 @@ import { StockStats } from "./stock-stats";
 import { IQuotes, IStockFullIntervalData } from "./models/stock-interval-data.model";
 import { ProxyService } from "./proxy-service";
 import { INTERVAL_PROPERTY_NAME } from "./config/globals.config";
-import { wait } from "./utils/utils";
+import { convertAlphaVantageIntervals } from "./utils/utils";
 import { logger } from "./config/winston.config";
 
 export class StockHistoricalReader {
@@ -25,13 +25,14 @@ export class StockHistoricalReader {
                      this.proxyService.getHistoricalData(this.quotes[j]).then( (historicalData: any) => {
                         hd = historicalData;
                         for (let i = 0; i < hd.length ; i++) {
-                            const quoteIntervals = hd[i][INTERVAL_PROPERTY_NAME] ;
-                            const tradeDay = Object.keys(quoteIntervals)[0].substring(0, 10);
-                            // console.log("index="+i+":"+this.quotes[0] + " Trade Day is " + tradeDay + ":"  );
+                            const alphaVantageQuoteIntervals = hd[i][INTERVAL_PROPERTY_NAME] ;
+                            const tradeDay = Object.keys(alphaVantageQuoteIntervals)[0].substring(0, 10);
+
                             logger.debug("index=" + i + ":" + this.quotes[j] + " Trade Day is " + tradeDay + ":"  );
-                            //logger.info(hd[i]["Time Series (5min)"]);
+
                             const stockStats = new StockStats(this.quotes[j], tradeDay);
-                            stockStats.InitializeStockData(quoteIntervals);
+                            const quoteIntervals = convertAlphaVantageIntervals(alphaVantageQuoteIntervals);
+                            stockStats.InitializeStockData(alphaVantageQuoteIntervals);
                         }
                     });
 

@@ -42,14 +42,14 @@ export class StockReader {
     }
 
     public initiateStockWatch() {
-        let i=1;
+        let  i = 1;
         if  (Object.keys(this.quotes).length > 0) {
             const iterateStockInterval = setInterval( () => {
                 this.iterateStocks();
                 if  (Object.keys(this.quotes).length === 0) {
                     clearInterval(iterateStockInterval);
                 }
-            }, INTERVAL_TIME + i*1000);
+            }, INTERVAL_TIME + i++ * 1000);
         } else {
             throw Error("No Stocks were initialized");
         }
