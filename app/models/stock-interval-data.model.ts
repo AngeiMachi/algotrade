@@ -22,3 +22,7 @@ export interface IAlphaVantageIntervals {
 export interface IQuotes {
     [key: string]: StockStats;
 }
+export interface IStockIntervals {
+    [key: string]: IStockIntervalData;
+}
+

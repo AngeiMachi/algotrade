@@ -1,6 +1,6 @@
 import * as environmentConfig from "./../config/environment.Config.json";
 import moment from "moment-timezone";
-import { IAlphaVantageIntervals , IStockFullIntervalData } from "../models/stock-interval-data.model";
+import { IAlphaVantageIntervals , IStockFullIntervalData, IStockIntervals } from "../models/stock-interval-data.model";
 
 export function getCurrentTradingDay() {
     let mockDataDate: string;
@@ -27,6 +27,16 @@ export function convertAlphaVantageFormat(stockIntervalData: IAlphaVantageInterv
     };
 
     return convertedStockIntervalData;
+}
+
+export function convertAlphaVantageIntervals(alphaVantageIntervals:IAlphaVantageIntervals): IStockIntervals  {
+
+    const stockIntervals  = {} as IStockIntervals;
+
+    Object.keys(alphaVantageIntervals).forEach((key) => {
+        stockIntervals.push( convertAlphaVantageFormat(alphaVantageIntervals[key], key)) ;
+        }
+     });
 }
 
 export function wait(ms: number){

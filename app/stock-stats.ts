@@ -78,7 +78,7 @@ export class StockStats {
                 if (key.includes(this.todayDate)) {
                 this.stockIntervals.push( convertAlphaVantageFormat(quoteIntervals[key], key)) ;
                 }
-            });
+             });
         }
     }
 

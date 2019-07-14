@@ -28,24 +28,28 @@ export const getAccessToken = async () => {
     });
 };
 
-export const getQuote5MinuteHistory = async (quote: string) => {
-    const formData = {
-        frequencyType: "minute",
-        startDate: "",
-        frequency: "5",
-        apikey: environmentConfig.TDAmeritradeAPI.client_id,
-        needExtendedHoursData: true,
-    };
-
-    request.get({ url: "https://api.tdameritrade.com/v1/marketdata/AMZN/pricehistory?apikey=ANGELMALCA&frequencyType=minute&frequency=5&startDate=1547307000000&needExtendedHoursData=false ",
-        headers: { Authorization: "Bearer " +   environmentConfig.TDAmeritradeAPI.bearer_token },
-
-       }, (err: string, httpResponse: any, body: any) => {
-           if (err) {
-               logger.error ("getAccessToken failed " + err );
-           }
-           const response = JSON.parse(body);
-           const grouped = _.groupBy(response.candles, getIntervals);
+export const getQuote5MinuteHistory = async (quote: string):Promise<any> => {
+    return new Promise( (resolve, reject) => {
+        const formData = {
+            frequencyType: "minute",
+            startDate: "",
+            frequency: "5",
+            apikey: environmentConfig.TDAmeritradeAPI.client_id,
+            needExtendedHoursData: true,
+        };
+    
+        request.get({ url: "https://api.tdameritrade.com/v1/marketdata/AMZN/pricehistory?apikey=ANGELMALCA&frequencyType=minute&frequency=5&startDate=1547307000000&needExtendedHoursData=false ",
+            headers: { Authorization: "Bearer " +   environmentConfig.TDAmeritradeAPI.bearer_token },
+    
+           }, (err: string, httpResponse: any, body: any) => {
+               if (err) {
+                   logger.error ("getAccessToken failed " + err );
+               }
+               const response = JSON.parse(body);
+               const grouped = _.groupBy(response.candles, getIntervals);
+               resolve(grouped);
+               
+        });
     });
 };
 
