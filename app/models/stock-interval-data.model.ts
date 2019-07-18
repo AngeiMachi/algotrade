@@ -1,14 +1,11 @@
+import {QouteStats} from '../stock-stats';
 
-import {StockStats} from '../stock-stats';
-
-export interface IStockIntervalData {
+export interface IQouteFullIntervalData {
     open: number;
     high: number;
     low: number;
     close: number;
     volume: number;
-}
-export interface IStockFullIntervalData extends IStockIntervalData {
     time: Date;
 }
 
@@ -20,9 +17,21 @@ export interface IAlphaVantageIntervals {
 }
 
 export interface IQuotes {
-    [key: string]: StockStats;
+    [key: string]: QouteStats;
 }
-export interface IStockIntervals {
-    [key: string]: IStockIntervalData;
+export interface IQouteIntervals {
+    [key: string]: IQouteFullIntervalData;
 }
 
+interface IQuotePriceFormat {
+    raw:number;
+    fmt:string;
+}
+
+export interface IQouteMetadata {
+    averageDailyVolume10Day: IQuotePriceFormat;
+    averageDailyVolume3Month: IQuotePriceFormat;
+    regularMarketPreviousClose:IQuotePriceFormat;
+    fiftyTwoWeekLow: IQuotePriceFormat;
+    fiftyTwoWeekHigh: IQuotePriceFormat;
+}

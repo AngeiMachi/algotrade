@@ -1,4 +1,3 @@
-
 import moment from "moment";
 
 import { MAX_QUOTES ,
@@ -7,10 +6,10 @@ import { MAX_QUOTES ,
         METADATA_PROPERTY_NAME ,
         LAST_REFRESHED_PROPERTY_NAME,
     } from "./config/globals.config";
-import { StockStats } from "./stock-stats";
-import { IQuotes, IStockFullIntervalData } from "./models/stock-interval-data.model";
+import { QouteStats } from "./stock-stats";
+import { IQuotes, IQouteFullIntervalData, IQouteMetadata } from "./models/stock-interval-data.model";
 import { ProxyService } from "./proxy-service";
-import { convertAlphaVantageFormat } from "./utils/utils";
+import { convertAlphaVantageFormat , convertAlphaVantageIntervals } from "./utils/utils";
 import { logger } from "./config/winston.config";
 
 
@@ -28,9 +27,11 @@ export class StockReader {
         try {
             const promises = [];
             for (const quote of  Object.keys(this.quotes)) {
+                const quoteMetadata: IQouteMetadata = await this.proxyService.getMetadata(quote) ;
                 const promise = this.proxyService.getIntraday(quote).then( (data: any) => {
-                    const quoteIntervals = data[INTERVAL_PROPERTY_NAME] ;
-                    this.quotes[quote].InitializeStockData(quoteIntervals);
+                    const alphaVantageQuoteIntervals = data[INTERVAL_PROPERTY_NAME] ;
+                    const quoteIntervals = convertAlphaVantageIntervals(alphaVantageQuoteIntervals)
+                    this.quotes[quote].InitializeStockData(quoteIntervals,quoteMetadata);
                 });
                 promises.push( promise );
             }
@@ -58,15 +59,17 @@ export class StockReader {
     private initializeQuotes(quotes: string[]) {
         const maxFiveQuotes = quotes.slice(0, MAX_QUOTES);
         maxFiveQuotes.forEach( (quote) => {
-               this.quotes[quote] = new StockStats(quote);
+               this.quotes[quote] = new QouteStats(quote);
         });
     }
 
     private iterateStocks() {
         Object.keys(this.quotes).forEach((quote, index) => {
-            const quoteStockStats: StockStats = this.quotes[quote];
+            const quoteStockStats: QouteStats = this.quotes[quote];
             this.proxyService.getIntraday(quote).then( (data: any) => {
-                const stockInterval: IStockFullIntervalData = this.getStockLatestIntervalData(data);
+
+                const stockInterval: IQouteFullIntervalData = this.getStockLatestIntervalData(data);
+                
                 quoteStockStats.recordNewStockInterval(stockInterval,true);
                 if (this.isLastInterval(data)) {
                     delete this.quotes[quote];
@@ -78,7 +81,7 @@ export class StockReader {
         });
     }
 
-    private getStockLatestIntervalData(data: any): IStockFullIntervalData {
+    private getStockLatestIntervalData(data: any): IQouteFullIntervalData {
         const timeSeries = data[ INTERVAL_PROPERTY_NAME ];
         const lastIntervalIndex = data[ METADATA_PROPERTY_NAME ][LAST_REFRESHED_PROPERTY_NAME];
         const stockLastInterval = timeSeries[lastIntervalIndex];

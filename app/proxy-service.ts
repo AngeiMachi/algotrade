@@ -1,9 +1,12 @@
 import moment from "moment-timezone";
+import * as request from "request-promise";
+import { logger } from "./config/winston.config.js";
 import * as environmentConfig from "./config/environment.Config.json";
 import { getCurrentTradingDay } from "./utils/utils.js";
 
 import { INTERVAL_PROPERTY_NAME , METADATA_PROPERTY_NAME , LAST_REFRESHED_PROPERTY_NAME } from "./config/globals.config";
-import { IAlphaVantageIntervals } from "./models/stock-interval-data.model";
+import { IAlphaVantageIntervals, IQouteMetadata } from "./models/stock-interval-data.model";
+import { parseMustache } from "./utils/general.js";
 
 export class ProxyService {
 
@@ -72,6 +75,24 @@ export class ProxyService {
         } catch ( err) {
             Promise.reject(err);
         }
+    }
+
+    public async getMetadata(quote: string): Promise< any > {
+            
+            const fullURL = parseMustache(environmentConfig.Yahoo.get_metadata,{quote});
+           
+            const yahooQuoteRawMetadata = await request.get({url:fullURL});
+            const yahooQuoteMetadata = JSON.parse(yahooQuoteRawMetadata).quoteSummary.result[0];
+
+            let quoteMetadata: IQouteMetadata = {
+                averageDailyVolume10Day: yahooQuoteMetadata.price.averageDailyVolume10Day,
+                averageDailyVolume3Month: yahooQuoteMetadata.price.averageDailyVolume3Month,
+                regularMarketPreviousClose:yahooQuoteMetadata.price.regularMarketPreviousClose,
+                fiftyTwoWeekLow: yahooQuoteMetadata.summaryDetail.fiftyTwoWeekLow,
+                fiftyTwoWeekHigh: yahooQuoteMetadata.summaryDetail.fiftyTwoWeekHigh
+            }
+        
+            return quoteMetadata;
     }
 
     private async prepareMockData(quote: string): Promise<any> {

@@ -2,17 +2,19 @@ import { StockHistoricalReader } from "./stock-historical-reader";
 import * as environmentConfig from "./config/environment.Config.json";
 import { StockReader } from "./stock-reader";
 import * as TDAmeritradeAPI from "./td-ameritrade-api";
-// const sr = new StockReader( environmentConfig.AlphaVantageAPIKeys[1].key , [...environmentConfig.AlphaVantageAPIKeys[1].quotes]);
-// sr.initializeQuotesData().then(() => {
-//  sr.initiateStockWatch();
-// });
 
-TDAmeritradeAPI.getQuote5MinuteHistory("AMZN").then((intervals) => {
 
-    console.log("AFTER RESOVE>>>");
-    const shr = new StockHistoricalReader( environmentConfig.AlphaVantageAPIKeys[1].key , [...environmentConfig.AlphaVantageAPIKeys[1].quotes]);
-    shr.getQuotesHistoricalData();
+const sr = new StockReader( environmentConfig.AlphaVantageAPIKeys[1].key , [...environmentConfig.AlphaVantageAPIKeys[1].quotes]);
+sr.initializeQuotesData().then(() => {
+    sr.initiateStockWatch();
 });
+
+// TDAmeritradeAPI.getQuote5MinuteHistory("AMZN").then((intervals) => {
+
+//     console.log("AFTER RESOVE>>>");
+//     const shr = new StockHistoricalReader( environmentConfig.AlphaVantageAPIKeys[1].key , [...environmentConfig.AlphaVantageAPIKeys[1].quotes]);
+//     shr.getQuotesHistoricalData();
+// });
 // const shr = new StockHistoricalReader( environmentConfig.AlphaVantageAPIKeys[1].key , [...environmentConfig.AlphaVantageAPIKeys[1].quotes]);
 // shr.getQuotesHistoricalData();
 

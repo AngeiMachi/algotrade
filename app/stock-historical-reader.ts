@@ -1,6 +1,6 @@
 
-import { StockStats } from "./stock-stats";
-import { IQuotes, IStockFullIntervalData } from "./models/stock-interval-data.model";
+import { QouteStats } from "./stock-stats";
+import { IQuotes, IQouteFullIntervalData } from "./models/stock-interval-data.model";
 import { ProxyService } from "./proxy-service";
 import { INTERVAL_PROPERTY_NAME } from "./config/globals.config";
 import { convertAlphaVantageIntervals } from "./utils/utils";
@@ -30,9 +30,9 @@ export class StockHistoricalReader {
 
                             logger.debug("index=" + i + ":" + this.quotes[j] + " Trade Day is " + tradeDay + ":"  );
 
-                            const stockStats = new StockStats(this.quotes[j], tradeDay);
+                            const stockStats = new QouteStats(this.quotes[j], tradeDay);
                             const quoteIntervals = convertAlphaVantageIntervals(alphaVantageQuoteIntervals);
-                            stockStats.InitializeStockData(alphaVantageQuoteIntervals);
+                            //stockStats.InitializeStockData(alphaVantageQuoteIntervals);
                         }
                     });
 

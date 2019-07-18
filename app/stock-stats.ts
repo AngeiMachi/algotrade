@@ -5,27 +5,29 @@ import * as pushed from "./pushed";
 import { getCurrentTradingDay, convertAlphaVantageFormat } from "./utils/utils.js";
 
 import {  VOLUME_THRESHOLD_ALARM , MINIMUM_INTERVALS_TO_CALCULATE_AVERAGE_VOLUME, PERCENTAGE_CHANGE_THRESHOLD } from "./config/globals.config";
-import {  IAlphaVantageIntervals, IStockFullIntervalData } from "./models/stock-interval-data.model";
+import {  IAlphaVantageIntervals, IQouteFullIntervalData, IQouteIntervals, IQouteMetadata } from "./models/stock-interval-data.model";
 import { BuyDirectionEnum } from "./models/enums";
 import { logger } from "./config/winston.config.js";
 
-export class StockStats {
+export class QouteStats {
     private quote: string;
+    private quoteMetadata  = {} as IQouteMetadata;
+
     private volumeSum: number = 0;
     private interval: number = 0;
     private volumeInterval: number = 0;
     private avg: number = 0;
     private todayDate: string;
-    private stockIntervals: IStockFullIntervalData[] = [];
+    private stockIntervals: IQouteFullIntervalData[] = [];
 
 
     private didBuy : boolean = false;
     private isInBuyDirection: BuyDirectionEnum = BuyDirectionEnum.NONE;
     private isInBreakOutOrDown: BuyDirectionEnum = BuyDirectionEnum.NONE;
-    private volumeChangeIntervalData: IStockFullIntervalData = {} as IStockFullIntervalData;
-    private HODIntevalData:IStockFullIntervalData = {} as IStockFullIntervalData;
-    private LODIntevalData:IStockFullIntervalData = {} as IStockFullIntervalData;
-    private boughtIntervalData:IStockFullIntervalData = {} as IStockFullIntervalData;
+    private volumeChangeIntervalData = {} as IQouteFullIntervalData;
+    private HODIntevalData = {} as IQouteFullIntervalData;
+    private LODIntevalData = {} as IQouteFullIntervalData;
+    private boughtIntervalData = {} as IQouteFullIntervalData;
     private ratioPower: number = 0 ;
     private percentageChange: number = 0;
 
@@ -38,8 +40,10 @@ export class StockStats {
         }
     }
 
-    public InitializeStockData(quoteIntervals: IAlphaVantageIntervals ) {
+    public InitializeStockData(quoteIntervals: IQouteIntervals , quoteMetadata : IQouteMetadata) {
 
+        this.quoteMetadata = quoteMetadata;
+        
         this.InitializeStockIntervalsSoFar(quoteIntervals);
 
         this.stockIntervals.forEach((stockInterval) => {
@@ -47,7 +51,7 @@ export class StockStats {
         });
     }
 
-    public recordNewStockInterval(stockInterval: IStockFullIntervalData, isLive: boolean = false) {
+    public recordNewStockInterval(stockInterval: IQouteFullIntervalData, isLive: boolean = false) {
 
         this.composeAndPrintCurrentIntervalStats(stockInterval, isLive);
         this.calculateAverageVolume(stockInterval);
@@ -65,7 +69,8 @@ export class StockStats {
 
     }
 
-    private InitializeStockIntervalsSoFar(quoteIntervals: IAlphaVantageIntervals) {
+    private InitializeStockIntervalsSoFar(quoteIntervals: IQouteIntervals) {
+
         let intervalKeys = Object.keys(quoteIntervals).filter( (key) => key.includes(this.todayDate));
 
         if ( intervalKeys.length > 0) {
@@ -76,13 +81,13 @@ export class StockStats {
 
             intervalKeys.forEach((key) => {
                 if (key.includes(this.todayDate)) {
-                this.stockIntervals.push( convertAlphaVantageFormat(quoteIntervals[key], key)) ;
+                    this.stockIntervals.push( quoteIntervals [ key ] ) ;
                 }
-             });
+            });
         }
     }
 
-    private calculateAverageVolume(stockInterval: IStockFullIntervalData) {
+    private calculateAverageVolume(stockInterval: IQouteFullIntervalData) {
         if (this.interval >= MINIMUM_INTERVALS_TO_CALCULATE_AVERAGE_VOLUME) {
             this.volumeSum += stockInterval.volume;
             this.volumeInterval++;
@@ -108,7 +113,7 @@ export class StockStats {
         }
     }
 
-    private monitorHODBreakout( stockInterval: IStockFullIntervalData) {
+    private monitorHODBreakout( stockInterval: IQouteFullIntervalData) {
         if (this.interval === 0) {
             this.HODIntevalData = {...stockInterval };
         } else {
@@ -121,7 +126,7 @@ export class StockStats {
         }
     }
 
-    private monitorLODBreakdown( stockInterval: IStockFullIntervalData) {
+    private monitorLODBreakdown( stockInterval: IQouteFullIntervalData) {
         if (this.interval === 0) {
             this.LODIntevalData = {...stockInterval };
         } else {
@@ -134,11 +139,11 @@ export class StockStats {
         }
     }
 
-    private composeAndPrintBuyMessage(stockInterval: IStockFullIntervalData) {
+    private composeAndPrintBuyMessage(stockInterval: IQouteFullIntervalData) {
         if (!this.didBuy && this.isInBreakOutOrDown === this.isInBuyDirection && this.isInBuyDirection!==BuyDirectionEnum.NONE) {
             this.boughtIntervalData = {...stockInterval };
 
-            let breakInterval: IStockFullIntervalData = {} as IStockFullIntervalData;
+            let breakInterval: IQouteFullIntervalData = {} as IQouteFullIntervalData;
 
             if (this.isInBreakOutOrDown === BuyDirectionEnum.CALL) {
                 breakInterval = this.HODIntevalData;
@@ -183,7 +188,7 @@ export class StockStats {
          + nextFridayDate + "due to opposite direction volume volatility");
     }
 
-    private composeAndPrintCurrentIntervalStats(stockInterval: IStockFullIntervalData, isLive:boolean) {
+    private composeAndPrintCurrentIntervalStats(stockInterval: IQouteFullIntervalData, isLive:boolean) {
 
         
         let stats = {quote: this.quote, interval: moment(stockInterval.time).format("HH:mm:ss") , ...stockInterval,
@@ -196,7 +201,7 @@ export class StockStats {
          logger.debug ( JSON.stringify(stats) );
     }
 
-    private didPassVolumeThreshold(stockInterval: IStockFullIntervalData): boolean {
+    private didPassVolumeThreshold(stockInterval: IQouteFullIntervalData): boolean {
         if (this.isTradeClosingTime(stockInterval)) {
             return false;
         }
@@ -215,17 +220,17 @@ export class StockStats {
         }
     }
 
-    private isTradeClosingTime(stockInterval: IStockFullIntervalData): boolean {
+    private isTradeClosingTime(stockInterval: IQouteFullIntervalData): boolean {
         return (stockInterval.time.getHours() >= 22 && stockInterval.time.getMinutes() >= 45 || stockInterval.time.getHours() === 23);
     }
 
-    private getPercentageChange(stockInterval: IStockFullIntervalData): number {
+    private getPercentageChange(stockInterval: IQouteFullIntervalData): number {
         const percentage = (Math.abs(stockInterval.open - stockInterval.close) / stockInterval.open) * 100 ;
 
         return +percentage.toFixed(2);
     }
     
-    private calculatePercentageChange(stockIntervalStart: IStockFullIntervalData, stockIntervalEnd: IStockFullIntervalData): number {
+    private calculatePercentageChange(stockIntervalStart: IQouteFullIntervalData, stockIntervalEnd: IQouteFullIntervalData): number {
              return +(((stockIntervalStart.close-stockIntervalEnd.close) / stockIntervalStart.close) * -100).toFixed(2);
     }
 
@@ -233,7 +238,7 @@ export class StockStats {
         const ratio = volume / this.avg;
         return +ratio.toFixed(2);
     }
-    private getBuyDirection(stockInterval: IStockFullIntervalData): BuyDirectionEnum {
+    private getBuyDirection(stockInterval: IQouteFullIntervalData): BuyDirectionEnum {
         if (stockInterval.close > stockInterval.open) {
             // checks if inverted hammer - if so , there is hesitation - don't buy Call
             if ((stockInterval.high - stockInterval.close) > (stockInterval.close - stockInterval.open)) {

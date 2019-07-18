@@ -1,6 +1,6 @@
 import * as environmentConfig from "./../config/environment.Config.json";
 import moment from "moment-timezone";
-import { IAlphaVantageIntervals , IStockFullIntervalData, IStockIntervals } from "../models/stock-interval-data.model";
+import { IAlphaVantageIntervals , IQouteFullIntervalData, IQouteIntervals } from "../models/stock-interval-data.model";
 
 export function getCurrentTradingDay() {
     let mockDataDate: string;
@@ -13,11 +13,11 @@ export function getCurrentTradingDay() {
     return mockDataDate;
 }
 
-export function convertAlphaVantageFormat(stockIntervalData: IAlphaVantageIntervals, key: string): IStockFullIntervalData {
+export function convertAlphaVantageFormat(stockIntervalData: IAlphaVantageIntervals, key: string): IQouteFullIntervalData {
     const nasdaqTime = moment.tz(key, "America/New_York");
     const israelTime = nasdaqTime.clone().tz("Asia/Jerusalem");
 
-    const convertedStockIntervalData: IStockFullIntervalData = {
+    const convertedStockIntervalData: IQouteFullIntervalData = {
         open :  Number(Object.values(stockIntervalData)[0]) ,
         high :  Number(Object.values(stockIntervalData)[1]),
         low :  Number(Object.values(stockIntervalData)[2]),
@@ -29,9 +29,9 @@ export function convertAlphaVantageFormat(stockIntervalData: IAlphaVantageInterv
     return convertedStockIntervalData;
 }
 
-export function convertAlphaVantageIntervals(alphaVantageIntervals:IAlphaVantageIntervals): IStockIntervals  {
+export function convertAlphaVantageIntervals(alphaVantageIntervals:IAlphaVantageIntervals): IQouteIntervals  {
 
-    const stockIntervals  = {} as IStockIntervals;
+    const stockIntervals  = {} as IQouteIntervals;
 
     Object.keys(alphaVantageIntervals).forEach((key) => {
         stockIntervals[key] = convertAlphaVantageFormat(alphaVantageIntervals[key], key) ;
