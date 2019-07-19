@@ -27,11 +27,11 @@ export class StockReader {
         try {
             const promises = [];
             for (const quote of  Object.keys(this.quotes)) {
-                const quoteMetadata: IQouteMetadata = await this.proxyService.getMetadata(quote) ;
+                const quoteMetadata: IQouteMetadata = await this.proxyService.getYahooFinanceMetadata(quote) ;
                 const promise = this.proxyService.getIntraday(quote).then( (data: any) => {
                     const alphaVantageQuoteIntervals = data[INTERVAL_PROPERTY_NAME] ;
                     const quoteIntervals = convertAlphaVantageIntervals(alphaVantageQuoteIntervals)
-                    this.quotes[quote].InitializeStockData(quoteIntervals,quoteMetadata);
+                    this.quotes[quote].initializeStockData(quoteIntervals,quoteMetadata);
                 });
                 promises.push( promise );
             }

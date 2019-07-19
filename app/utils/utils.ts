@@ -39,3 +39,48 @@ export function convertAlphaVantageIntervals(alphaVantageIntervals:IAlphaVantage
 
     return stockIntervals;
 }
+
+export function convertYahooIntervals(timestamp:any[], yahooIntervals:any) : IQouteFullIntervalData[]{
+    const convertedQuoteIntervalsData: IQouteFullIntervalData[] = [];
+
+    timestamp.forEach((item, index) => {
+        const interval :IQouteFullIntervalData = {
+            open:yahooIntervals.open[index],
+            high:yahooIntervals.high[index],
+            low:yahooIntervals.low[index],
+            close:yahooIntervals.close[index],
+            volume: yahooIntervals.volume[index],
+            time: new Date(moment(item*1000).tz("Asia/Jerusalem").format("YYYY-MM-DD HH:mm:ss"))
+        }
+        convertedQuoteIntervalsData.push(interval)
+    });
+
+    return convertedQuoteIntervalsData;
+}
+export function convertTDAmeritrade5MinuteIntervals(intervals:any[]) : IQouteIntervals {
+    const convertedQuoteIntervalsData: IQouteIntervals = {};
+
+    intervals.forEach((item, index) => {
+        const interval :IQouteFullIntervalData = {
+            open:item.open,
+            high:item.high,
+            low:item.low,
+            close:item.close,
+            volume: item.volume,
+            time: new Date(moment(item.datetime).add(5,"minutes").tz("Asia/Jerusalem").format("YYYY-MM-DD HH:mm:ss"))
+        }
+        convertedQuoteIntervalsData[moment(item.datetime).add(5,"minutes").tz("America/New_York").format("YYYY-MM-DD HH:mm:ss")] =  interval;
+    });
+
+    return convertedQuoteIntervalsData;
+}
+
+export function convertTDAmeritradeMultipleDaysOf5MinuteIntervals(daysWithInterval:any) : {[key: string]:IQouteIntervals}  {
+    const convertedQuoteIntervalsMultipleDayData  = {} as {[key: string]:IQouteIntervals};
+
+    Object.keys(daysWithInterval).forEach((key)=>{
+        convertedQuoteIntervalsMultipleDayData[key] = convertTDAmeritrade5MinuteIntervals(daysWithInterval[key]);
+    });
+
+    return convertedQuoteIntervalsMultipleDayData;
+}

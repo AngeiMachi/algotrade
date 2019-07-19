@@ -1,9 +1,10 @@
 import * as _ from "lodash";
 import moment from "moment-timezone";
-import * as request from "request";
+import * as request from "request-promise";
 import * as environmentConfig from "./config/environment.Config.json";
 import { logger } from "./config/winston.config.js";
 import * as queryString from "query-string";
+import { convertTDAmeritrade5MinuteIntervals, convertTDAmeritradeMultipleDaysOf5MinuteIntervals } from "./utils/utils.js";
 
 const TD_BASE_API = "https://api.tdameritrade.com/v1";
 const GET_ACCESS_TOKEN = "/oauth2/token";
@@ -17,44 +18,32 @@ export const getAccessToken = async () => {
         client_id: environmentConfig.TDAmeritradeAPI.client_id,
     };
 
-    request.post({ url: TD_BASE_API + GET_ACCESS_TOKEN, qs: queryString.stringify(formData),
-         headers:{ 'Content-Type': 'application/x-www-form-urlencoded' } 
-        
-        }, (err: string, httpResponse: any, body: any) => {
-            if (err) {
-                logger.error ("getAccessToken failed " + err );
-            }
-            token = body;
+    await request.post({
+        url: TD_BASE_API + GET_ACCESS_TOKEN, qs: queryString.stringify(formData),
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
     });
+
 };
 
-export const getQuote5MinuteHistory = async (quote: string):Promise<any> => {
-    return new Promise( (resolve, reject) => {
-        const formData = {
-            frequencyType: "minute",
-            startDate: "",
-            frequency: "5",
-            apikey: environmentConfig.TDAmeritradeAPI.client_id,
-            needExtendedHoursData: true,
-        };
-    
-        request.get({ url: "https://api.tdameritrade.com/v1/marketdata/AMZN/pricehistory?apikey=ANGELMALCA&frequencyType=minute&frequency=5&startDate=1547307000000&needExtendedHoursData=false ",
-            headers: { Authorization: "Bearer " +   environmentConfig.TDAmeritradeAPI.bearer_token },
-    
-           }, (err: string, httpResponse: any, body: any) => {
-               if (err) {
-                   logger.error ("getAccessToken failed " + err );
-               }
-               const response = JSON.parse(body);
-               const grouped = _.groupBy(response.candles, getIntervals);
-               resolve(grouped);
-               
+export const getQuote5MinuteHistory = async (quote: string): Promise<any> => {
+    try {
+        const response = await request.get({
+            url: "https://api.tdameritrade.com/v1/marketdata/AMZN/pricehistory?apikey=ANGELMALCA&frequencyType=minute&frequency=5&startDate=1547307000000&needExtendedHoursData=false ",
+            headers: { Authorization: "Bearer " + environmentConfig.TDAmeritradeAPI.bearer_token }
         });
-    });
+
+        const parsedResponse = JSON.parse(response);
+        const groupedIntervalsByDay = _.groupBy(parsedResponse.candles, groupByDateFunction);
+        delete groupedIntervalsByDay[Object.keys(groupedIntervalsByDay)[0]];
+
+        const quote5MinuteHistory = convertTDAmeritradeMultipleDaysOf5MinuteIntervals(groupedIntervalsByDay);
+        return quote5MinuteHistory;
+    } catch (err) {
+        logger.error("getQuote5MinuteHistory failed " + err);
+        throw err;
+    }
 };
 
-function getIntervals(interval: any) {
-    console.log( moment(interval.datetime).format("YYYY-MM-DD HH:mm:ss"));
-    let x = moment(interval.datetime).format("YYYY-MM-DD");
-    return x;
+function groupByDateFunction(interval: any) {
+    return moment(interval.datetime).format("YYYY-MM-DD");
 }

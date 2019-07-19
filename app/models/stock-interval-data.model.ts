@@ -34,4 +34,6 @@ export interface IQouteMetadata {
     regularMarketPreviousClose:IQuotePriceFormat;
     fiftyTwoWeekLow: IQuotePriceFormat;
     fiftyTwoWeekHigh: IQuotePriceFormat;
+
+    dailyHistoricalData:IQouteFullIntervalData[];
 }

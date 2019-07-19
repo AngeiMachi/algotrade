@@ -2,10 +2,10 @@ import moment from "moment-timezone";
 import * as request from "request-promise";
 import { logger } from "./config/winston.config.js";
 import * as environmentConfig from "./config/environment.Config.json";
-import { getCurrentTradingDay } from "./utils/utils.js";
+import { getCurrentTradingDay, convertYahooIntervals } from "./utils/utils.js";
 
 import { INTERVAL_PROPERTY_NAME , METADATA_PROPERTY_NAME , LAST_REFRESHED_PROPERTY_NAME } from "./config/globals.config";
-import { IAlphaVantageIntervals, IQouteMetadata } from "./models/stock-interval-data.model";
+import { IAlphaVantageIntervals, IQouteMetadata, IQouteFullIntervalData } from "./models/stock-interval-data.model";
 import { parseMustache } from "./utils/general.js";
 
 export class ProxyService {
@@ -43,7 +43,7 @@ export class ProxyService {
         }
     }
 
-    public async getHistoricalData(quote: string): Promise< any > {
+    public async getAlphaVantageHistoricalData(quote: string): Promise< any > {
         try {
             const quoteHistoricalDataResponse: any[] = [];
 
@@ -77,8 +77,10 @@ export class ProxyService {
         }
     }
 
-    public async getMetadata(quote: string): Promise< any > {
+    public async getYahooFinanceMetadata(quote: string , tradeDay?: moment.Moment): Promise< any > {
             
+            const quoteDailyHistorical = await this.getYahooFinanceDailyHistorical(quote,5,tradeDay);
+
             const fullURL = parseMustache(environmentConfig.Yahoo.get_metadata,{quote});
            
             const yahooQuoteRawMetadata = await request.get({url:fullURL});
@@ -89,11 +91,34 @@ export class ProxyService {
                 averageDailyVolume3Month: yahooQuoteMetadata.price.averageDailyVolume3Month,
                 regularMarketPreviousClose:yahooQuoteMetadata.price.regularMarketPreviousClose,
                 fiftyTwoWeekLow: yahooQuoteMetadata.summaryDetail.fiftyTwoWeekLow,
-                fiftyTwoWeekHigh: yahooQuoteMetadata.summaryDetail.fiftyTwoWeekHigh
+                fiftyTwoWeekHigh: yahooQuoteMetadata.summaryDetail.fiftyTwoWeekHigh,
+
+                dailyHistoricalData:quoteDailyHistorical
             }
         
             return quoteMetadata;
     }
+
+    public async getYahooFinanceDailyHistorical(quote: string,daysBack:number,tradeDay?: moment.Moment ): Promise< IQouteFullIntervalData[] > {
+      
+        const finalCurrentDay = tradeDay? tradeDay : moment().subtract(1,"days")
+
+        const options = {
+            quote:quote,
+            endDay: finalCurrentDay.unix(),
+            startDay: finalCurrentDay.subtract(daysBack+1,"days").unix()
+            
+        }
+        
+        const fullURL = parseMustache(environmentConfig.Yahoo.get_historical_daily,options);
+       
+        const yahooQuoteRawHistorical = await request.get({url:fullURL});
+        const yahooQuoteHistorical = JSON.parse(yahooQuoteRawHistorical).chart.result[0];
+        
+        return convertYahooIntervals(yahooQuoteHistorical.timestamp,yahooQuoteHistorical.indicators.quote[0]);
+}
+
+
 
     private async prepareMockData(quote: string): Promise<any> {
         try {

@@ -40,7 +40,7 @@ export class QouteStats {
         }
     }
 
-    public InitializeStockData(quoteIntervals: IQouteIntervals , quoteMetadata : IQouteMetadata) {
+    public initializeStockData(quoteIntervals: IQouteIntervals , quoteMetadata : IQouteMetadata) {
 
         this.quoteMetadata = quoteMetadata;
         

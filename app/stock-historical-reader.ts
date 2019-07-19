@@ -1,40 +1,44 @@
 
-import { QouteStats } from "./stock-stats";
-import { IQuotes, IQouteFullIntervalData } from "./models/stock-interval-data.model";
+import { QouteStats as QuoteStats } from "./stock-stats";
+import { IQuotes, IQouteFullIntervalData, IQouteMetadata } from "./models/stock-interval-data.model";
 import { ProxyService } from "./proxy-service";
 import { INTERVAL_PROPERTY_NAME } from "./config/globals.config";
 import { convertAlphaVantageIntervals } from "./utils/utils";
 import { logger } from "./config/winston.config";
+import moment = require("moment");
 
 export class StockHistoricalReader {
     private proxyService: ProxyService;
     private quotes: string[] = [];
 
-    constructor(key: string, quotes: string[]= []) {
-       this.proxyService = new ProxyService( key );
+    constructor(key: string, quotes: string[] = []) {
+        this.proxyService = new ProxyService(key);
 
-       this.initializeQuotes(quotes);
+        this.initializeQuotes(quotes);
     }
 
-    public async getQuotesHistoricalData(): Promise<any> {
+    public async getQuotesHistoricalDataByAlphaVantage(): Promise<any> {
         try {
-            let hd = [];
             const promises: any[] | Array<Promise<void>> = [];
             for (let j = 0; j < this.quotes.length; j++) {
-                const promise = setTimeout(() => {
-                     this.proxyService.getHistoricalData(this.quotes[j]).then( (historicalData: any) => {
-                        hd = historicalData;
-                        for (let i = 0; i < hd.length ; i++) {
-                            const alphaVantageQuoteIntervals = hd[i][INTERVAL_PROPERTY_NAME] ;
-                            const tradeDay = Object.keys(alphaVantageQuoteIntervals)[0].substring(0, 10);
+                const promise = setTimeout(async () => {
+                    const historicalData = await this.proxyService.getAlphaVantageHistoricalData(this.quotes[j])
 
-                            logger.debug("index=" + i + ":" + this.quotes[j] + " Trade Day is " + tradeDay + ":"  );
+                    for (let i = 0; i < historicalData.length; i++) {
+                        const alphaVantageQuoteIntervals = historicalData[i][INTERVAL_PROPERTY_NAME];
+                        const tradeDay = Object.keys(alphaVantageQuoteIntervals)[0].substring(0, 10);
 
-                            const stockStats = new QouteStats(this.quotes[j], tradeDay);
-                            const quoteIntervals = convertAlphaVantageIntervals(alphaVantageQuoteIntervals);
-                            //stockStats.InitializeStockData(alphaVantageQuoteIntervals);
-                        }
-                    });
+                        logger.debug("index=" + i + ":" + this.quotes[j] + " Trade Day is " + tradeDay + ":");
+
+                        const quoteIntervals = convertAlphaVantageIntervals(alphaVantageQuoteIntervals);
+
+                        const quoteMetadata: IQouteMetadata = await this.proxyService.getYahooFinanceMetadata(this.quotes[j],moment(tradeDay)) ;
+
+                        const quoteStats = new QuoteStats(this.quotes[j], tradeDay);
+                        
+                        quoteStats.initializeStockData(quoteIntervals,quoteMetadata);
+                    }
+
 
                 }, j * 15 * 1000);
             }
@@ -45,8 +49,8 @@ export class StockHistoricalReader {
     }
 
     private initializeQuotes(quotes: string[]) {
-        quotes.forEach( (quote) => {
-               this.quotes.push(quote);
+        quotes.forEach((quote) => {
+            this.quotes.push(quote);
         });
     }
 }
