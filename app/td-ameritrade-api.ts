@@ -5,6 +5,7 @@ import * as environmentConfig from "./config/environment.Config.json";
 import { logger } from "./config/winston.config.js";
 import * as queryString from "query-string";
 import { convertTDAmeritrade5MinuteIntervals, convertTDAmeritradeMultipleDaysOf5MinuteIntervals } from "./utils/utils.js";
+import { parseMustache } from "./utils/general.js";
 
 const TD_BASE_API = "https://api.tdameritrade.com/v1";
 const GET_ACCESS_TOKEN = "/oauth2/token";
@@ -15,7 +16,7 @@ export const getAccessToken = async () => {
     const formData = {
         grant_type: "refresh_token",
         refresh_token: environmentConfig.TDAmeritradeAPI.refresh_token,
-        client_id: environmentConfig.TDAmeritradeAPI.client_id,
+        client_id: environmentConfig.TDAmeritradeAPI.api_key,
     };
 
     await request.post({
@@ -27,8 +28,15 @@ export const getAccessToken = async () => {
 
 export const getQuote5MinuteHistory = async (quote: string): Promise<any> => {
     try {
+
+        const options = {
+            quote: quote.toUpperCase(),
+            api_key: environmentConfig.TDAmeritradeAPI.api_key
+        }
+        const fullURL = parseMustache(environmentConfig.TDAmeritradeAPI.URL.get_historical_5_minutes, options);
+
         const response = await request.get({
-            url: "https://api.tdameritrade.com/v1/marketdata/AMZN/pricehistory?apikey=ANGELMALCA&frequencyType=minute&frequency=5&startDate=1547307000000&needExtendedHoursData=false ",
+            url: fullURL,
             headers: { Authorization: "Bearer " + environmentConfig.TDAmeritradeAPI.bearer_token }
         });
 

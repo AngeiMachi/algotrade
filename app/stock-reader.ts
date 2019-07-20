@@ -6,7 +6,7 @@ import { MAX_QUOTES ,
         METADATA_PROPERTY_NAME ,
         LAST_REFRESHED_PROPERTY_NAME,
     } from "./config/globals.config";
-import { QouteStats } from "./stock-stats";
+import { QuoteStats } from "./stock-stats";
 import { IQuotes, IQouteFullIntervalData, IQouteMetadata } from "./models/stock-interval-data.model";
 import { ProxyService } from "./proxy-service";
 import { convertAlphaVantageFormat , convertAlphaVantageIntervals } from "./utils/utils";
@@ -59,13 +59,13 @@ export class StockReader {
     private initializeQuotes(quotes: string[]) {
         const maxFiveQuotes = quotes.slice(0, MAX_QUOTES);
         maxFiveQuotes.forEach( (quote) => {
-               this.quotes[quote] = new QouteStats(quote);
+               this.quotes[quote] = new QuoteStats(quote);
         });
     }
 
     private iterateStocks() {
         Object.keys(this.quotes).forEach((quote, index) => {
-            const quoteStockStats: QouteStats = this.quotes[quote];
+            const quoteStockStats: QuoteStats = this.quotes[quote];
             this.proxyService.getIntraday(quote).then( (data: any) => {
 
                 const stockInterval: IQouteFullIntervalData = this.getStockLatestIntervalData(data);

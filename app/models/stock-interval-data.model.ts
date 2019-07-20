@@ -1,4 +1,4 @@
-import {QouteStats} from '../stock-stats';
+import {QuoteStats} from '../stock-stats';
 
 export interface IQouteFullIntervalData {
     open: number;
@@ -17,7 +17,7 @@ export interface IAlphaVantageIntervals {
 }
 
 export interface IQuotes {
-    [key: string]: QouteStats;
+    [key: string]: QuoteStats;
 }
 export interface IQouteIntervals {
     [key: string]: IQouteFullIntervalData;

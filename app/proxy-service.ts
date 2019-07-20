@@ -3,8 +3,8 @@ import * as request from "request-promise";
 import { logger } from "./config/winston.config.js";
 import * as environmentConfig from "./config/environment.Config.json";
 import { getCurrentTradingDay, convertYahooIntervals } from "./utils/utils.js";
-
-import { INTERVAL_PROPERTY_NAME , METADATA_PROPERTY_NAME , LAST_REFRESHED_PROPERTY_NAME } from "./config/globals.config";
+import * as TDAmeritradeAPI from "./td-ameritrade-api";
+import { INTERVAL_PROPERTY_NAME, METADATA_PROPERTY_NAME, LAST_REFRESHED_PROPERTY_NAME } from "./config/globals.config";
 import { IAlphaVantageIntervals, IQouteMetadata, IQouteFullIntervalData } from "./models/stock-interval-data.model";
 import { parseMustache } from "./utils/general.js";
 
@@ -15,131 +15,136 @@ export class ProxyService {
     private mockDataResponse: any = {};
     private mockDataResponseValues: any[] = [];
     private mockDataResponseKeys: any[] = [];
-    private currentInterval: number ;
+    private currentInterval: number;
     private mockDataDate: string = "";
     private isMockLoaded: boolean = false;
 
     constructor(key: string) {
-       this.alphaAPI = require("alphavantage")({ key });
-       this.currentInterval = environmentConfig.Mock.StartLiveSimulationAtInterval;
+        this.alphaAPI = require("alphavantage")({ key });
+        this.currentInterval = environmentConfig.Mock.StartLiveSimulationAtInterval;
 
-       this.mockDataResponse[INTERVAL_PROPERTY_NAME] = {};
-       this.mockDataResponse[METADATA_PROPERTY_NAME] = {};
+        this.mockDataResponse[INTERVAL_PROPERTY_NAME] = {};
+        this.mockDataResponse[METADATA_PROPERTY_NAME] = {};
 
-       this.mockDataDate = getCurrentTradingDay();
+        this.mockDataDate = getCurrentTradingDay();
     }
 
     // main method to get alphaVantage Intraday data
-    public async getIntraday(quote: string): Promise< any > {
+    public async getIntraday(quote: string): Promise<any> {
         if (environmentConfig.Mock.IsMock) {
             if (!this.isMockLoaded) {
                 await this.prepareMockData(quote);
             }
             return this.serveMockData();
         } else {
-            return this.alphaAPI.data.intraday(quote, "compact", "json", "5min").then( (data: any) => {
-                return data ;
+            return this.alphaAPI.data.intraday(quote, "compact", "json", "5min").then((data: any) => {
+                return data;
             });
         }
     }
 
-    public async getAlphaVantageHistoricalData(quote: string): Promise< any > {
+    public async getAlphaVantageHistoricalData(quote: string): Promise<any> {
         try {
             const quoteHistoricalDataResponse: any[] = [];
 
             const data = await this.alphaAPI.data.intraday(quote, "full", "json", "5min");
             let tradingDayDate: string = "";
             let lastRefreshedTime: string = "";
-            let tradingDayIntervals: IAlphaVantageIntervals = { };
+            let tradingDayIntervals: IAlphaVantageIntervals = {};
             const quoteMetadata = data[METADATA_PROPERTY_NAME];
 
             Object.keys(data[INTERVAL_PROPERTY_NAME]).reverse().forEach((key, index) => {
                 if (key.substring(0, 10) !== tradingDayDate) {
-                    if ( tradingDayDate) {
+                    if (tradingDayDate) {
                         quoteMetadata[LAST_REFRESHED_PROPERTY_NAME] = lastRefreshedTime;
-                        quoteHistoricalDataResponse.push({"Meta Data": {...quoteMetadata},
-                                                        "Time Series (5min)": { ...tradingDayIntervals} } );
+                        quoteHistoricalDataResponse.push({
+                            "Meta Data": { ...quoteMetadata },
+                            "Time Series (5min)": { ...tradingDayIntervals }
+                        });
                         tradingDayIntervals = {};
                     }
-                        tradingDayDate = key.substring(0, 10) ;
+                    tradingDayDate = key.substring(0, 10);
                 }
                 tradingDayIntervals[key] = data[INTERVAL_PROPERTY_NAME][key];
                 lastRefreshedTime = key;
             });
             quoteMetadata[LAST_REFRESHED_PROPERTY_NAME] = lastRefreshedTime;
-            quoteHistoricalDataResponse.push({"Meta Data": {...quoteMetadata},
-                                                "Time Series (5min)": { ...tradingDayIntervals} } );
+            quoteHistoricalDataResponse.push({
+                "Meta Data": { ...quoteMetadata },
+                "Time Series (5min)": { ...tradingDayIntervals }
+            });
 
             return Promise.resolve(quoteHistoricalDataResponse);
 
-        } catch ( err) {
+        } catch (err) {
             Promise.reject(err);
         }
     }
 
-    public async getYahooFinanceMetadata(quote: string , tradeDay?: moment.Moment): Promise< any > {
-            
-            const quoteDailyHistorical = await this.getYahooFinanceDailyHistorical(quote,5,tradeDay);
+    public async getYahooFinanceMetadata(quote: string, tradeDay?: moment.Moment): Promise<any> {
 
-            const fullURL = parseMustache(environmentConfig.Yahoo.get_metadata,{quote});
-           
-            const yahooQuoteRawMetadata = await request.get({url:fullURL});
-            const yahooQuoteMetadata = JSON.parse(yahooQuoteRawMetadata).quoteSummary.result[0];
+        const quoteDailyHistorical = await this.getYahooFinanceDailyHistorical(quote, 5, tradeDay);
 
-            let quoteMetadata: IQouteMetadata = {
-                averageDailyVolume10Day: yahooQuoteMetadata.price.averageDailyVolume10Day,
-                averageDailyVolume3Month: yahooQuoteMetadata.price.averageDailyVolume3Month,
-                regularMarketPreviousClose:yahooQuoteMetadata.price.regularMarketPreviousClose,
-                fiftyTwoWeekLow: yahooQuoteMetadata.summaryDetail.fiftyTwoWeekLow,
-                fiftyTwoWeekHigh: yahooQuoteMetadata.summaryDetail.fiftyTwoWeekHigh,
+        const fullURL = parseMustache(environmentConfig.Yahoo.get_metadata, { quote });
 
-                dailyHistoricalData:quoteDailyHistorical
-            }
-        
-            return quoteMetadata;
+        const yahooQuoteRawMetadata = await request.get({ url: fullURL });
+        const yahooQuoteMetadata = JSON.parse(yahooQuoteRawMetadata).quoteSummary.result[0];
+
+        let quoteMetadata: IQouteMetadata = {
+            averageDailyVolume10Day: yahooQuoteMetadata.price.averageDailyVolume10Day,
+            averageDailyVolume3Month: yahooQuoteMetadata.price.averageDailyVolume3Month,
+            regularMarketPreviousClose: yahooQuoteMetadata.price.regularMarketPreviousClose,
+            fiftyTwoWeekLow: yahooQuoteMetadata.summaryDetail.fiftyTwoWeekLow,
+            fiftyTwoWeekHigh: yahooQuoteMetadata.summaryDetail.fiftyTwoWeekHigh,
+
+            dailyHistoricalData: quoteDailyHistorical
+        }
+        return quoteMetadata;
     }
 
-    public async getYahooFinanceDailyHistorical(quote: string,daysBack:number,tradeDay?: moment.Moment ): Promise< IQouteFullIntervalData[] > {
-      
-        const finalCurrentDay = tradeDay? tradeDay : moment().subtract(1,"days")
+    public async getYahooFinanceDailyHistorical(quote: string, daysBack: number, tradeDay?: moment.Moment): Promise<IQouteFullIntervalData[]> {
+
+        const finalCurrentDay = tradeDay ? tradeDay : moment().subtract(1, "days")
 
         const options = {
-            quote:quote,
+            quote: quote,
             endDay: finalCurrentDay.unix(),
-            startDay: finalCurrentDay.subtract(daysBack+1,"days").unix()
-            
+            startDay: finalCurrentDay.subtract(daysBack + 1, "days").unix()
+
         }
-        
-        const fullURL = parseMustache(environmentConfig.Yahoo.get_historical_daily,options);
-       
-        const yahooQuoteRawHistorical = await request.get({url:fullURL});
+
+        const fullURL = parseMustache(environmentConfig.Yahoo.get_historical_daily, options);
+
+        const yahooQuoteRawHistorical = await request.get({ url: fullURL });
         const yahooQuoteHistorical = JSON.parse(yahooQuoteRawHistorical).chart.result[0];
-        
-        return convertYahooIntervals(yahooQuoteHistorical.timestamp,yahooQuoteHistorical.indicators.quote[0]);
-}
 
+        return convertYahooIntervals(yahooQuoteHistorical.timestamp, yahooQuoteHistorical.indicators.quote[0]);
+    }
 
+    public async getTDAmeritradeHistoricalData(quote: string): Promise<any> {
+        return TDAmeritradeAPI.getQuote5MinuteHistory(quote);
+    }
 
     private async prepareMockData(quote: string): Promise<any> {
         try {
             let quoteMockResponse: any;
             const mockIntervals: IAlphaVantageIntervals = {};
 
-            await this.alphaAPI.data.intraday(quote, "full", "json", "5min").then( (data: any) => {
-                quoteMockResponse = data ;
+            await this.alphaAPI.data.intraday(quote, "full", "json", "5min").then((data: any) => {
+                quoteMockResponse = data;
             });
 
             Object.keys(quoteMockResponse[INTERVAL_PROPERTY_NAME]).forEach((key) => {
                 if (key.includes(this.mockDataDate)) {
-                  mockIntervals[key] = quoteMockResponse[INTERVAL_PROPERTY_NAME][key];
+                    mockIntervals[key] = quoteMockResponse[INTERVAL_PROPERTY_NAME][key];
                 }
             });
 
             this.mockDataResponseValues = Object.values(mockIntervals).reverse();
             this.mockDataResponseKeys = Object.keys(mockIntervals).reverse();
 
-            for (let i = 0 ; i < this.currentInterval ; i++) {
-                this.mockDataResponse[ INTERVAL_PROPERTY_NAME][this.mockDataResponseKeys[i]] = this.mockDataResponseValues[i];
+            for (let i = 0; i < this.currentInterval; i++) {
+                this.mockDataResponse[INTERVAL_PROPERTY_NAME][this.mockDataResponseKeys[i]] = this.mockDataResponseValues[i];
             }
 
             this.mockDataResponse[METADATA_PROPERTY_NAME] = quoteMockResponse[METADATA_PROPERTY_NAME];
@@ -153,13 +158,13 @@ export class ProxyService {
     }
 
     private serveMockData(): Promise<any> {
-        return new Promise ((resolve, reject) => {
+        return new Promise((resolve, reject) => {
             try {
                 if (this.mockDataResponseKeys[this.currentInterval]) {
-                    this.mockDataResponse[ INTERVAL_PROPERTY_NAME][this.mockDataResponseKeys[this.currentInterval]] =
-                                                                   this.mockDataResponseValues[this.currentInterval];
-                    this.mockDataResponse[ METADATA_PROPERTY_NAME ] [LAST_REFRESHED_PROPERTY_NAME] =
-                                                                   this.mockDataResponseKeys[this.currentInterval];
+                    this.mockDataResponse[INTERVAL_PROPERTY_NAME][this.mockDataResponseKeys[this.currentInterval]] =
+                        this.mockDataResponseValues[this.currentInterval];
+                    this.mockDataResponse[METADATA_PROPERTY_NAME][LAST_REFRESHED_PROPERTY_NAME] =
+                        this.mockDataResponseKeys[this.currentInterval];
                     this.currentInterval++;
                 }
                 resolve(this.mockDataResponse);

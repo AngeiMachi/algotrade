@@ -13,11 +13,11 @@ import * as TDAmeritradeAPI from "./td-ameritrade-api";
 // });
 
 //     console.log("AFTER RESOVE>>>");
-const shr = new StockHistoricalReader( environmentConfig.AlphaVantageAPIKeys[1].key , [...environmentConfig.AlphaVantageAPIKeys[1].quotes]);
-shr.getQuotesHistoricalDataByAlphaVantage();
-
 // const shr = new StockHistoricalReader( environmentConfig.AlphaVantageAPIKeys[1].key , [...environmentConfig.AlphaVantageAPIKeys[1].quotes]);
-// shr.getQuotesHistoricalData();
+// shr.getQuotesHistoricalDataByAlphaVantage();
+
+const shr = new StockHistoricalReader([...environmentConfig.AlphaVantageAPIKeys[1].quotes],environmentConfig.AlphaVantageAPIKeys[1].key);
+shr.getQuotesHistoricalDataByTDAmeritrade();
 
 
  
