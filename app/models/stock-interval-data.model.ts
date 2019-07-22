@@ -22,6 +22,14 @@ export interface IQuotes {
 export interface IQouteIntervals {
     [key: string]: IQouteFullIntervalData;
 }
+export interface IQouteHistoricalIntervals {
+    [key: string]: IQouteIntervals;
+}
+export interface IQuotesHistoricalsData {
+    quote5MinuteHistory:IQouteHistoricalIntervals;
+    quoteFullYearDailyHistory:ITDAmeritradePriceHistory;
+    SMA: any;
+}
 
 interface IQuotePriceFormat {
     raw:number;
@@ -29,11 +37,28 @@ interface IQuotePriceFormat {
 }
 
 export interface IQouteMetadata {
-    averageDailyVolume10Day: IQuotePriceFormat;
-    averageDailyVolume3Month: IQuotePriceFormat;
-    regularMarketPreviousClose:IQuotePriceFormat;
-    fiftyTwoWeekLow: IQuotePriceFormat;
-    fiftyTwoWeekHigh: IQuotePriceFormat;
+    averageDailyVolume10Day: number | IQuotePriceFormat;
+    averageDailyVolume3Month: number | IQuotePriceFormat;
+    regularMarketPreviousClose:number | IQuotePriceFormat;
+    fiftyTwoWeekLow: number | IQuotePriceFormat;
+    fiftyTwoWeekHigh: number | IQuotePriceFormat;
 
     dailyHistoricalData:IQouteFullIntervalData[];
+
+    SMA5?:any;
+}
+
+export interface ITDAmeritradePriceHistory {
+    candles: ITDAmeritradeIntervalData[];
+    symbol:string;
+    empty:false;
+}
+
+export interface ITDAmeritradeIntervalData {
+    open:number;
+    high:number;
+    low:number;
+    close:number;
+    volume:number;
+    datetime:number;
 }

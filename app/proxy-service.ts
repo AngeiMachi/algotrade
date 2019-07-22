@@ -5,7 +5,7 @@ import * as environmentConfig from "./config/environment.Config.json";
 import { getCurrentTradingDay, convertYahooIntervals } from "./utils/utils.js";
 import * as TDAmeritradeAPI from "./td-ameritrade-api";
 import { INTERVAL_PROPERTY_NAME, METADATA_PROPERTY_NAME, LAST_REFRESHED_PROPERTY_NAME } from "./config/globals.config";
-import { IAlphaVantageIntervals, IQouteMetadata, IQouteFullIntervalData } from "./models/stock-interval-data.model";
+import { IAlphaVantageIntervals, IQouteMetadata, IQouteFullIntervalData, IQuotesHistoricalsData } from "./models/stock-interval-data.model";
 import { parseMustache } from "./utils/general.js";
 
 export class ProxyService {
@@ -121,8 +121,24 @@ export class ProxyService {
         return convertYahooIntervals(yahooQuoteHistorical.timestamp, yahooQuoteHistorical.indicators.quote[0]);
     }
 
-    public async getTDAmeritradeHistoricalData(quote: string): Promise<any> {
-        return TDAmeritradeAPI.getQuote5MinuteHistory(quote);
+    public async getHistoricalData(quote: string): Promise<IQuotesHistoricalsData> {
+
+        try {
+           
+            const quote5MinuteHistory = await  TDAmeritradeAPI.getQuote5MinuteHistory(quote);
+            const quoteFullYearDailyHistory = await TDAmeritradeAPI.getQuoteFullYearDailyHistory(quote);
+            const SMA = await this.alphaAPI.technical.sma(quote, `daily`, 5, `close`);
+            await request.get({url:"https://reqres.in/api/users?delay=6"});
+    
+            return  {
+                SMA,
+                quote5MinuteHistory,
+                quoteFullYearDailyHistory
+            }
+        } catch (err) {
+                throw err;
+        }
+        
     }
 
     private async prepareMockData(quote: string): Promise<any> {

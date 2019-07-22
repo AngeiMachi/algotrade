@@ -10,20 +10,25 @@ import { BuyDirectionEnum } from "./models/enums";
 import { logger } from "./config/winston.config.js";
 
 export class QuoteStats {
+    private debugAtDate:string = "2019-05-09";
+
     private quote: string;
     private quoteMetadata = {} as IQouteMetadata;
 
     private volumeSum: number = 0;
     private interval: number = 0;
     private volumeInterval: number = 0;
-    private avg: number = 0;
+    private averageVolume: number = 0;
     private todayDate: string;
     private quoteIntervals: IQouteFullIntervalData[] = [];
 
 
+    private allowedBuyDirection: BuyDirectionEnum = BuyDirectionEnum.NONE;
+    private didTouchSMA: boolean = false;
     private didBuy: boolean = false;
     private didSell: boolean = false;
     private isDirty: boolean = false; // flag to know if bought once 
+    private strengthOf5MA:number = 0;
     private isInBuyDirection: BuyDirectionEnum = BuyDirectionEnum.NONE;
     private isInBreakOutOrDown: BuyDirectionEnum = BuyDirectionEnum.NONE;
     private volumeChangeIntervalData = {} as IQouteFullIntervalData;
@@ -44,14 +49,14 @@ export class QuoteStats {
     }
 
     public initializeStockData(quoteIntervals: IQouteIntervals, quoteMetadata: IQouteMetadata): number {
-        let profitLossAccount : number = 0 ; 
+        let profitLossAccount: number = 0;
 
         this.quoteMetadata = quoteMetadata;
 
         this.InitializeStockIntervalsSoFar(quoteIntervals);
 
         this.quoteIntervals.forEach((stockInterval) => {
-            profitLossAccount+=this.recordNewStockInterval(stockInterval);
+            profitLossAccount += this.recordNewStockInterval(stockInterval);
         });
 
         return profitLossAccount;
@@ -60,21 +65,24 @@ export class QuoteStats {
     public recordNewStockInterval(stockInterval: IQouteFullIntervalData, isLive: boolean = false): number {
 
         //this.composeAndPrintCurrentIntervalStats(stockInterval, isLive);
-        //this.calculateAverageVolume(stockInterval);
+        
         //this.monitorHODBreakout(stockInterval);
         //this.monitorLODBreakdown(stockInterval);
         //this.composeAndPrintBuyMessage(stockInterval);
-        this.monitorHighVolumeInterval(stockInterval);
+        this.calculateAverageVolume(stockInterval);
+        this.decideAllowedByDirectionForToday(stockInterval);
+        this.checkToKnowIfReached5SMA(stockInterval);
+        this.buyOnHighVolumeMovement(stockInterval);
         this.checkToSell(stockInterval);
         if (isLive) {
             this.quoteIntervals.push(stockInterval);
         }
         this.interval++;
 
-        if (!isLive && stockInterval.time.getHours() === 23 && this.didBuy) {
+        if (!isLive && this.didBuy && this.interval == 77) {
             logger.debug("*** " + this.quote + " Ended with " + this.calculatePercentageChange(this.boughtIntervalData, stockInterval) + "%");
             return this.calculateLossProfit();
-        } 
+        }
         return 0;
     }
 
@@ -97,10 +105,22 @@ export class QuoteStats {
     }
 
     private calculateAverageVolume(stockInterval: IQouteFullIntervalData) {
+            this.volumeSum += stockInterval.volume;
+            this.averageVolume = this.volumeSum / this.interval+1;
+    }
+    private isExtremeVolume() : boolean {
+        if ((((this.quoteMetadata.averageDailyVolume10Day as number)/78)*(this.interval+1))<=(this.averageVolume*2)) {
+            return true;
+        } 
+
+        return false;    
+    }
+
+    private calculateAverageVolume2(stockInterval: IQouteFullIntervalData) {
         if (this.interval >= MINIMUM_INTERVALS_TO_CALCULATE_AVERAGE_VOLUME) {
             this.volumeSum += stockInterval.volume;
             this.volumeInterval++;
-            this.avg = this.volumeSum / this.volumeInterval;
+            this.averageVolume = this.volumeSum / this.volumeInterval;
 
             if (this.didPassVolumeThreshold(stockInterval)) {
                 const currentBuyDirection = this.getBuyDirection(stockInterval);
@@ -175,12 +195,51 @@ export class QuoteStats {
         }
     }
 
+    private decideAllowedByDirectionForToday(quoteInterval: IQouteFullIntervalData) {
+        if (this.interval === 0) {
+            const today5SMA = +this.quoteMetadata.SMA5["Technical Analysis: SMA"][this.todayDate].SMA;
+            const dayBefore5MA =  this.getDayBefore5MA();
+            this.strengthOf5MA = today5SMA - dayBefore5MA;
+            if (this.strengthOf5MA>0.2) {
+                if (today5SMA <= quoteInterval.open+( this.strengthOf5MA/2)) {
+                    this.allowedBuyDirection = BuyDirectionEnum.CALL;
+                }
+                else {
+                    this.allowedBuyDirection = BuyDirectionEnum.NONE;
+                }
+            } else if (this.strengthOf5MA<-0.2) {
+                if (today5SMA >= quoteInterval.open - ( this.strengthOf5MA/2)) {
+                    this.allowedBuyDirection = BuyDirectionEnum.PUT;
+                }
+                else {
+                    this.allowedBuyDirection = BuyDirectionEnum.NONE;
+                }
+            }
+            else {
+                this.allowedBuyDirection = BuyDirectionEnum.NONE;
+            }
+        }
+    }
+
+    private checkToKnowIfReached5SMA(quoteInterval: IQouteFullIntervalData) {
+        if (!this.didTouchSMA) {
+            const today5SMA = +this.quoteMetadata.SMA5["Technical Analysis: SMA"][this.todayDate].SMA;
+
+            if (this.allowedBuyDirection === BuyDirectionEnum.CALL && ((quoteInterval.low - (this.strengthOf5MA/2)) <= today5SMA)) {
+                this.didTouchSMA = true;
+            } else if (this.allowedBuyDirection === BuyDirectionEnum.PUT && ((quoteInterval.high + (this.strengthOf5MA/2)) >= today5SMA)) {
+                this.didTouchSMA = true;
+            }
+        }
+    }
+
     private buyQuote(quoteInterval: IQouteFullIntervalData) {
         if (!this.didBuy) {
 
-            let buyMessage:string;
-            
-            this.isInBuyDirection = this.getBuyDirection(quoteInterval);
+            let buyMessage: string;
+
+            //this.isInBuyDirection = this.getBuyDirection(quoteInterval);
+            this.isInBuyDirection = this.allowedBuyDirection;
             if (this.isInBuyDirection !== BuyDirectionEnum.NONE) {
                 this.boughtIntervalData = { ...quoteInterval };
                 this.didBuy = true;
@@ -192,22 +251,26 @@ export class QuoteStats {
                 buyMessage = "CANCELED *** " + this.quote + " *** Entered Buy " + BuyDirectionEnum[this.isInBuyDirection] + " Mode  at " + moment(quoteInterval.time).format("HH:mm:ss");
             }
             pushed.sendPushMessage(buyMessage);
-            logger.debug(buyMessage); 
+            logger.debug(buyMessage);
         }
     }
 
     private checkToSell(quoteInterval: IQouteFullIntervalData) {
         if (this.didBuy && this.didSell === false) {
-            if (quoteInterval.time.getHours() == 22 && quoteInterval.time.getMinutes() == 55) {
+            if (this.interval == 76) {
                 this.soldIntervalData = { ...quoteInterval };
                 this.didSell = true;
             }
         }
     }
 
-    private monitorHighVolumeInterval(quoteInterval : IQouteFullIntervalData) {
-        if (quoteInterval.volume>=this.quoteIntervals[0].volume && this.interval>=2 && this.interval<71) {
-            this.buyQuote(quoteInterval);
+    private buyOnHighVolumeMovement(quoteInterval: IQouteFullIntervalData) {
+        if (!this.didBuy && this.interval >= 2 && this.interval < 71 && this.didTouchSMA) {
+            if (quoteInterval.volume * 1.2 >= this.quoteIntervals[0].volume) {
+                this.buyQuote(quoteInterval);
+            } else if (this.isExtremeVolume()) {
+                this.buyQuote(quoteInterval);
+            }
         }
     }
 
@@ -250,7 +313,7 @@ export class QuoteStats {
         let stats = {
             quote: this.quote, interval: moment(stockInterval.time).format("HH:mm:ss"), ...stockInterval,
             intervalNumber: this.interval, volumeIntervalNumber: this.volumeInterval,
-            volumeSum: this.volumeSum, avg: this.avg
+            volumeSum: this.volumeSum, avg: this.averageVolume
         } as any;
 
         if (isLive) {
@@ -265,7 +328,7 @@ export class QuoteStats {
         }
 
         const { volume } = stockInterval;
-        if (volume > this.avg * VOLUME_THRESHOLD_ALARM && !this.isInBuyDirection) {
+        if (volume > this.averageVolume * VOLUME_THRESHOLD_ALARM && !this.isInBuyDirection) {
             const percentageIntervalChange = this.getPercentageChange(stockInterval);
             if (this.quote == "AMZN" || this.quote == "Googl" || this.quote == "CMG") {
                 return true;
@@ -293,25 +356,37 @@ export class QuoteStats {
     }
 
     private getVolumeRatioPower(volume: number): number {
-        const ratio = volume / this.avg;
+        const ratio = volume / this.averageVolume;
         return +ratio.toFixed(2);
     }
     private getBuyDirection(stockInterval: IQouteFullIntervalData): BuyDirectionEnum {
         if (stockInterval.close > stockInterval.open) {
             // checks if inverted hammer - if so , there is hesitation - don't buy Call
-            if ((stockInterval.high - stockInterval.close) > (stockInterval.close - stockInterval.open)) {
-                return BuyDirectionEnum.NONE;
-            }
+            // if ((stockInterval.high - stockInterval.close) > (stockInterval.close - stockInterval.open)) {
+            //     return BuyDirectionEnum.NONE;
+            // }
             return BuyDirectionEnum.CALL;
         } else if (stockInterval.open > stockInterval.close) {
             // checks if hammer - if so , there is hesitation - don't buy put 
-            if ((stockInterval.close - stockInterval.low) > (stockInterval.open - stockInterval.close)) {
-                return BuyDirectionEnum.NONE;
-            }
+            // if ((stockInterval.close - stockInterval.low) > (stockInterval.open - stockInterval.close)) {
+            //     return BuyDirectionEnum.NONE;
+            // }
             return BuyDirectionEnum.PUT;
         } else {
             return BuyDirectionEnum.NONE;
         }
+    }
+
+    private getDayBefore5MA() : number{
+        let dayBefore5MA;
+        let dayBefore = this.todayDate;
+        while (!dayBefore5MA) {
+            dayBefore = moment(dayBefore).subtract(1, "days").format("YYYY-MM-DD");
+            if (this.quoteMetadata.SMA5["Technical Analysis: SMA"][dayBefore]) {
+                dayBefore5MA = +this.quoteMetadata.SMA5["Technical Analysis: SMA"][dayBefore].SMA
+            }
+        }
+        return dayBefore5MA;
     }
 
 }

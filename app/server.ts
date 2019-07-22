@@ -16,7 +16,7 @@ import * as TDAmeritradeAPI from "./td-ameritrade-api";
 // const shr = new StockHistoricalReader( environmentConfig.AlphaVantageAPIKeys[1].key , [...environmentConfig.AlphaVantageAPIKeys[1].quotes]);
 // shr.getQuotesHistoricalDataByAlphaVantage();
 
-const shr = new StockHistoricalReader([...environmentConfig.AlphaVantageAPIKeys[1].quotes],environmentConfig.AlphaVantageAPIKeys[1].key);
+const shr = new StockHistoricalReader(environmentConfig.AlphaVantageAPIKeys[0].quotes,environmentConfig.AlphaVantageAPIKeys[0].key);
 shr.getQuotesHistoricalDataByTDAmeritrade();
 
 

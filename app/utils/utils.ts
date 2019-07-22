@@ -84,3 +84,8 @@ export function convertTDAmeritradeMultipleDaysOf5MinuteIntervals(daysWithInterv
 
     return convertedQuoteIntervalsMultipleDayData;
 }
+
+export function convertDateToTDMillisecondInterval(date:string):number {
+    // date is 00:00 . TDAmeritrade daily interval is at 08:00 = 28800000
+    return moment(date).unix()*1000 + 28800000;
+}

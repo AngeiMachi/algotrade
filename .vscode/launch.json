@@ -11,7 +11,13 @@
             "preLaunchTask": "tsc",
             "name": "Launch Program",
             "program": "${workspaceFolder}\\dist\\server.js",
-            "outputCapture": "std"
+            "outputCapture": "std",
+            "skipFiles": [
+                "node_modules/**/*.js",
+                "lib/**/*.js",
+                "async_hooks.js",
+                "inspector_async_hook.js"
+              ]
         }
     ]
 }
