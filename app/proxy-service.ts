@@ -7,6 +7,8 @@ import * as TDAmeritradeAPI from "./td-ameritrade-api";
 import { INTERVAL_PROPERTY_NAME, METADATA_PROPERTY_NAME, LAST_REFRESHED_PROPERTY_NAME } from "./config/globals.config";
 import { IAlphaVantageIntervals, IQouteMetadata, IQouteFullIntervalData, IQuotesHistoricalsData } from "./models/stock-interval-data.model";
 import { parseMustache } from "./utils/general.js";
+import  * as quoteUtils  from "./utils/quoteUtils";
+import  * as utils  from "./utils/utils";
 
 export class ProxyService {
 
@@ -121,14 +123,14 @@ export class ProxyService {
         return convertYahooIntervals(yahooQuoteHistorical.timestamp, yahooQuoteHistorical.indicators.quote[0]);
     }
 
-    public async getHistoricalData(quote: string): Promise<IQuotesHistoricalsData> {
+    public async getHistoricalData(quote: string,specificTradeDates:string[]=[]): Promise<IQuotesHistoricalsData> {
 
         try {
            
-            const quote5MinuteHistory = await  TDAmeritradeAPI.getQuote5MinuteHistory(quote);
+            const quote5MinuteHistory = await  TDAmeritradeAPI.getQuote5MinuteHistory(quote,specificTradeDates);
             const quoteFullYearDailyHistory = await TDAmeritradeAPI.getQuoteFullYearDailyHistory(quote);
             const SMA = await this.alphaAPI.technical.sma(quote, `daily`, 5, `close`);
-            await request.get({url:"https://reqres.in/api/users?delay=6"});
+            await request.get({url:"https://reqres.in/api/users?delay=5"});
     
             return  {
                 SMA,
@@ -139,6 +141,13 @@ export class ProxyService {
                 throw err;
         }
         
+    }
+
+    public async getTDAmeritradeDailyHistory(quote:string,daysBack:number): Promise<IQouteFullIntervalData[]>  {
+        const quoteFullYearDailyHistory = await TDAmeritradeAPI.getQuoteFullYearDailyHistory(quote);
+        const tradeDay = quoteFullYearDailyHistory.candles[quoteFullYearDailyHistory.candles.length-1].datetime;
+        const partialDailyHistory = quoteUtils.getPartialHistory( quoteFullYearDailyHistory.candles ,tradeDay,daysBack);
+        return utils.convertTDAmeritradeDailyIntervals(partialDailyHistory);
     }
 
     private async prepareMockData(quote: string): Promise<any> {

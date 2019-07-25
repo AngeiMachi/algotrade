@@ -1,6 +1,6 @@
 import * as environmentConfig from "./../config/environment.Config.json";
 import moment from "moment-timezone";
-import { IAlphaVantageIntervals , IQouteFullIntervalData, IQouteIntervals } from "../models/stock-interval-data.model";
+import { IAlphaVantageIntervals , IQouteFullIntervalData, IQouteIntervals, ITDAmeritradeIntervalData } from "../models/stock-interval-data.model";
 
 export function getCurrentTradingDay() {
     let mockDataDate: string;
@@ -85,7 +85,25 @@ export function convertTDAmeritradeMultipleDaysOf5MinuteIntervals(daysWithInterv
     return convertedQuoteIntervalsMultipleDayData;
 }
 
+export function convertTDAmeritradeDailyIntervals(intervals: ITDAmeritradeIntervalData[] ) : IQouteFullIntervalData[] {
+    let convertedQuoteIntervalsData: IQouteFullIntervalData[] = [];
+
+    intervals.forEach((item, index) => {
+        const interval :IQouteFullIntervalData = {
+            open:item.open,
+            high:item.high,
+            low:item.low,
+            close:item.close,
+            volume: item.volume,
+            time: new Date(moment(item.datetime).format("YYYY-MM-DD HH:mm:ss"))
+        }
+        convertedQuoteIntervalsData.push(interval);
+        
+    });
+
+    return convertedQuoteIntervalsData;
+}
+
 export function convertDateToTDMillisecondInterval(date:string):number {
-    // date is 00:00 . TDAmeritrade daily interval is at 08:00 = 28800000
-    return moment(date).unix()*1000 + 28800000;
+    return moment(date).unix()*1000 ;
 }

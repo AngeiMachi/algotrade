@@ -8,9 +8,10 @@ import { VOLUME_THRESHOLD_ALARM, MINIMUM_INTERVALS_TO_CALCULATE_AVERAGE_VOLUME, 
 import { IAlphaVantageIntervals, IQouteFullIntervalData, IQouteIntervals, IQouteMetadata } from "./models/stock-interval-data.model";
 import { BuyDirectionEnum } from "./models/enums";
 import { logger } from "./config/winston.config.js";
+import { minuteDifference } from "./utils/general.js";
 
 export class QuoteStats {
-    private debugAtDate:string = "2019-05-09";
+    private debugAtDate: string = "2019-05-09";
 
     private quote: string;
     private quoteMetadata = {} as IQouteMetadata;
@@ -27,8 +28,9 @@ export class QuoteStats {
     private didTouchSMA: boolean = false;
     private didBuy: boolean = false;
     private didSell: boolean = false;
+    private didSellWithLoss: boolean = false;
     private isDirty: boolean = false; // flag to know if bought once 
-    private strengthOf5MA:number = 0;
+    private strengthOf5MA: number = 0;
     private isInBuyDirection: BuyDirectionEnum = BuyDirectionEnum.NONE;
     private isInBreakOutOrDown: BuyDirectionEnum = BuyDirectionEnum.NONE;
     private volumeChangeIntervalData = {} as IQouteFullIntervalData;
@@ -65,22 +67,28 @@ export class QuoteStats {
     public recordNewStockInterval(stockInterval: IQouteFullIntervalData, isLive: boolean = false): number {
 
         //this.composeAndPrintCurrentIntervalStats(stockInterval, isLive);
+
         
-        //this.monitorHODBreakout(stockInterval);
-        //this.monitorLODBreakdown(stockInterval);
         //this.composeAndPrintBuyMessage(stockInterval);
+        this.checkToSell(stockInterval);
         this.calculateAverageVolume(stockInterval);
         this.decideAllowedByDirectionForToday(stockInterval);
         this.checkToKnowIfReached5SMA(stockInterval);
+    
+        this.monitorHOD(stockInterval);
+        this.monitorLOD(stockInterval);
         this.buyOnHighVolumeMovement(stockInterval);
-        this.checkToSell(stockInterval);
+
         if (isLive) {
             this.quoteIntervals.push(stockInterval);
         }
         this.interval++;
 
         if (!isLive && this.didBuy && this.interval == 77) {
-            logger.debug("*** " + this.quote + " Ended with " + this.calculatePercentageChange(this.boughtIntervalData, stockInterval) + "%");
+            logger.debug("*** " + this.quote + " Ended with " + this.calculatePercentageChange(this.boughtIntervalData, this.soldIntervalData) + "%");
+            if (this.didSellWithLoss) {
+                logger.debug("*** " + this.quote + " Could of Ended with " + this.calculatePercentageChange(this.boughtIntervalData, stockInterval) + "%");
+            }
             return this.calculateLossProfit();
         }
         return 0;
@@ -105,15 +113,15 @@ export class QuoteStats {
     }
 
     private calculateAverageVolume(stockInterval: IQouteFullIntervalData) {
-            this.volumeSum += stockInterval.volume;
-            this.averageVolume = this.volumeSum / this.interval+1;
+        this.volumeSum += stockInterval.volume;
+        this.averageVolume = this.volumeSum / (this.interval + 1);
     }
-    private isExtremeVolume() : boolean {
-        if ((((this.quoteMetadata.averageDailyVolume10Day as number)/78)*(this.interval+1))<=(this.averageVolume*2)) {
+    private isExtremeVolume(): boolean {
+        if ((((this.quoteMetadata.averageDailyVolume10Day as number) / 78) * 2.3 ) <= (this.averageVolume)) {
             return true;
-        } 
+        }
 
-        return false;    
+        return false;
     }
 
     private calculateAverageVolume2(stockInterval: IQouteFullIntervalData) {
@@ -142,29 +150,19 @@ export class QuoteStats {
         }
     }
 
-    private monitorHODBreakout(stockInterval: IQouteFullIntervalData) {
+    private monitorHOD(stockInterval: IQouteFullIntervalData) {
         if (this.interval === 0) {
             this.HODIntevalData = { ...stockInterval };
-        } else {
-            if (stockInterval.close > this.HODIntevalData.high && !this.isInBreakOutOrDown) {
+        } else if (stockInterval.high > this.HODIntevalData.high) {
                 this.HODIntevalData = { ...stockInterval };
-                if (this.interval >= MINIMUM_INTERVALS_TO_CALCULATE_AVERAGE_VOLUME) {
-                    this.isInBreakOutOrDown = BuyDirectionEnum.CALL;
-                }
-            }
         }
     }
 
-    private monitorLODBreakdown(stockInterval: IQouteFullIntervalData) {
+    private monitorLOD(stockInterval: IQouteFullIntervalData) {
         if (this.interval === 0) {
             this.LODIntevalData = { ...stockInterval };
-        } else {
-            if (stockInterval.close < this.LODIntevalData.low && !this.isInBreakOutOrDown) {
+        } else if (stockInterval.low < this.LODIntevalData.low ) {
                 this.LODIntevalData = { ...stockInterval };
-                if (this.interval >= MINIMUM_INTERVALS_TO_CALCULATE_AVERAGE_VOLUME && !this.isInBreakOutOrDown) {
-                    this.isInBreakOutOrDown = BuyDirectionEnum.PUT;
-                }
-            }
         }
     }
 
@@ -198,17 +196,18 @@ export class QuoteStats {
     private decideAllowedByDirectionForToday(quoteInterval: IQouteFullIntervalData) {
         if (this.interval === 0) {
             const today5SMA = +this.quoteMetadata.SMA5["Technical Analysis: SMA"][this.todayDate].SMA;
-            const dayBefore5MA =  this.getDayBefore5MA();
+            const dayBefore5MA = this.getDayBefore5MA();
             this.strengthOf5MA = today5SMA - dayBefore5MA;
-            if (this.strengthOf5MA>0.2) {
-                if (today5SMA <= quoteInterval.open+( this.strengthOf5MA/2)) {
+
+            if (this.strengthOf5MA > 0.2) {
+                if (today5SMA <= quoteInterval.open + (this.strengthOf5MA / 2)) {
                     this.allowedBuyDirection = BuyDirectionEnum.CALL;
                 }
                 else {
                     this.allowedBuyDirection = BuyDirectionEnum.NONE;
                 }
-            } else if (this.strengthOf5MA<-0.2) {
-                if (today5SMA >= quoteInterval.open - ( this.strengthOf5MA/2)) {
+            } else if (this.strengthOf5MA < -0.2) {
+                if (today5SMA >= quoteInterval.open - (this.strengthOf5MA / 2)) {
                     this.allowedBuyDirection = BuyDirectionEnum.PUT;
                 }
                 else {
@@ -225,9 +224,9 @@ export class QuoteStats {
         if (!this.didTouchSMA) {
             const today5SMA = +this.quoteMetadata.SMA5["Technical Analysis: SMA"][this.todayDate].SMA;
 
-            if (this.allowedBuyDirection === BuyDirectionEnum.CALL && ((quoteInterval.low - (this.strengthOf5MA/2)) <= today5SMA)) {
+            if (this.allowedBuyDirection === BuyDirectionEnum.CALL && ((quoteInterval.low - (this.strengthOf5MA / 2)) <= today5SMA)) {
                 this.didTouchSMA = true;
-            } else if (this.allowedBuyDirection === BuyDirectionEnum.PUT && ((quoteInterval.high + (this.strengthOf5MA/2)) >= today5SMA)) {
+            } else if (this.allowedBuyDirection === BuyDirectionEnum.PUT && ((quoteInterval.high + (this.strengthOf5MA / 2)) >= today5SMA)) {
                 this.didTouchSMA = true;
             }
         }
@@ -256,10 +255,34 @@ export class QuoteStats {
     }
 
     private checkToSell(quoteInterval: IQouteFullIntervalData) {
-        if (this.didBuy && this.didSell === false) {
+        if (this.didBuy && !this.didSell) {
+
+            const today5SMA = +this.quoteMetadata.SMA5["Technical Analysis: SMA"][this.todayDate].SMA;
+            // if before close - sell
             if (this.interval == 76) {
                 this.soldIntervalData = { ...quoteInterval };
                 this.didSell = true;
+            } else if ((this.isInBuyDirection == BuyDirectionEnum.CALL) &&
+                (quoteInterval.low < today5SMA - (this.strengthOf5MA / 2)) &&
+                (minuteDifference(this.boughtIntervalData.time, quoteInterval.time) > 15) &&
+                (quoteInterval.close < this.boughtIntervalData.low) &&
+                (quoteInterval.close < this.LODIntevalData.low)) {
+
+                this.soldIntervalData = { ...quoteInterval };
+                this.didSell = true;
+                this.didSellWithLoss = true;
+                logger.debug("CALLS NOT WORKING - SOLD WITH LOSS AT " + moment(quoteInterval.time).format("HH:mm:ss"));
+
+            } else if ((this.isInBuyDirection == BuyDirectionEnum.PUT) &&
+                (quoteInterval.high > today5SMA - (this.strengthOf5MA / 2)) &&
+                (minuteDifference(this.boughtIntervalData.time, quoteInterval.time) > 15) &&
+                (quoteInterval.close > this.boughtIntervalData.high) &&
+                (quoteInterval.close > this.HODIntevalData.high)) {
+
+                this.soldIntervalData = { ...quoteInterval };
+                this.didSell = true;
+                this.didSellWithLoss = true;
+                logger.debug("PUTS NOT WORKING - SOLD WITH LOSS AT " + moment(quoteInterval.time).format("HH:mm:ss"));
             }
         }
     }
@@ -267,7 +290,9 @@ export class QuoteStats {
     private buyOnHighVolumeMovement(quoteInterval: IQouteFullIntervalData) {
         if (!this.didBuy && this.interval >= 2 && this.interval < 71 && this.didTouchSMA) {
             if (quoteInterval.volume * 1.2 >= this.quoteIntervals[0].volume) {
-                this.buyQuote(quoteInterval);
+                if ((((this.quoteMetadata.averageDailyVolume10Day as number) / 78) * 2) <= quoteInterval.volume) {
+                    this.buyQuote(quoteInterval);
+                }
             } else if (this.isExtremeVolume()) {
                 this.buyQuote(quoteInterval);
             }
@@ -377,7 +402,7 @@ export class QuoteStats {
         }
     }
 
-    private getDayBefore5MA() : number{
+    private getDayBefore5MA(): number {
         let dayBefore5MA;
         let dayBefore = this.todayDate;
         while (!dayBefore5MA) {

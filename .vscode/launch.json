@@ -16,7 +16,9 @@
                 "node_modules/**/*.js",
                 "lib/**/*.js",
                 "async_hooks.js",
-                "inspector_async_hook.js"
+                "inspector_async_hook.js",
+                "next_tick.js",
+                "timers.js",
               ]
         }
     ]

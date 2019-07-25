@@ -1,4 +1,4 @@
-
+import * as _ from "lodash";
 import { QuoteStats as QuoteStats } from "./stock-stats";
 import { IQuotes, IQouteFullIntervalData, IQouteMetadata, IQuotesHistoricalsData } from "./models/stock-interval-data.model";
 import { ProxyService } from "./proxy-service";
@@ -7,6 +7,7 @@ import { convertAlphaVantageIntervals } from "./utils/utils";
 import { logger } from "./config/winston.config";
 import moment = require("moment");
 import  * as quoteUtils  from "./utils/quoteUtils";
+import  * as convertUtils  from "./utils/utils";
 
 export class StockHistoricalReader {
     private proxyService: ProxyService;
@@ -53,8 +54,9 @@ export class StockHistoricalReader {
     public async getQuotesHistoricalDataByTDAmeritrade(quoteIndex:number=0): Promise<any> {
         try {
                 const currentQuote = this.quotes[quoteIndex];
+                const specificTradeDates:string[] = [];
 
-                const historicalData: IQuotesHistoricalsData = await this.proxyService.getHistoricalData(this.quotes[quoteIndex]);
+                const historicalData: IQuotesHistoricalsData = await this.proxyService.getHistoricalData(this.quotes[quoteIndex],specificTradeDates);
                 const {quote5MinuteHistory} = historicalData;
                 const historicalIntervalsTradeDays = Object.keys(quote5MinuteHistory);
 
@@ -74,12 +76,34 @@ export class StockHistoricalReader {
                 }  finally {
                     if (quoteIndex+1<this.quotes.length) {
                         this.getQuotesHistoricalDataByTDAmeritrade(quoteIndex+1);
+                    } else {
+                        logger.debug("(-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  ");
                     }
                 }
         } catch (err) {
             logger.error("getQuotesHistoricalDataByTDAmeritrade :" + err);
         }
+
+        logger.debug("----------------------------------------------------------------------------");
     }
+
+    public async getBiggestDailyMoves (BiggestMoversQuota:number)  {
+        logger.debug("Biggest Moves:");
+        logger.debug("-------------------");
+        for (let i=0;i<this.quotes.length;i++) {
+            logger.debug(this.quotes[i]);
+            logger.debug("----------------------------------------------------------------------------");
+            const quoteIntervals  = await this.proxyService.getTDAmeritradeDailyHistory(this.quotes[i],100);
+            const quoteMoves = quoteIntervals.map((item)=>{
+                    return { diff:+(item.high - item.low).toFixed(2),...item}
+            });
+            const maxTenMoves = _.sortBy(quoteMoves, ['diff']).reverse().slice(0,10);
+            for (let j=0; j<maxTenMoves.length;j++) {
+                logger.debug(JSON.stringify(maxTenMoves[j]));
+            }
+            logger.debug("----------------------------------------------------------------------------");
+        }
+    } 
 
     private initializeQuotes(quotes: string[]) {
         quotes.forEach((quote) => {
@@ -102,7 +126,7 @@ export class StockHistoricalReader {
             // TODO :  put true values 
             fiftyTwoWeekLow:0,
             fiftyTwoWeekHigh:0,
-            dailyHistoricalData: [],
+            dailyHistoricalData: convertUtils.convertTDAmeritradeDailyIntervals(quoteUtils.getPartialHistory(intervals,tradeDay,5))
         }
         return quoteMetadata;
     }

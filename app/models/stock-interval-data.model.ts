@@ -51,7 +51,7 @@ export interface IQouteMetadata {
 export interface ITDAmeritradePriceHistory {
     candles: ITDAmeritradeIntervalData[];
     symbol:string;
-    empty:false;
+    empty:boolean;
 }
 
 export interface ITDAmeritradeIntervalData {
