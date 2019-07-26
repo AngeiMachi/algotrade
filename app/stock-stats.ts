@@ -2,16 +2,16 @@ import moment from "moment-timezone";
 
 import * as environmentConfig from "./config/environment.Config.json";
 import * as pushed from "./pushed";
-import { getCurrentTradingDay, convertAlphaVantageFormat } from "./utils/utils.js";
-
-import { VOLUME_THRESHOLD_ALARM, MINIMUM_INTERVALS_TO_CALCULATE_AVERAGE_VOLUME, PERCENTAGE_CHANGE_THRESHOLD } from "./config/globals.config";
-import { IAlphaVantageIntervals, IQuoteFullIntervalData, IQuoteIntervals, IQuoteMetadata } from "./models/stock-interval-data.model";
+import { getCurrentTradingDay } from "./utils/utils.js";
+import { VOLUME_THRESHOLD_ALARM,
+        MINIMUM_INTERVALS_TO_CALCULATE_AVERAGE_VOLUME,
+        PERCENTAGE_CHANGE_THRESHOLD } from "./config/globals.config";
+import { IQuoteFullIntervalData, IQuoteIntervals, IQuoteMetadata } from "./models/stock-interval-data.model";
 import { BuyDirectionEnum } from "./models/enums";
 import { logger } from "./config/winston.config.js";
 import { minuteDifference } from "./utils/general.js";
 
 export class QuoteStats {
-    private debugAtDate: string = "2019-05-09";
 
     private quote: string;
     private quoteMetadata = {} as IQuoteMetadata;
@@ -23,13 +23,12 @@ export class QuoteStats {
     private todayDate: string;
     private quoteIntervals: IQuoteFullIntervalData[] = [];
 
-
     private allowedBuyDirection: BuyDirectionEnum = BuyDirectionEnum.NONE;
     private didTouchSMA: boolean = false;
     private didBuy: boolean = false;
     private didSell: boolean = false;
     private didSellWithLoss: boolean = false;
-    private isDirty: boolean = false; // flag to know if bought once 
+    private isDirty: boolean = false; // flag to know if bought once
     private strengthOf5MA: number = 0;
     private isInBuyDirection: BuyDirectionEnum = BuyDirectionEnum.NONE;
     private isInBreakOutOrDown: BuyDirectionEnum = BuyDirectionEnum.NONE;
@@ -181,10 +180,14 @@ export class QuoteStats {
             const today = moment().isoWeekday();
             const nextFridayDate = moment().isoWeekday(today + 5 + (7 - today)).format("MMM Do YY");
 
-            //+ + "buy "+ BuyDirectionEnum[this.isInBuyDirection] + "S of the " + nextFridayDate +
-            const buyMessage = "*** " + this.quote + " *** Entered Buy " + BuyDirectionEnum[this.isInBuyDirection] + " Mode  at " + moment(stockInterval.time).format("HH:mm:ss")
-                + '\n,' + moment(this.volumeChangeIntervalData.time).format("HH:mm:ss(MMMM Do YYYY)") + ")Volume: Power=" + (this.ratioPower * 100).toFixed(2) + "%, Change=" + this.percentageChange + "%"
-                + '\n' + moment(breakInterval.time).format("HH:mm:ss(MMMM Do YYYY)") + ") Break Interval time"
+            // + + "buy "+ BuyDirectionEnum[this.isInBuyDirection] + "S of the " + nextFridayDate +
+
+            const buyMessage = "*** " + this.quote + " *** Entered Buy " + BuyDirectionEnum[this.isInBuyDirection] +
+                               " Mode  at " + moment(stockInterval.time).format("HH:mm:ss") + "\n," +
+                                moment(this.volumeChangeIntervalData.time).format("HH:mm:ss(MMMM Do YYYY)")
+                                + ")Volume: Power=" + (this.ratioPower * 100).toFixed(2) + "%, Change=" +
+                                this.percentageChange + "%" + "\n" + moment(breakInterval.time).format("HH:mm:ss(MMMM Do YYYY)")
+                                 + ") Break Interval time";
 
             pushed.sendPushMessage(buyMessage);
             logger.debug(buyMessage);
@@ -223,7 +226,8 @@ export class QuoteStats {
 
             if (this.allowedBuyDirection === BuyDirectionEnum.CALL && ((quoteInterval.low - (this.strengthOf5MA / 2)) <= today5SMA)) {
                 this.didTouchSMA = true;
-            } else if (this.allowedBuyDirection === BuyDirectionEnum.PUT && ((quoteInterval.high + (this.strengthOf5MA / 2)) >= today5SMA)) {
+            } else if (this.allowedBuyDirection === BuyDirectionEnum.PUT &&
+                      ((quoteInterval.high - (this.strengthOf5MA / 2)) >= today5SMA)) {
                 this.didTouchSMA = true;
             }
         }
@@ -234,17 +238,19 @@ export class QuoteStats {
 
             let buyMessage: string;
 
-            //this.isInBuyDirection = this.getBuyDirection(quoteInterval);
+            // this.isInBuyDirection = this.getBuyDirection(quoteInterval);
             this.isInBuyDirection = this.allowedBuyDirection;
             if (this.isInBuyDirection !== BuyDirectionEnum.NONE) {
                 this.boughtIntervalData = { ...quoteInterval };
                 this.didBuy = true;
                 this.isDirty = true;
 
-                buyMessage = "*** " + this.quote + " *** Entered Buy " + BuyDirectionEnum[this.isInBuyDirection] + " Mode  at " + moment(quoteInterval.time).format("HH:mm:ss");
-            }
-            else {
-                buyMessage = "CANCELED *** " + this.quote + " *** Entered Buy " + BuyDirectionEnum[this.isInBuyDirection] + " Mode  at " + moment(quoteInterval.time).format("HH:mm:ss");
+                buyMessage = "*** " + this.quote + " *** Entered Buy " + BuyDirectionEnum[this.isInBuyDirection] +
+                             " Mode  at " + moment(quoteInterval.time).format("HH:mm:ss");
+            } else {
+
+                buyMessage = "CANCELED *** " + this.quote + " *** Entered Buy " + BuyDirectionEnum[this.isInBuyDirection] +
+                             " Mode  at " + moment(quoteInterval.time).format("HH:mm:ss");
             }
             pushed.sendPushMessage(buyMessage);
             logger.debug(buyMessage);
@@ -256,10 +262,10 @@ export class QuoteStats {
 
             const today5SMA = +this.quoteMetadata.SMA5["Technical Analysis: SMA"][this.todayDate].SMA;
             // if before close - sell
-            if (this.interval == 76) {
+            if (this.interval === 76) {
                 this.soldIntervalData = { ...quoteInterval };
                 this.didSell = true;
-            } else if ((this.isInBuyDirection == BuyDirectionEnum.CALL) &&
+            } else if ((this.isInBuyDirection === BuyDirectionEnum.CALL) &&
                 (quoteInterval.low < today5SMA - (this.strengthOf5MA / 2)) &&
                 (minuteDifference(this.boughtIntervalData.time, quoteInterval.time) > 15) &&
                 (quoteInterval.close < this.boughtIntervalData.low) &&

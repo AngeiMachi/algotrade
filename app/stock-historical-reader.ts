@@ -51,10 +51,9 @@ export class StockHistoricalReader {
         }
     }
 
-    public async getQuotesHistoricalDataByTDAmeritrade(quoteIndex: number = 0): Promise<any> {
+    public async getQuotesHistoricalDataByTDAmeritrade(quoteIndex: number = 0, specificTradeDates: string[]= []): Promise<any> {
         try {
             const currentQuote = this.quotes[quoteIndex];
-            const specificTradeDates: string[] = [];
 
             const historicalData: IQuotesHistoricalData =
                 await this.proxyService.getHistoricalData(this.quotes[quoteIndex], specificTradeDates);
@@ -77,7 +76,7 @@ export class StockHistoricalReader {
                 logger.debug(currentQuote + " Final Profit / Loss:" + this.profitLossAccountPerQuote[currentQuote]);
             } finally {
                 if (quoteIndex + 1 < this.quotes.length) {
-                    this.getQuotesHistoricalDataByTDAmeritrade(quoteIndex + 1);
+                    this.getQuotesHistoricalDataByTDAmeritrade(quoteIndex + 1, specificTradeDates);
                 } else {
                     logger.debug("(-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-: ");
                 }
@@ -96,7 +95,7 @@ export class StockHistoricalReader {
             logger.debug(this.quotes[i]);
             logger.debug("----------------------------------------------------------------------------");
             const { partialHistoryDailyIntervals,
-                fullYearDailyHistory } = await this.proxyService.getTDAmeritradeDailyHistory(this.quotes[i], 100);
+                    fullYearDailyHistory } = await this.proxyService.getTDAmeritradeDailyHistory(this.quotes[i], 100);
             const quoteMoves = partialHistoryDailyIntervals.map((item) => {
                 const tradeDay = moment(item.time).format("YYYY-MM-DD");
                 return {
@@ -115,13 +114,13 @@ export class StockHistoricalReader {
                     },
                 };
             });
-            const maxTenMoves = _.sortBy(quoteMoves, ["diff"]).reverse().slice(0, 10);
+            const maxTenMoves = _.sortBy(quoteMoves, ["diff"]).reverse().slice(0, BiggestMoversQuota);
 
             let datesArray = "[";
 
             for (let j = 0; j < maxTenMoves.length; j++) {
                 logger.debug(JSON.stringify(maxTenMoves[j]));
-                datesArray += "\"" + maxTenMoves[j].time + "\",";
+                datesArray += "\"" + maxTenMoves[j].time + "\", ";
             }
             datesArray = datesArray.replace(/,(?=[^,]*$)/, "]");
 
@@ -129,7 +128,7 @@ export class StockHistoricalReader {
             const avg90avg = _.meanBy(quoteMoves.filter((item) => item.avg10DaysRatio > 1), "avg90DaysRatio").toFixed(2);
             logger.debug("----------------------------------------------------------------------------");
             logger.debug("avg10avg=" + avg10avg + " ,avg90avg=" + avg90avg  );
-            logger.debug( datesArray  );
+            logger.debug( datesArray );
             logger.debug("----------------------------------------------------------------------------");
         }
     }
