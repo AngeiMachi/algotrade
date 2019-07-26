@@ -1,6 +1,6 @@
-import {QuoteStats} from '../stock-stats';
+import {QuoteStats} from "../stock-stats";
 
-export interface IQouteFullIntervalData {
+export interface IQuoteFullIntervalData {
     open: number;
     high: number;
     low: number;
@@ -19,46 +19,46 @@ export interface IAlphaVantageIntervals {
 export interface IQuotes {
     [key: string]: QuoteStats;
 }
-export interface IQouteIntervals {
-    [key: string]: IQouteFullIntervalData;
+export interface IQuoteIntervals {
+    [key: string]: IQuoteFullIntervalData;
 }
-export interface IQouteHistoricalIntervals {
-    [key: string]: IQouteIntervals;
+export interface IQuoteHistoricalIntervals {
+    [key: string]: IQuoteIntervals;
 }
-export interface IQuotesHistoricalsData {
-    quote5MinuteHistory:IQouteHistoricalIntervals;
-    quoteFullYearDailyHistory:ITDAmeritradePriceHistory;
+export interface IQuotesHistoricalData {
+    quote5MinuteHistory: IQuoteHistoricalIntervals;
+    quoteFullYearDailyHistory: ITDAmeritradePriceHistory;
     SMA: any;
 }
 
 interface IQuotePriceFormat {
-    raw:number;
-    fmt:string;
+    raw: number;
+    fmt: string;
 }
 
-export interface IQouteMetadata {
+export interface IQuoteMetadata {
     averageDailyVolume10Day: number | IQuotePriceFormat;
     averageDailyVolume3Month: number | IQuotePriceFormat;
-    regularMarketPreviousClose:number | IQuotePriceFormat;
+    regularMarketPreviousClose: number | IQuotePriceFormat;
     fiftyTwoWeekLow: number | IQuotePriceFormat;
     fiftyTwoWeekHigh: number | IQuotePriceFormat;
 
-    dailyHistoricalData:IQouteFullIntervalData[];
+    dailyHistoricalData: IQuoteFullIntervalData[];
 
-    SMA5?:any;
+    SMA5?: any;
 }
 
 export interface ITDAmeritradePriceHistory {
     candles: ITDAmeritradeIntervalData[];
-    symbol:string;
-    empty:boolean;
+    symbol: string;
+    empty: boolean;
 }
 
 export interface ITDAmeritradeIntervalData {
-    open:number;
-    high:number;
-    low:number;
-    close:number;
-    volume:number;
-    datetime:number;
+    open: number;
+    high: number;
+    low: number;
+    close: number;
+    volume: number;
+    datetime: number;
 }

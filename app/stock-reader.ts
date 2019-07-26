@@ -7,7 +7,7 @@ import { MAX_QUOTES ,
         LAST_REFRESHED_PROPERTY_NAME,
     } from "./config/globals.config";
 import { QuoteStats } from "./stock-stats";
-import { IQuotes, IQouteFullIntervalData, IQouteMetadata } from "./models/stock-interval-data.model";
+import { IQuotes, IQuoteFullIntervalData, IQuoteMetadata } from "./models/stock-interval-data.model";
 import { ProxyService } from "./proxy-service";
 import { convertAlphaVantageFormat , convertAlphaVantageIntervals } from "./utils/utils";
 import { logger } from "./config/winston.config";
@@ -27,7 +27,7 @@ export class StockReader {
         try {
             const promises = [];
             for (const quote of  Object.keys(this.quotes)) {
-                const quoteMetadata: IQouteMetadata = await this.proxyService.getYahooFinanceMetadata(quote) ;
+                const quoteMetadata: IQuoteMetadata = await this.proxyService.getYahooFinanceMetadata(quote) ;
                 const promise = this.proxyService.getIntraday(quote).then( (data: any) => {
                     const alphaVantageQuoteIntervals = data[INTERVAL_PROPERTY_NAME] ;
                     const quoteIntervals = convertAlphaVantageIntervals(alphaVantageQuoteIntervals)
@@ -68,20 +68,20 @@ export class StockReader {
             const quoteStockStats: QuoteStats = this.quotes[quote];
             this.proxyService.getIntraday(quote).then( (data: any) => {
 
-                const stockInterval: IQouteFullIntervalData = this.getStockLatestIntervalData(data);
-                
-                quoteStockStats.recordNewStockInterval(stockInterval,true);
+                const stockInterval: IQuoteFullIntervalData = this.getStockLatestIntervalData(data);
+
+                quoteStockStats.recordNewStockInterval(stockInterval, true);
                 if (this.isLastInterval(data)) {
                     delete this.quotes[quote];
                     logger.debug("Terminating quote " + quote);
                 }
-            }).catch( err => {
+            }).catch( (err) => {
                 logger.error("error at Stock-Reader.iterateStocks - quote=" + quote+",index="+index+"err="+err);
             });
         });
     }
 
-    private getStockLatestIntervalData(data: any): IQouteFullIntervalData {
+    private getStockLatestIntervalData(data: any): IQuoteFullIntervalData {
         const timeSeries = data[ INTERVAL_PROPERTY_NAME ];
         const lastIntervalIndex = data[ METADATA_PROPERTY_NAME ][LAST_REFRESHED_PROPERTY_NAME];
         const stockLastInterval = timeSeries[lastIntervalIndex];

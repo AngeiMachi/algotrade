@@ -6,12 +6,12 @@ import { logger } from "./config/winston.config.js";
 import * as queryString from "query-string";
 import { convertTDAmeritradeMultipleDaysOf5MinuteIntervals } from "./utils/utils.js";
 import { parseMustache } from "./utils/general.js";
-import { IQouteHistoricalIntervals, ITDAmeritradePriceHistory } from "./models/stock-interval-data.model.js";
+import { IQuoteHistoricalIntervals, ITDAmeritradePriceHistory } from "./models/stock-interval-data.model.js";
 
 const TD_BASE_API = "https://api.tdameritrade.com/v1";
 const GET_ACCESS_TOKEN = "/oauth2/token";
 
-let token: any = {};
+const token: any = {};
 
 export const getAccessToken = async () => {
     const formData = {
@@ -22,33 +22,33 @@ export const getAccessToken = async () => {
 
     await request.post({
         url: TD_BASE_API + GET_ACCESS_TOKEN, qs: queryString.stringify(formData),
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
     });
 
 };
 
-export const getQuote5MinuteHistory = async (quote: string,specificTradeDates:string[]=[]): Promise<IQouteHistoricalIntervals> => {
+export const getQuote5MinuteHistory = async (quote: string, specificTradeDates: string[]= []): Promise<IQuoteHistoricalIntervals> => {
     try {
         const options = {
             quote: quote.toUpperCase(),
-            api_key: environmentConfig.TDAmeritradeAPI.api_key
-        }
+            api_key: environmentConfig.TDAmeritradeAPI.api_key,
+        };
         const fullURL = parseMustache(environmentConfig.TDAmeritradeAPI.URL.get_historical_5_minutes, options);
 
         const response = await request.get({
             url: fullURL,
-            headers: { Authorization: "Bearer " + environmentConfig.TDAmeritradeAPI.bearer_token }
+
         });
 
         const parsedResponse = JSON.parse(response);
         let  groupedIntervalsByDay = _.groupBy(parsedResponse.candles, groupByDateFunction);
-        
-        if (specificTradeDates.length>0) {
+
+        if (specificTradeDates.length > 0) {
             groupedIntervalsByDay = _.pick(groupedIntervalsByDay,specificTradeDates);
         }
-        
-        groupedIntervalsByDay = _.omitBy(groupedIntervalsByDay, intervals =>  intervals.length!=78);
-       
+
+        groupedIntervalsByDay = _.omitBy(groupedIntervalsByDay, (intervals) =>  intervals.length !== 78);
+
         const quote5MinuteHistory = convertTDAmeritradeMultipleDaysOf5MinuteIntervals(groupedIntervalsByDay);
         return quote5MinuteHistory;
     } catch (err) {
@@ -61,19 +61,19 @@ export const getQuoteFullYearDailyHistory = async (quote: string): Promise<ITDAm
     try {
         const options = {
             quote: quote.toUpperCase(),
-        }
+        };
+
         const fullURL = parseMustache(environmentConfig.TDAmeritradeAPI.URL.get_historical_daily_full_Year, options);
 
         const response = await request.get({
-            url: fullURL,
-            headers: { Authorization: "Bearer " + environmentConfig.TDAmeritradeAPI.bearer_token }
+            url: fullURL
         });
 
         const dailyIntervals = JSON.parse(response) as ITDAmeritradePriceHistory;
-        
+
         return dailyIntervals;
     } catch (err) {
-        logger.error("getQuoteFullYearDailyHistorry failed " + err);
+        logger.error("getQuoteFullYearDailyHistory failed " + err);
         throw err;
     }
 };

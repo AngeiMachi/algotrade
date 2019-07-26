@@ -1,21 +1,21 @@
 import * as _ from "lodash";
 import { QuoteStats as QuoteStats } from "./stock-stats";
-import { IQuotes, IQouteFullIntervalData, IQouteMetadata, IQuotesHistoricalsData } from "./models/stock-interval-data.model";
+import { IQuoteMetadata, IQuotesHistoricalData } from "./models/stock-interval-data.model";
 import { ProxyService } from "./proxy-service";
 import { INTERVAL_PROPERTY_NAME } from "./config/globals.config";
 import { convertAlphaVantageIntervals } from "./utils/utils";
 import { logger } from "./config/winston.config";
 import moment = require("moment");
-import  * as quoteUtils  from "./utils/quoteUtils";
-import  * as convertUtils  from "./utils/utils";
+import * as quoteUtils from "./utils/quoteUtils";
+import * as convertUtils from "./utils/utils";
 
 export class StockHistoricalReader {
     private proxyService: ProxyService;
     private quotes: string[] = [];
-    private profitLossAccountPerQuote = {} as  {[key:string]:number};
+    private profitLossAccountPerQuote = {} as { [key: string]: number };
 
-    constructor( quotes: string[] = [], alphaVantagekey: string) {
-        this.proxyService = new ProxyService(alphaVantagekey);
+    constructor(quotes: string[] = [], alphaVantageKey: string) {
+        this.proxyService = new ProxyService(alphaVantageKey);
 
         this.initializeQuotes(quotes);
     }
@@ -25,7 +25,7 @@ export class StockHistoricalReader {
             const promises: any[] | Array<Promise<void>> = [];
             for (let j = 0; j < this.quotes.length; j++) {
                 const promise = setTimeout(async () => {
-                    const historicalData = await this.proxyService.getAlphaVantageHistoricalData(this.quotes[j])
+                    const historicalData = await this.proxyService.getAlphaVantageHistoricalData(this.quotes[j]);
 
                     for (let i = 0; i < historicalData.length; i++) {
                         const alphaVantageQuoteIntervals = historicalData[i][INTERVAL_PROPERTY_NAME];
@@ -35,13 +35,13 @@ export class StockHistoricalReader {
 
                         const quoteIntervals = convertAlphaVantageIntervals(alphaVantageQuoteIntervals);
 
-                        const quoteMetadata: IQouteMetadata = await this.proxyService.getYahooFinanceMetadata(this.quotes[j], moment(tradeDay));
+                        const quoteMetadata: IQuoteMetadata = await this.proxyService.getYahooFinanceMetadata(this.quotes[j],
+                                                                                                              moment(tradeDay));
 
                         const quoteStats = new QuoteStats(this.quotes[j], tradeDay);
 
                         quoteStats.initializeStockData(quoteIntervals, quoteMetadata);
                     }
-
 
                 }, j * 15 * 1000);
             }
@@ -51,35 +51,37 @@ export class StockHistoricalReader {
         }
     }
 
-    public async getQuotesHistoricalDataByTDAmeritrade(quoteIndex:number=0): Promise<any> {
+    public async getQuotesHistoricalDataByTDAmeritrade(quoteIndex: number = 0): Promise<any> {
         try {
-                const currentQuote = this.quotes[quoteIndex];
-                const specificTradeDates:string[] = [];
+            const currentQuote = this.quotes[quoteIndex];
+            const specificTradeDates: string[] = [];
 
-                const historicalData: IQuotesHistoricalsData = await this.proxyService.getHistoricalData(this.quotes[quoteIndex],specificTradeDates);
-                const {quote5MinuteHistory} = historicalData;
-                const historicalIntervalsTradeDays = Object.keys(quote5MinuteHistory);
+            const historicalData: IQuotesHistoricalData =
+                await this.proxyService.getHistoricalData(this.quotes[quoteIndex], specificTradeDates);
+            const { quote5MinuteHistory } = historicalData;
+            const historicalIntervalsTradeDays = Object.keys(quote5MinuteHistory);
 
-                try {
-                    for (let i=0; i<historicalIntervalsTradeDays.length; i++) {
-                        const tradeDay = historicalIntervalsTradeDays[i];
-                        logger.debug("index=" + i + ":" + currentQuote + " Trade Day is " + tradeDay + ":");
-                        
-                        const profitLossAccount = this.calculateProfitLossPerTradeDay (historicalData,currentQuote,tradeDay);
+            try {
+                for (let i = 0; i < historicalIntervalsTradeDays.length; i++) {
+                    const tradeDay = historicalIntervalsTradeDays[i];
+                    logger.debug("index=" + i + ":" + currentQuote + " Trade Day is " + tradeDay + ":");
 
-                        if (profitLossAccount!==0) {
-                            logger.debug("index=" +  i + ":" + this.quotes[quoteIndex] + " Trade Day is " + tradeDay + " Profit / Loss:" + profitLossAccount);
-                            this.profitLossAccountPerQuote[currentQuote] +=  profitLossAccount;
-                        }
-                    }
-                    logger.debug(currentQuote + " Final Profit / Loss:" + this.profitLossAccountPerQuote[currentQuote]);
-                }  finally {
-                    if (quoteIndex+1<this.quotes.length) {
-                        this.getQuotesHistoricalDataByTDAmeritrade(quoteIndex+1);
-                    } else {
-                        logger.debug("(-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  ");
+                    const profitLossAccount = this.calculateProfitLossPerTradeDay(historicalData, currentQuote, tradeDay);
+
+                    if (profitLossAccount !== 0) {
+                        logger.debug("index=" + i + ":" + this.quotes[quoteIndex] + " Trade Day is " +
+                            tradeDay + " Profit / Loss:" + profitLossAccount);
+                        this.profitLossAccountPerQuote[currentQuote] += profitLossAccount;
                     }
                 }
+                logger.debug(currentQuote + " Final Profit / Loss:" + this.profitLossAccountPerQuote[currentQuote]);
+            } finally {
+                if (quoteIndex + 1 < this.quotes.length) {
+                    this.getQuotesHistoricalDataByTDAmeritrade(quoteIndex + 1);
+                } else {
+                    logger.debug("(-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-: ");
+                }
+            }
         } catch (err) {
             logger.error("getQuotesHistoricalDataByTDAmeritrade :" + err);
         }
@@ -87,23 +89,50 @@ export class StockHistoricalReader {
         logger.debug("----------------------------------------------------------------------------");
     }
 
-    public async getBiggestDailyMoves (BiggestMoversQuota:number)  {
+    public async getBiggestDailyMoves(BiggestMoversQuota: number) {
         logger.debug("Biggest Moves:");
         logger.debug("-------------------");
-        for (let i=0;i<this.quotes.length;i++) {
+        for (let i = 0; i < this.quotes.length; i++) {
             logger.debug(this.quotes[i]);
             logger.debug("----------------------------------------------------------------------------");
-            const quoteIntervals  = await this.proxyService.getTDAmeritradeDailyHistory(this.quotes[i],100);
-            const quoteMoves = quoteIntervals.map((item)=>{
-                    return { diff:+(item.high - item.low).toFixed(2),...item}
+            const { partialHistoryDailyIntervals,
+                fullYearDailyHistory } = await this.proxyService.getTDAmeritradeDailyHistory(this.quotes[i], 100);
+            const quoteMoves = partialHistoryDailyIntervals.map((item) => {
+                const tradeDay = moment(item.time).format("YYYY-MM-DD");
+                return {
+                    diff: + (item.high - item.low).toFixed(2),
+                    ...item,
+                    time: tradeDay,
+                    avg10Days: quoteUtils.calculateAverage(fullYearDailyHistory.candles, tradeDay, 10),
+                    get avg10DaysRatio() {
+                        // @ts-ignore
+                        return +(this.volume / this.avg10Days).toFixed(2) ;
+                    },
+                    avg90Days: quoteUtils.calculateAverage(fullYearDailyHistory.candles, tradeDay, 90),
+                    get avg90DaysRatio() {
+                        // @ts-ignore
+                        return +(this.volume / this.avg90Days).toFixed(2) ;
+                    },
+                };
             });
-            const maxTenMoves = _.sortBy(quoteMoves, ['diff']).reverse().slice(0,10);
-            for (let j=0; j<maxTenMoves.length;j++) {
+            const maxTenMoves = _.sortBy(quoteMoves, ["diff"]).reverse().slice(0, 10);
+
+            let datesArray = "[";
+
+            for (let j = 0; j < maxTenMoves.length; j++) {
                 logger.debug(JSON.stringify(maxTenMoves[j]));
+                datesArray += "\"" + maxTenMoves[j].time + "\",";
             }
+            datesArray = datesArray.replace(/,(?=[^,]*$)/, "]");
+
+            const avg10avg = _.meanBy(quoteMoves.filter((item) => item.avg10DaysRatio > 1), "avg10DaysRatio").toFixed(2);
+            const avg90avg = _.meanBy(quoteMoves.filter((item) => item.avg10DaysRatio > 1), "avg90DaysRatio").toFixed(2);
+            logger.debug("----------------------------------------------------------------------------");
+            logger.debug("avg10avg=" + avg10avg + " ,avg90avg=" + avg90avg  );
+            logger.debug( datesArray  );
             logger.debug("----------------------------------------------------------------------------");
         }
-    } 
+    }
 
     private initializeQuotes(quotes: string[]) {
         quotes.forEach((quote) => {
@@ -112,31 +141,31 @@ export class StockHistoricalReader {
         });
     }
 
-    private composeMetadata(historicalData: IQuotesHistoricalsData,tradeDay:string) :IQouteMetadata {
+    private composeMetadata(historicalData: IQuotesHistoricalData, tradeDay: string): IQuoteMetadata {
 
         const intervals = historicalData.quoteFullYearDailyHistory.candles;
-        
-        let quoteMetadata: IQouteMetadata = {
-            averageDailyVolume10Day: quoteUtils.calculateAverage(intervals,tradeDay,10),
-            averageDailyVolume3Month: quoteUtils.calculateAverage(intervals,tradeDay,90),
-            regularMarketPreviousClose: quoteUtils.getPreviousClose(intervals,tradeDay),
-            
-            SMA5:historicalData.SMA,
-            
-            // TODO :  put true values 
-            fiftyTwoWeekLow:0,
-            fiftyTwoWeekHigh:0,
-            dailyHistoricalData: convertUtils.convertTDAmeritradeDailyIntervals(quoteUtils.getPartialHistory(intervals,tradeDay,5))
-        }
+
+        const quoteMetadata: IQuoteMetadata = {
+            averageDailyVolume10Day: quoteUtils.calculateAverage(intervals, tradeDay, 10),
+            averageDailyVolume3Month: quoteUtils.calculateAverage(intervals, tradeDay, 90),
+            regularMarketPreviousClose: quoteUtils.getPreviousClose(intervals, tradeDay),
+
+            SMA5: historicalData.SMA,
+
+            // TODO :  put true values
+            fiftyTwoWeekLow: 0,
+            fiftyTwoWeekHigh: 0,
+            dailyHistoricalData: convertUtils.convertTDAmeritradeDailyIntervals(quoteUtils.getPartialHistory(intervals, tradeDay, 5)),
+        };
         return quoteMetadata;
     }
 
-     private calculateProfitLossPerTradeDay (historicalData:any, currentQuote:string,tradeDay:string)  { 
-         
+    private calculateProfitLossPerTradeDay(historicalData: any, currentQuote: string, tradeDay: string) {
+
         const quote5MinuteHistory = historicalData.quote5MinuteHistory;
-        const quoteMetadata = this.composeMetadata(historicalData,tradeDay);
-        const quoteStats =  new QuoteStats(currentQuote, tradeDay);
-        const profitLossAccount = quoteStats.initializeStockData(quote5MinuteHistory[tradeDay], quoteMetadata); 
+        const quoteMetadata = this.composeMetadata(historicalData, tradeDay);
+        const quoteStats = new QuoteStats(currentQuote, tradeDay);
+        const profitLossAccount = quoteStats.initializeStockData(quote5MinuteHistory[tradeDay], quoteMetadata);
 
         return profitLossAccount;
     }
