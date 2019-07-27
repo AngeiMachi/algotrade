@@ -33,8 +33,8 @@ export class QuoteStats {
     private isInBuyDirection: BuyDirectionEnum = BuyDirectionEnum.NONE;
     private isInBreakOutOrDown: BuyDirectionEnum = BuyDirectionEnum.NONE;
     private volumeChangeIntervalData = {} as IQuoteFullIntervalData;
-    private HODIntevalData = {} as IQuoteFullIntervalData;
-    private LODIntevalData = {} as IQuoteFullIntervalData;
+    private HODIntervalData = {} as IQuoteFullIntervalData;
+    private LODIntervalData = {} as IQuoteFullIntervalData;
     private boughtIntervalData = {} as IQuoteFullIntervalData;
     private soldIntervalData = {} as IQuoteFullIntervalData;
     private ratioPower: number = 0;
@@ -123,6 +123,13 @@ export class QuoteStats {
         return false;
     }
 
+    private isSuperExtremeVolumeInterval(stockInterval: IQuoteFullIntervalData): boolean {
+        if ((this.quoteMetadata.averageDailyVolume10Day)   <= (stockInterval.volume * 4)) {
+            return true;
+        }
+        return false;
+    }
+
     private calculateAverageVolume2(stockInterval: IQuoteFullIntervalData) {
         if (this.interval >= MINIMUM_INTERVALS_TO_CALCULATE_AVERAGE_VOLUME) {
             this.volumeSum += stockInterval.volume;
@@ -151,17 +158,17 @@ export class QuoteStats {
 
     private monitorHOD(stockInterval: IQuoteFullIntervalData) {
         if (this.interval === 0) {
-            this.HODIntevalData = { ...stockInterval };
-        } else if (stockInterval.high > this.HODIntevalData.high) {
-                this.HODIntevalData = { ...stockInterval };
+            this.HODIntervalData = { ...stockInterval };
+        } else if (stockInterval.high > this.HODIntervalData.high) {
+                this.HODIntervalData = { ...stockInterval };
         }
     }
 
     private monitorLOD(stockInterval: IQuoteFullIntervalData) {
         if (this.interval === 0) {
-            this.LODIntevalData = { ...stockInterval };
-        } else if (stockInterval.low < this.LODIntevalData.low ) {
-                this.LODIntevalData = { ...stockInterval };
+            this.LODIntervalData = { ...stockInterval };
+        } else if (stockInterval.low < this.LODIntervalData.low ) {
+                this.LODIntervalData = { ...stockInterval };
         }
     }
 
@@ -172,9 +179,9 @@ export class QuoteStats {
             let breakInterval: IQuoteFullIntervalData = {} as IQuoteFullIntervalData;
 
             if (this.isInBreakOutOrDown === BuyDirectionEnum.CALL) {
-                breakInterval = this.HODIntevalData;
+                breakInterval = this.HODIntervalData;
             } else if (this.isInBreakOutOrDown === BuyDirectionEnum.PUT) {
-                breakInterval = this.LODIntevalData;
+                breakInterval = this.LODIntervalData;
             }
 
             const today = moment().isoWeekday();
@@ -209,7 +216,7 @@ export class QuoteStats {
                     this.allowedBuyDirection = BuyDirectionEnum.NONE;
                 }
             } else if (this.strengthOf5MA < -0.2) {
-                if (today5SMA >= quoteInterval.open - (this.strengthOf5MA / 2)) {
+                if (today5SMA >= quoteInterval.open + (this.strengthOf5MA / 2)) {
                     this.allowedBuyDirection = BuyDirectionEnum.PUT;
                 } else {
                     this.allowedBuyDirection = BuyDirectionEnum.NONE;
@@ -240,7 +247,7 @@ export class QuoteStats {
 
             // this.isInBuyDirection = this.getBuyDirection(quoteInterval);
             this.isInBuyDirection = this.allowedBuyDirection;
-            if (this.isInBuyDirection !== BuyDirectionEnum.NONE) {
+            if (true) {
                 this.boughtIntervalData = { ...quoteInterval };
                 this.didBuy = true;
                 this.isDirty = true;
@@ -269,7 +276,7 @@ export class QuoteStats {
                 (quoteInterval.low < today5SMA - (this.strengthOf5MA / 2)) &&
                 (minuteDifference(this.boughtIntervalData.time, quoteInterval.time) > 15) &&
                 (quoteInterval.close < this.boughtIntervalData.low) &&
-                (quoteInterval.close < this.LODIntevalData.low)) {
+                (quoteInterval.close < this.LODIntervalData.low)) {
 
                 this.soldIntervalData = { ...quoteInterval };
                 this.didSell = true;
@@ -280,7 +287,7 @@ export class QuoteStats {
                 (quoteInterval.high > today5SMA - (this.strengthOf5MA / 2)) &&
                 (minuteDifference(this.boughtIntervalData.time, quoteInterval.time) > 15) &&
                 (quoteInterval.close > this.boughtIntervalData.high) &&
-                (quoteInterval.close > this.HODIntevalData.high)) {
+                (quoteInterval.close > this.HODIntervalData.high)) {
 
                 this.soldIntervalData = { ...quoteInterval };
                 this.didSell = true;
@@ -291,12 +298,17 @@ export class QuoteStats {
     }
 
     private buyOnHighVolumeMovement(quoteInterval: IQuoteFullIntervalData) {
-        if (!this.didBuy && this.interval >= 2 && this.interval < 71 && this.didTouchSMA) {
-            if (quoteInterval.volume * 1.2 >= this.quoteIntervals[0].volume) {
-                if ((((this.quoteMetadata.averageDailyVolume10Day as number) / 78) * 1.5) <= quoteInterval.volume) {
+        if (!this.didBuy && this.interval >= 2 && this.interval < 71) {
+            if (this.didTouchSMA) {
+                if (quoteInterval.volume * 1.2 >= this.quoteIntervals[0].volume) {
+                    if ((((this.quoteMetadata.averageDailyVolume10Day as number) / 78) * 1.5) <= quoteInterval.volume) {
+                        this.buyQuote(quoteInterval);
+                    }
+                } else if (this.isExtremeVolume()) {
                     this.buyQuote(quoteInterval);
                 }
-            } else if (this.isExtremeVolume()) {
+            }
+            if (this.isSuperExtremeVolumeInterval(quoteInterval)) {
                 this.buyQuote(quoteInterval);
             }
         }
@@ -317,7 +329,7 @@ export class QuoteStats {
         const nextFridayDate = moment().isoWeekday(today + 5 + (7 - today)).format("MMM Do YY");
 
         const buyMessage = "*** " + this.quote + " Was bought by breakout confirmation "
-            + moment(this.HODIntevalData.time).format("HH:mm:ss(MMMM Do YYYY)")
+            + moment(this.HODIntervalData.time).format("HH:mm:ss(MMMM Do YYYY)")
             + " Can buy Calls of the " + nextFridayDate;
 
         pushed.sendPushMessage(buyMessage);

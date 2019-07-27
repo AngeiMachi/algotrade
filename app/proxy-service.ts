@@ -136,9 +136,11 @@ export class ProxyService {
             const quote5MinuteHistory = await  TDAmeritradeAPI.getQuote5MinuteHistory(quote, specificTradeDates);
             const quoteFullYearDailyHistory = await TDAmeritradeAPI.getQuoteFullYearDailyHistory(quote);
             const SMA = await this.alphaAPI.technical.sma(quote, `daily`, 5, `close`);
+            const BBands = await this.alphaAPI.technical.BBands(quote, `daily`, 20, `close`, 2 , 2);
             await request.get({url: "https://reqres.in/api/users?delay=5"});
 
             return  {
+                BBands,
                 SMA,
                 quote5MinuteHistory,
                 quoteFullYearDailyHistory,
@@ -146,7 +148,6 @@ export class ProxyService {
         } catch (err) {
                 throw err;
         }
-
     }
 
     public async getTDAmeritradeDailyHistory(quote: string, daysBack: number):

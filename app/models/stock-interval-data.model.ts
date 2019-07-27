@@ -29,6 +29,7 @@ export interface IQuotesHistoricalData {
     quote5MinuteHistory: IQuoteHistoricalIntervals;
     quoteFullYearDailyHistory: ITDAmeritradePriceHistory;
     SMA: any;
+    BBands: any;
 }
 
 interface IQuotePriceFormat {
