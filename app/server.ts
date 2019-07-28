@@ -16,9 +16,9 @@ import * as TDAmeritradeAPI from "./td-ameritrade-api";
 // [...environmentConfig.AlphaVantageAPIKeys[1].quotes]);
 // shr.getQuotesHistoricalDataByAlphaVantage();
 
-const shr = new StockHistoricalReader( environmentConfig.AlphaVantageAPIKeys[0].quotes , environmentConfig.AlphaVantageAPIKeys[0].key);
+const shr = new StockHistoricalReader( environmentConfig.AlphaVantageAPIKeys[2].quotes , environmentConfig.AlphaVantageAPIKeys[2].key);
 // shr.getBiggestDailyMoves(15);
-shr.getQuotesHistoricalDataByTDAmeritrade(0 );
+shr.getQuotesHistoricalDataByTDAmeritrade(0 , [] );
 
 // alpha2.data.daily_adjusted('aapl','compact','json','5min').then(data => {
 //     console.log(data);

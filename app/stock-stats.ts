@@ -230,11 +230,14 @@ export class QuoteStats {
     private checkToKnowIfReached5SMA(quoteInterval: IQuoteFullIntervalData) {
         if (!this.didTouchSMA) {
             const today5SMA = +this.quoteMetadata.SMA5["Technical Analysis: SMA"][this.todayDate].SMA;
+            // const vector =  (this.quoteIntervals[0].open / this.strengthOf5MA ) * 100;
+            const vector = 0;
 
-            if (this.allowedBuyDirection === BuyDirectionEnum.CALL && ((quoteInterval.low - (this.strengthOf5MA / 2)) <= today5SMA)) {
+            if (this.allowedBuyDirection === BuyDirectionEnum.CALL &&
+                ((quoteInterval.low - ((this.strengthOf5MA / 2) + vector)) <= today5SMA)) {
                 this.didTouchSMA = true;
             } else if (this.allowedBuyDirection === BuyDirectionEnum.PUT &&
-                      ((quoteInterval.high - (this.strengthOf5MA / 2)) >= today5SMA)) {
+                      ((quoteInterval.high - ((this.strengthOf5MA / 2) + vector)) >= today5SMA)) {
                 this.didTouchSMA = true;
             }
         }
@@ -272,7 +275,8 @@ export class QuoteStats {
             if (this.interval === 76) {
                 this.soldIntervalData = { ...quoteInterval };
                 this.didSell = true;
-            } else if ((this.isInBuyDirection === BuyDirectionEnum.CALL) &&
+            }
+             else if ((this.isInBuyDirection === BuyDirectionEnum.CALL) &&
                 (quoteInterval.low < today5SMA - (this.strengthOf5MA / 2)) &&
                 (minuteDifference(this.boughtIntervalData.time, quoteInterval.time) > 15) &&
                 (quoteInterval.close < this.boughtIntervalData.low) &&

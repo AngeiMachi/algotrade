@@ -61,6 +61,10 @@ export class StockHistoricalReader {
             const historicalIntervalsTradeDays = Object.keys(quote5MinuteHistory);
 
             try {
+                let loosingTrade = 0;
+                let winningTrades = 0;
+                let loosingSum = 0;
+                let winningSum = 0;
                 for (let i = 0; i < historicalIntervalsTradeDays.length; i++) {
                     const tradeDay = historicalIntervalsTradeDays[i];
                     logger.debug("index=" + i + ":" + currentQuote + " Trade Day is " + tradeDay + ":");
@@ -68,12 +72,24 @@ export class StockHistoricalReader {
                     const profitLossAccount = this.calculateProfitLossPerTradeDay(historicalData, currentQuote, tradeDay);
 
                     if (profitLossAccount !== 0) {
+                        if (profitLossAccount > 0) {
+                            winningTrades++;
+                            winningSum += profitLossAccount;
+                        } else if (profitLossAccount < 0) {
+                            loosingTrade++;
+                            loosingSum += profitLossAccount;
+                        }
                         logger.debug("index=" + i + ":" + this.quotes[quoteIndex] + " Trade Day is " +
                             tradeDay + " Profit / Loss:" + profitLossAccount);
                         this.profitLossAccountPerQuote[currentQuote] += profitLossAccount;
                     }
                 }
-                logger.debug(currentQuote + " Final Profit / Loss:" + this.profitLossAccountPerQuote[currentQuote]);
+                logger.debug("----------------------------------------------------------------------------");
+                logger.debug("Loosing trades=" + loosingTrade + "(" + loosingSum.toFixed(2) +
+                            ")  ,Winning trades=" + winningTrades +  "(" + winningSum.toFixed(2) + ")");
+                logger.debug("----------------------------------------------------------------------------");
+                logger.debug(currentQuote + " Final Profit / Loss:" + this.profitLossAccountPerQuote[currentQuote].toFixed(2) +
+                ". Success Ratio:" + (winningTrades / loosingTrade ).toFixed(2));
             } finally {
                 if (quoteIndex + 1 < this.quotes.length) {
                     this.getQuotesHistoricalDataByTDAmeritrade(quoteIndex + 1, specificTradeDates);
