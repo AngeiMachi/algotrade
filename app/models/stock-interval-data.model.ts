@@ -26,7 +26,7 @@ export interface IQuoteHistoricalIntervals {
     [key: string]: IQuoteIntervals;
 }
 export interface IQuotesHistoricalData {
-    quote5MinuteHistory: IQuoteHistoricalIntervals;
+    quote5MinuteHistory?: IQuoteHistoricalIntervals;
     quoteFullYearDailyHistory: ITDAmeritradePriceHistory;
     SMA: any;
 }

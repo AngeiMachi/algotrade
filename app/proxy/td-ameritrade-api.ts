@@ -1,31 +1,16 @@
 import * as _ from "lodash";
 import moment from "moment-timezone";
 import * as request from "request-promise";
-import * as environmentConfig from "./config/environment.Config.json";
-import { logger } from "./config/winston.config.js";
-import * as queryString from "query-string";
-import { convertTDAmeritradeMultipleDaysOf5MinuteIntervals } from "./utils/utils.js";
-import { parseMustache } from "./utils/general.js";
-import { IQuoteHistoricalIntervals, ITDAmeritradePriceHistory } from "./models/stock-interval-data.model.js";
 
-const TD_BASE_API = "https://api.tdameritrade.com/v1";
-const GET_ACCESS_TOKEN = "/oauth2/token";
+import * as environmentConfig from "../config/environment.Config.json";
+import { logger } from "../config/winston.config.js";
 
-const token: any = {};
+import { parseMustache } from "../utils/general";
+import * as convertUtils from "../utils/convert-utils";
 
-export const getAccessToken = async () => {
-    const formData = {
-        grant_type: "refresh_token",
-        refresh_token: environmentConfig.TDAmeritradeAPI.refresh_token,
-        client_id: environmentConfig.TDAmeritradeAPI.api_key,
-    };
+import { IQuoteHistoricalIntervals,
+         ITDAmeritradePriceHistory } from "../models/stock-interval-data.model";
 
-    await request.post({
-        url: TD_BASE_API + GET_ACCESS_TOKEN, qs: queryString.stringify(formData),
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    });
-
-};
 
 export const getQuote5MinuteHistory = async (quote: string, specificTradeDates: string[]= []): Promise<IQuoteHistoricalIntervals> => {
     try {
@@ -49,7 +34,7 @@ export const getQuote5MinuteHistory = async (quote: string, specificTradeDates: 
 
         groupedIntervalsByDay = _.omitBy(groupedIntervalsByDay, (intervals) =>  intervals.length !== 78);
 
-        const quote5MinuteHistory = convertTDAmeritradeMultipleDaysOf5MinuteIntervals(groupedIntervalsByDay);
+        const quote5MinuteHistory = convertUtils.convertTDAmeritradeMultipleDaysOf5MinuteIntervals(groupedIntervalsByDay);
         return quote5MinuteHistory;
     } catch (err) {
         logger.error("getQuote5MinuteHistory failed " + err);

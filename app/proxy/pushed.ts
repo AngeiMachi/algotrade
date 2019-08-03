@@ -1,4 +1,4 @@
-import * as environmentConfig from "./config/environment.Config.json";
+import * as environmentConfig from "../config/environment.Config.json";
 import * as request from "request";
 
 const url = "https://api.pushed.co/1/push";
