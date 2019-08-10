@@ -1,18 +1,18 @@
 import * as _ from "lodash";
 import moment = require("moment");
-import { AsyncRevolver } from "async-revolver";
 
-import * as environmentConfig from "./config/environment.Config.json";
 import { logger } from "./config/winston.config";
-import { INTERVAL_PROPERTY_NAME } from "./config/globals.config";
-
-import { QuoteStats as QuoteStats } from "./stock-stats";
-import { IQuoteMetadata, IQuotesHistoricalData } from "./models/stock-interval-data.model";
-import { ProxyService } from "./proxy/proxy-service";
 
 import { convertAlphaVantageIntervals } from "./utils/convert-utils";
 import * as quoteUtils from "./utils/quote-utils";
 
+import { ProxyService } from "./proxy/proxy-service";
+import { QuoteStats} from "./stock-stats";
+
+import { IQuoteMetadata,
+         IQuotesHistoricalData 
+       } from "./models/stock-interval-data.model";
+import { INTERVAL_PROPERTY_NAME } from "./models/alpha-vantage.model";
 
 export class StockHistoricalReader {
     private proxyService: ProxyService;

@@ -10,7 +10,7 @@
             "request": "launch",
             "preLaunchTask": "tsc",
             "name": "Launch Program",
-            "program": "${workspaceFolder}\\dist\\server.js",
+            "program": "${workspaceFolder}\\dist\\app\\server.js",
             "outputCapture": "std",
             "skipFiles": [
                 "node_modules/**/*.js",

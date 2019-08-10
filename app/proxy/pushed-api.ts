@@ -1,7 +1,6 @@
 import * as environmentConfig from "../config/environment.Config.json";
+import * as globalConfig from "../config/globals.config"
 import * as request from "request";
-
-const url = "https://api.pushed.co/1/push";
 
 const pushedConfig = {
     app_key: environmentConfig.PushedNotifications.appKey,
@@ -10,13 +9,15 @@ const pushedConfig = {
 };
 
 export const sendPushMessage = (message: string) => {
-    if (environmentConfig.ShouldUsePushNotifications) {
+    if (globalConfig.ShouldUsePushNotifications) {
         const formData = {
             ...pushedConfig,
             content: message,
         };
 
-        request.post({url, formData}, (err: string, httpResponse: any, body: any) => {
+        const url = environmentConfig.PushedNotifications.URL;
+
+        request.post({ url , formData}, (err: string, httpResponse: any, body: any) => {
             if (err) {
                 return console.error("pushing message:" + message +  "failed:", err);
             }

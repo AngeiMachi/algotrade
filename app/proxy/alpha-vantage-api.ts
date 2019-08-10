@@ -7,10 +7,11 @@ import { parseMustache } from "../utils/general";
 import { AsyncRevolver } from "../async-revolver";
 
 
-const asyncRevolver  = new AsyncRevolver(environmentConfig.AlphaVantage.key, 16000, true,true);
+const asyncRevolver  = new AsyncRevolver(environmentConfig.AlphaVantage.key, 16000,false);
 
 export const getIntraday5Minute = async (quote:string,outputsize:string): Promise<any> => {
     const apiKey = await asyncRevolver.next();
+    console.log("Time="+ new Date() + " ,apiKey=" + apiKey)
     const options = {
         quote,
         apiKey,
@@ -24,6 +25,7 @@ export const getIntraday5Minute = async (quote:string,outputsize:string): Promis
 
 export const getDaily5SMA = async (quote:string): Promise<any> => {
     const apiKey = await asyncRevolver.next();
+    console.log("Time="+ new Date() + " ,apiKey=" + apiKey)
     const options = {
         quote,
         apiKey

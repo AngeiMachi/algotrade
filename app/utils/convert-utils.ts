@@ -1,8 +1,11 @@
 import moment from "moment-timezone";
-import {IAlphaVantageIntervals,
+import {
         IQuoteFullIntervalData,
         IQuoteIntervals,
-        ITDAmeritradeIntervalData } from "../models/stock-interval-data.model";
+        ITDAmeritradeIntervalData 
+       } from "../models/stock-interval-data.model";
+       
+import { IAlphaVantageIntervals } from "../models/alpha-vantage.model";
 
 export function convertAlphaVantageFormat(stockIntervalData: IAlphaVantageIntervals, key: string): IQuoteFullIntervalData {
     const nasdaqTime = moment.tz(key, "America/New_York");

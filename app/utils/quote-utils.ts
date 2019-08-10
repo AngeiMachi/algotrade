@@ -1,15 +1,20 @@
 import * as _ from "lodash";
 import moment from "moment-timezone";
+
+import * as globalConfig from "../config/globals.config";
+
 import * as convertUtils from './convert-utils';
-import * as environmentConfig from "../config/environment.Config.json";
-import { ITDAmeritradeIntervalData, IQuotesHistoricalData, IQuoteMetadata } from "../models/stock-interval-data.model";
 import { convertDateToTDMillisecondInterval } from "./convert-utils";
 
+import { ITDAmeritradeIntervalData,
+         IQuotesHistoricalData,
+         IQuoteMetadata 
+       } from "../models/stock-interval-data.model";
 
 export function getCurrentTradingDay() {
     let mockDataDate: string;
-    if (environmentConfig.Mock.IsMock || environmentConfig.Mock.MockDataDate) {
-        mockDataDate = environmentConfig.Mock.MockDataDate;
+    if (globalConfig.Mock.IsMock || globalConfig.Mock.MockDataDate) {
+        mockDataDate = globalConfig.Mock.MockDataDate;
     } else {
         mockDataDate = moment(new Date()).format("YYYY-MM-DD");
     }

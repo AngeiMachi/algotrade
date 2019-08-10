@@ -1,18 +1,22 @@
-import { AsyncRevolver } from "async-revolver";
-import * as environmentConfig from "./config/environment.Config.json";
-import { convertAlphaVantageFormat, convertAlphaVantageIntervals } from "./utils/convert-utils";
 import * as quoteUtils from "./utils/quote-utils";
-import {
-    INTERVAL_TIME,
-    INTERVAL_PROPERTY_NAME,
-    METADATA_PROPERTY_NAME,
-    LAST_REFRESHED_PROPERTY_NAME,
-} from "./config/globals.config";
-import { QuoteStats } from "./stock-stats";
-import { IQuotes, IQuoteFullIntervalData, IQuoteMetadata } from "./models/stock-interval-data.model";
-import { ProxyService } from "./proxy/proxy-service";
+import { convertAlphaVantageFormat, 
+        convertAlphaVantageIntervals 
+       } from "./utils/convert-utils";
+
+import { INTERVAL_TIME } from "./config/globals.config";
 import { logger } from "./config/winston.config";
 
+import { ProxyService } from "./proxy/proxy-service";
+import { QuoteStats } from "./stock-stats";
+import { IQuotes,
+         IQuoteFullIntervalData,
+         IQuoteMetadata 
+       } from "./models/stock-interval-data.model";
+
+import { INTERVAL_PROPERTY_NAME,
+         METADATA_PROPERTY_NAME, 
+         LAST_REFRESHED_PROPERTY_NAME
+       } from "./models/alpha-vantage.model";
 
 export class StockReader {
     private proxyService: ProxyService;
@@ -20,13 +24,9 @@ export class StockReader {
 
 
     constructor( quotes: string[] = []) {
-        
-
         this.proxyService = new ProxyService();
 
-        this.initializeQuotes(quotes);
-
-        
+        this.initializeQuotes(quotes);  
     }
 
     public async initializeQuotesData(): Promise<any> {
@@ -51,7 +51,7 @@ export class StockReader {
     }
 
     public initiateStockWatch() {
-        let i = 1;
+        let i= 0;
         if (Object.keys(this.quotes).length > 0) {
             const iterateStockInterval = setInterval(() => {
                 this.iterateStocks();
@@ -71,7 +71,7 @@ export class StockReader {
     }
 
     private async iterateStocks() {
-        for (let i = 0; Object.keys(this.quotes).length; i++) {
+        for (let i = 0; i<Object.keys(this.quotes).length; i++) {
             const quoteKey = Object.keys(this.quotes)[i];
             try {
                 const quoteStockStats: QuoteStats = this.quotes[quoteKey];

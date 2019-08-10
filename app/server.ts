@@ -32,7 +32,8 @@ import { AsyncRevolver } from "./async-revolver";
 
 
 
-const sr = new StockReader(["ROKU","AMD","AMZN"]);
+const sr = new StockReader(["AMD","ROKU","TSLA","DIS","AAPL","XLNX","NVDA","LULU","WDC","RH",
+"WYNN","PYPL","AVGO","EA","CRM","PANW","HD","UNH","AMZN"]);
 sr.initializeQuotesData().then(() => {
     sr.initiateStockWatch();
 });

@@ -9,13 +9,6 @@ export interface IQuoteFullIntervalData {
     time: Date;
 }
 
-export interface IAlphaVantageInterval {
-    [key: string]: any;
-}
-export interface IAlphaVantageIntervals {
-    [key: string]: IAlphaVantageInterval;
-}
-
 export interface IQuotes {
     [key: string]: QuoteStats;
 }
