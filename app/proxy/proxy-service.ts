@@ -109,10 +109,10 @@ export class ProxyService {
 
             const quotesHistoricalData: IQuotesHistoricalData = {
                 quoteFullYearDailyHistory,
-                SMA
+                SMA,
             }
 
-            const metadata: IQuoteMetadata = quoteUtils.composeMetadata(quotesHistoricalData, tradeDay)
+            const metadata: IQuoteMetadata = quoteUtils.composeMetadata(quotesHistoricalData, tradeDay);
             return metadata;
         } catch (err) {
             throw err;

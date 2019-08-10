@@ -6,32 +6,30 @@ import { parseMustache } from "../utils/general";
 
 import { AsyncRevolver } from "../async-revolver";
 
+const asyncRevolver  = new AsyncRevolver(environmentConfig.AlphaVantage.key, 16000, false);
 
-const asyncRevolver  = new AsyncRevolver(environmentConfig.AlphaVantage.key, 16000,false);
-
-export const getIntraday5Minute = async (quote:string,outputsize:string): Promise<any> => {
+export const getIntraday5Minute = async (quote: string, outputSize: string): Promise<any> => {
     const apiKey = await asyncRevolver.next();
-    console.log("Time="+ new Date() + " ,apiKey=" + apiKey)
     const options = {
         quote,
         apiKey,
-        outputsize,
+        outputSize,
     };
     const fullURL = parseMustache(environmentConfig.AlphaVantage.URL.get_5_minutes, options);
-    const responseData = JSON.parse(await request.get({ url: fullURL })); 
+    const responseData = JSON.parse(await request.get({ url: fullURL }));
 
-    return responseData
-}
+    return responseData;
+};
 
-export const getDaily5SMA = async (quote:string): Promise<any> => {
+export const getDaily5SMA = async (quote: string): Promise<any> => {
     const apiKey = await asyncRevolver.next();
-    console.log("Time="+ new Date() + " ,apiKey=" + apiKey)
+
     const options = {
         quote,
-        apiKey
+        apiKey,
     };
     const fullURL = parseMustache(environmentConfig.AlphaVantage.URL.get_daily_5_sma, options);
     const SMA =  JSON.parse(await request.get({ url: fullURL }));
 
     return SMA;
-}
+};

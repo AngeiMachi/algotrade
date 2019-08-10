@@ -1,6 +1,6 @@
 import * as quoteUtils from "./utils/quote-utils";
-import { convertAlphaVantageFormat, 
-        convertAlphaVantageIntervals 
+import { convertAlphaVantageFormat,
+        convertAlphaVantageIntervals,
        } from "./utils/convert-utils";
 
 import { INTERVAL_TIME } from "./config/globals.config";
@@ -10,23 +10,22 @@ import { ProxyService } from "./proxy/proxy-service";
 import { QuoteStats } from "./stock-stats";
 import { IQuotes,
          IQuoteFullIntervalData,
-         IQuoteMetadata 
+         IQuoteMetadata,
        } from "./models/stock-interval-data.model";
 
 import { INTERVAL_PROPERTY_NAME,
-         METADATA_PROPERTY_NAME, 
-         LAST_REFRESHED_PROPERTY_NAME
+         METADATA_PROPERTY_NAME,
+         LAST_REFRESHED_PROPERTY_NAME,
        } from "./models/alpha-vantage.model";
 
 export class StockReader {
     private proxyService: ProxyService;
     private quotes: IQuotes = {};
 
-
     constructor( quotes: string[] = []) {
         this.proxyService = new ProxyService();
 
-        this.initializeQuotes(quotes);  
+        this.initializeQuotes(quotes);
     }
 
     public async initializeQuotesData(): Promise<any> {
@@ -35,10 +34,11 @@ export class StockReader {
 
             for (let i = 0; i < Object.keys(this.quotes).length; i++) {
                 const quoteKey = Object.keys(this.quotes)[i];
-                const quoteMetadata: IQuoteMetadata = await this.proxyService.getMetaDataPerDay(quoteKey,quoteUtils.getCurrentTradingDay());
+                const quoteMetadata: IQuoteMetadata = await this.proxyService.getMetaDataPerDay(quoteKey,
+                                                                                                quoteUtils.getCurrentTradingDay());
                 const promise = this.proxyService.getIntraday(quoteKey).then((data: any) => {
                     const alphaVantageQuoteIntervals = data[INTERVAL_PROPERTY_NAME];
-                    const quoteIntervals = convertAlphaVantageIntervals(alphaVantageQuoteIntervals)
+                    const quoteIntervals = convertAlphaVantageIntervals(alphaVantageQuoteIntervals);
                     this.quotes[quoteKey].initializeStockData(quoteIntervals, quoteMetadata);
                 });
                 promises.push(promise);

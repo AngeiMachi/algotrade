@@ -24,7 +24,7 @@ export function getCurrentTradingDay() {
 
 export function calculateAverage(intervals: ITDAmeritradeIntervalData[], currentTime: string, intervalsToAverageBack: number): number {
 
-    const dayBefore= moment(currentTime).subtract(1,"days").format("YYYY-MM-DD");
+    const dayBefore = moment(currentTime).subtract(1, "days").format("YYYY-MM-DD");
     const index = getIntervalIndex(intervals, dayBefore );
     if (index > -1) {
         const intervalsForAverage = _.slice(intervals, index - intervalsToAverageBack, index);
@@ -33,8 +33,21 @@ export function calculateAverage(intervals: ITDAmeritradeIntervalData[], current
     }
     return -1;
 }
+
+export function calculateMovingAverage(intervals: ITDAmeritradeIntervalData[], currentTime: string,
+                                                                     intervalsToAverageBack: number): number {
+
+    const index = getIntervalIndex(intervals, currentTime );
+    if (index > -1) {
+        const intervalsForAverage = _.slice(intervals, index - intervalsToAverageBack + 1, index + 1);
+        const average = _.meanBy(intervalsForAverage, "close");
+        return average;
+    }
+    return -1;
+}
+
 export function getPreviousClose(intervals: ITDAmeritradeIntervalData[], currentTime: string) {
-    const dayBefore= moment(currentTime).subtract(1,"days").format("YYYY-MM-DD");
+    const dayBefore = moment(currentTime).subtract(1, "days").format("YYYY-MM-DD");
     const index = getIntervalIndex(intervals, dayBefore );
     if (index > -1) {
         return intervals[index].close;
@@ -42,15 +55,15 @@ export function getPreviousClose(intervals: ITDAmeritradeIntervalData[], current
     return -1;
 }
 
-export function getPartialHistory(intervals: ITDAmeritradeIntervalData[], currentTime: string | number, 
-                                            intervalsToHistoryBack: number):ITDAmeritradeIntervalData[] {                                       
+export function getPartialHistory(intervals: ITDAmeritradeIntervalData[], currentTime: string | number,
+                                  intervalsToHistoryBack: number): ITDAmeritradeIntervalData[] {
     let index;
-    
+
     if (typeof currentTime === "string") {
-        const dayBefore= moment(currentTime).subtract(1,"days").format("YYYY-MM-DD");     
+        const dayBefore = moment(currentTime).subtract(1, "days").format("YYYY-MM-DD");
         index = getIntervalIndex(intervals , dayBefore);
     } else {
-        const dayBefore = currentTime-86400000; // 86400000 = 24 hours in milliseconds
+        const dayBefore = currentTime - 86400000; // 86400000 = 24 hours in milliseconds
         index = _.findIndex(intervals, [ "datetime" , dayBefore]);
     }
     if (index > -1) {
@@ -82,7 +95,7 @@ export function composeMetadata(historicalData: IQuotesHistoricalData, tradeDay:
         averageDailyVolume3Month: calculateAverage(intervals, tradeDay, 90),
         regularMarketPreviousClose: getPreviousClose(intervals, tradeDay),
 
-        SMA5: historicalData.SMA,
+        SMA5: calculateMovingAverage(intervals, tradeDay, 5),
 
         // TODO :  put true values
         fiftyTwoWeekLow: 0,
