@@ -2,7 +2,7 @@ import moment from "moment-timezone";
 import * as _ from "lodash";
 
 import * as pushed from "./proxy/pushed-api";
-import { getCurrentTradingDay } from "./utils/quote-utils";
+import { getCurrentTradingDate } from "./utils/quote-utils";
 
 import { IQuoteFullIntervalData, IQuoteIntervals, IQuoteMetadata } from "./models/stock-interval-data.model";
 import { BuyDirectionEnum } from "./models/enums";
@@ -41,7 +41,7 @@ export class QuoteStats {
         if (todayDate) {
             this.todayDate = todayDate;
         } else {
-            this.todayDate = getCurrentTradingDay();
+            this.todayDate = getCurrentTradingDate();
         }
     }
 
@@ -142,18 +142,17 @@ export class QuoteStats {
 
     private decideAllowedByDirectionForToday(quoteInterval: IQuoteFullIntervalData) {
         if (this.interval === 0) {
-            const today5SMA = this.getCurrentDay5SMA();
-            const dayBefore5MA = this.getDayBefore5SMA();
-            this.strengthOf5MA = today5SMA - dayBefore5MA;
+           
+            this.strengthOf5MA = this.quoteMetadata.SMA5.today - this.quoteMetadata.SMA5.previousDay;
 
             if (this.strengthOf5MA > 0.2) {
-                if (today5SMA <= quoteInterval.open + (this.strengthOf5MA / 2)) {
+                if (this.quoteMetadata.SMA5.today <= quoteInterval.open + (this.strengthOf5MA / 2)) {
                     this.allowedBuyDirection = BuyDirectionEnum.CALL;
                 } else {
                     this.allowedBuyDirection = BuyDirectionEnum.NONE;
                 }
             } else if (this.strengthOf5MA < -0.2) {
-                if (today5SMA >= quoteInterval.open + (this.strengthOf5MA / 2)) {
+                if (this.quoteMetadata.SMA5.today >= quoteInterval.open + (this.strengthOf5MA / 2)) {
                     this.allowedBuyDirection = BuyDirectionEnum.PUT;
                 } else {
                     this.allowedBuyDirection = BuyDirectionEnum.NONE;
@@ -166,15 +165,15 @@ export class QuoteStats {
 
     private checkToKnowIfReached5SMA(quoteInterval: IQuoteFullIntervalData) {
         if (!this.didTouchSMA) {
-            const today5SMA = this.getCurrentDay5SMA();
+       
             // const vector =  (this.quoteIntervals[0].open / this.strengthOf5MA ) * 100;
             const vector = 0;
 
             if (this.allowedBuyDirection === BuyDirectionEnum.CALL &&
-                ((quoteInterval.low - ((this.strengthOf5MA / 2) + vector)) <= today5SMA)) {
+                ((quoteInterval.low - ((this.strengthOf5MA / 2) + vector)) <= this.quoteMetadata.SMA5.today)) {
                 this.didTouchSMA = true;
             } else if (this.allowedBuyDirection === BuyDirectionEnum.PUT &&
-                      ((quoteInterval.high - ((this.strengthOf5MA / 2) + vector)) >= today5SMA)) {
+                      ((quoteInterval.high - ((this.strengthOf5MA / 2) + vector)) >= this.quoteMetadata.SMA5.today)) {
                 this.didTouchSMA = true;
             }
         }
@@ -193,11 +192,11 @@ export class QuoteStats {
                 this.isDirty = true;
 
                 buyMessage = "*** " + this.quote + " *** Entered Buy " + BuyDirectionEnum[this.isInBuyDirection] +
-                             " Mode  at " + moment(quoteInterval.time).format("HH:mm:ss");
+                             " Mode  at " + moment(quoteInterval.timeIsrael).format("HH:mm:ss");
             } else {
 
                 buyMessage = "CANCELED *** " + this.quote + " *** Entered Buy " + BuyDirectionEnum[this.isInBuyDirection] +
-                             " Mode  at " + moment(quoteInterval.time).format("HH:mm:ss");
+                             " Mode  at " + moment(quoteInterval.timeIsrael).format("HH:mm:ss");
             }
             pushed.sendPushMessage(buyMessage);
             logger.debug(buyMessage);
@@ -207,33 +206,32 @@ export class QuoteStats {
     private checkToSell(quoteInterval: IQuoteFullIntervalData) {
         if (this.didBuy && !this.didSell) {
 
-            const today5SMA = this.getCurrentDay5SMA();
             // if before close - sell
             if (this.interval === 76) {
                 this.soldIntervalData = { ...quoteInterval };
                 this.didSell = true;
             }
              else if ((this.isInBuyDirection === BuyDirectionEnum.CALL) &&
-                (quoteInterval.low < today5SMA - (this.strengthOf5MA / 2)) &&
-                (minuteDifference(this.boughtIntervalData.time, quoteInterval.time) > 15) &&
+                (quoteInterval.low < this.quoteMetadata.SMA5.today - (this.strengthOf5MA / 2)) &&
+                (minuteDifference(this.boughtIntervalData.timeIsrael, quoteInterval.timeIsrael) > 15) &&
                 (quoteInterval.close < this.boughtIntervalData.low) &&
                 (quoteInterval.close < this.LODIntervalData.low)) {
 
                 this.soldIntervalData = { ...quoteInterval };
                 this.didSell = true;
                 this.didSellWithLoss = true;
-                logger.debug("CALLS NOT WORKING - SOLD WITH LOSS AT " + moment(quoteInterval.time).format("HH:mm:ss"));
+                logger.debug("CALLS NOT WORKING - SOLD WITH LOSS AT " + moment(quoteInterval.timeIsrael).format("HH:mm:ss"));
 
             } else if ((this.isInBuyDirection === BuyDirectionEnum.PUT) &&
-                (quoteInterval.high > today5SMA - (this.strengthOf5MA / 2)) &&
-                (minuteDifference(this.boughtIntervalData.time, quoteInterval.time) > 15) &&
+                (quoteInterval.high > this.quoteMetadata.SMA5.today - (this.strengthOf5MA / 2)) &&
+                (minuteDifference(this.boughtIntervalData.timeIsrael, quoteInterval.timeIsrael) > 15) &&
                 (quoteInterval.close > this.boughtIntervalData.high) &&
                 (quoteInterval.close > this.HODIntervalData.high)) {
 
                 this.soldIntervalData = { ...quoteInterval };
                 this.didSell = true;
                 this.didSellWithLoss = true;
-                logger.debug("PUTS NOT WORKING - SOLD WITH LOSS AT " + moment(quoteInterval.time).format("HH:mm:ss"));
+                logger.debug("PUTS NOT WORKING - SOLD WITH LOSS AT " + moment(quoteInterval.timeIsrael).format("HH:mm:ss"));
             }
         }
     }
@@ -267,7 +265,7 @@ export class QuoteStats {
 
     private composeAndPrintCurrentIntervalStats(stockInterval: IQuoteFullIntervalData, isLive: boolean) {
         let stats = {
-            quote: this.quote, interval: moment(stockInterval.time).format("HH:mm:ss"), ...stockInterval,
+            quote: this.quote, interval: moment(stockInterval.timeIsrael).format("HH:mm:ss"), ...stockInterval,
             intervalNumber: this.interval, volumeIntervalNumber: this.volumeInterval,
             volumeSum: this.volumeSum, avg: this.averageVolume,
         } as any;
@@ -282,21 +280,6 @@ export class QuoteStats {
         return +(((stockIntervalStart.close - stockIntervalEnd.close) / stockIntervalStart.close) * -100).toFixed(2);
     }
 
-    private getDayBefore5SMA(): number {
-        let dayBefore5MA;
-        let dayBefore = this.todayDate;
-        while (!dayBefore5MA) {
-            dayBefore = moment(dayBefore).subtract(1, "days").format("YYYY-MM-DD");
-            if (this.quoteMetadata.SMA5["Technical Analysis: SMA"][dayBefore]) {
-                dayBefore5MA = +this.quoteMetadata.SMA5["Technical Analysis: SMA"][dayBefore].SMA
-            }
-        }
-        return dayBefore5MA;
-    }
 
-    private getCurrentDay5SMA() : number {
-        const all5SMAdays = this.quoteMetadata.SMA5["Technical Analysis: SMA"];
-        const cyrrent5SMA = Object.values((_.pickBy(all5SMAdays, (value, key) => _.includes(key, this.todayDate))))[0].SMA
-        return +cyrrent5SMA;
-    }
+    
 }

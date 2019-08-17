@@ -17,7 +17,8 @@ import {
     IQuoteMetadata,
     IQuoteFullIntervalData,
     IQuotesHistoricalData,
-    ITDAmeritradePriceHistory
+    ITDAmeritradePriceHistory,
+    IQuoteIntervals
 } from "../models/stock-interval-data.model";
 
 import {
@@ -33,14 +34,25 @@ export class ProxyService {
     }
 
     // main method to get alphaVantage Intraday data
-    public async getIntraday(quote: string): Promise<any> {
+    public async getAlphaVantageIntraday(quote: string): Promise<any> {
         if (globalConfig.Mock.IsMock) {
             if (!mockService.isMockLoaded(quote)) {
-                await mockService.prepareMockData(quote);
+                await mockService.prepareMockDataAlphaVantage(quote);
             }
-            return mockService.serveMockData(quote);
+            return mockService.serveMockDataAlphaVantage(quote);
         } else {
             return AlphaVantage.getIntraday5Minute(quote, "compact");
+        }
+    }
+    // main method to get TDAmeritrade Intraday data
+    public async getTDAmeritradeIntraday(quote: string): Promise<IQuoteIntervals> {
+        if (globalConfig.Mock.IsMock) {
+            if (!mockService.isMockLoaded(quote)) {
+                await mockService.prepareMockDataTDAmeritrade(quote);
+            }
+            return mockService.serveMockDataTDAmeritrade(quote);
+        } else {
+            return TDAmeritradeAPI.getQuote5MinuteIntraday(quote,quoteUtils.getCurrentTradingDate());
         }
     }
 
@@ -85,15 +97,12 @@ export class ProxyService {
 
     public async getHistoricalData(quote: string, specificTradeDates: string[] = []): Promise<IQuotesHistoricalData> {
         try {
-
-
             const quote5MinuteHistory = await TDAmeritradeAPI.getQuote5MinuteHistory(quote, specificTradeDates);
             const quoteFullYearDailyHistory = await TDAmeritradeAPI.getQuoteFullYearDailyHistory(quote);
-            const SMA = await AlphaVantage.getDaily5SMA(quote);
-            await request.get({ url: "https://reqres.in/api/users?delay=5" });
+        
 
             return {
-                SMA,
+             
                 quote5MinuteHistory,
                 quoteFullYearDailyHistory,
             };
@@ -102,17 +111,19 @@ export class ProxyService {
         }
     }
 
-    public async getMetaDataPerDay(quote: string, tradeDay: string): Promise<IQuoteMetadata> {
+    public async getMetaDataPerDay(quote: string, tradeDay: string,quoteIntervals:IQuoteIntervals): Promise<IQuoteMetadata> {
         try {
+
+            let firstInterval = quoteIntervals[Object.keys(quoteIntervals)[0]];
             const quoteFullYearDailyHistory = await TDAmeritradeAPI.getQuoteFullYearDailyHistory(quote);
-            const SMA = await AlphaVantage.getDaily5SMA(quote);
+   
 
             const quotesHistoricalData: IQuotesHistoricalData = {
                 quoteFullYearDailyHistory,
-                SMA,
+              
             }
 
-            const metadata: IQuoteMetadata = quoteUtils.composeMetadata(quotesHistoricalData, tradeDay);
+            const metadata: IQuoteMetadata = quoteUtils.composeMetadata( tradeDay, quotesHistoricalData,firstInterval);
             return metadata;
         } catch (err) {
             throw err;
@@ -146,10 +157,11 @@ export class ProxyService {
         const yahooQuoteRawMetadata = await request.get({ url: fullURL });
         const yahooQuoteMetadata = JSON.parse(yahooQuoteRawMetadata).quoteSummary.result[0];
 
+        // @ts-ignore
         const quoteMetadata: IQuoteMetadata = {
             averageDailyVolume10Day: yahooQuoteMetadata.price.averageDailyVolume10Day,
             averageDailyVolume3Month: yahooQuoteMetadata.price.averageDailyVolume3Month,
-            regularMarketPreviousClose: yahooQuoteMetadata.price.regularMarketPreviousClose,
+            previousClose: yahooQuoteMetadata.price.regularMarketPreviousClose,
             fiftyTwoWeekLow: yahooQuoteMetadata.summaryDetail.fiftyTwoWeekLow,
             fiftyTwoWeekHigh: yahooQuoteMetadata.summaryDetail.fiftyTwoWeekHigh,
 

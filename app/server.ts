@@ -9,46 +9,28 @@ import { AsyncRevolver } from "./async-revolver";
 
 
 
-// async function func() {
-//     let revolver = new AsyncRevolver([1,2,3,4,5],3000,true,true);
-
-//     setInterval(async ()=>{
-//             let val =  await revolver.next("printing from first interval");
-//             console.log("first interval="+ moment(new Date()).format("HH:mm:ss"),":",val);
-//     },2222);
-
-//     setInterval(async ()=>{
-//             let val =  await revolver.next("printing from second interval");
-//             console.log("second interval="+ moment(new Date()).format("HH:mm:ss"),":",val);
-//     },4534);
-//     for (let i=0;i<110;i++) {
-//         let val =  await revolver.next("printing from for loop I ="+i);
-//         console.log("for loop      I="+i+"="+ moment(new Date()).format("HH:mm:ss"),":",val);
-//     }
-    
-// }
-
-// func();
 
 
 
-const sr = new StockReader(["AMD","ROKU","TSLA","DIS","AAPL","XLNX","NVDA","LULU","WDC","RH",
-"WYNN","PYPL","AVGO","EA","CRM","PANW","HD","UNH","AMZN"]);
-sr.initializeQuotesData().then(() => {
-    sr.initiateStockWatch();
-});
 
-// TDAmeritradeAPI.getQuote5MinuteHistory("AMZN").then((intervals) => {
+// const sr = new StockReader(["AMD","ROKU","TSLA","DIS","AAPL","XLNX","NVDA","LULU","WDC","RH",
+// "WYNN","PYPL","AVGO","EA","CRM","PANW","HD","UNH","AMZN"]);
+
+// const sr = new StockReader(environmentConfig.quotes.quote1);
+// sr.initializeQuotesData().then(() => {
+//     sr.initiateStockWatch();
 // });
 
-//     console.log("AFTER RESOVE>>>");
-// const shr = new StockHistoricalReader( environmentConfig.AlphaVantageAPIKeys[1].key ,
-// [...environmentConfig.AlphaVantageAPIKeys[1].quotes]);
+//  TDAmeritradeAPI.getQuote5MinuteIntraday("AMZN","2019-08-09").then((intervals) => {
+//  });
+
+// //     console.log("AFTER RESOVE>>>");
+// const shr = new StockHistoricalReader( environmentConfig.quotes.quote1);
 // shr.getQuotesHistoricalDataByAlphaVantage();
 
-//const shr = new StockHistoricalReader( environmentConfig.AlphaVantageAPIKeys[2].quotes , environmentConfig.AlphaVantageAPIKeys[2].key);
-// shr.getBiggestDailyMoves(15);
-//shr.getQuotesHistoricalDataByTDAmeritrade(0 , [] );
+const shr = new StockHistoricalReader( environmentConfig.quotes.quote1);
+
+shr.getQuotesHistoricalDataByTDAmeritrade(0 );
 
 // alpha2.data.daily_adjusted('aapl','compact','json','5min').then(data => {
 //     console.log(data);

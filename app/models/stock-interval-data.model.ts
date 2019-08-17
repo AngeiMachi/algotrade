@@ -6,7 +6,8 @@ export interface IQuoteFullIntervalData {
     low: number;
     close: number;
     volume: number;
-    time: Date;
+    timeIsrael: Date;
+    timeNewYork: Date;
 }
 
 export interface IQuotes {
@@ -21,7 +22,6 @@ export interface IQuoteHistoricalIntervals {
 export interface IQuotesHistoricalData {
     quote5MinuteHistory?: IQuoteHistoricalIntervals;
     quoteFullYearDailyHistory: ITDAmeritradePriceHistory;
-    SMA: any;
 }
 
 interface IQuotePriceFormat {
@@ -32,13 +32,16 @@ interface IQuotePriceFormat {
 export interface IQuoteMetadata {
     averageDailyVolume10Day: number | IQuotePriceFormat;
     averageDailyVolume3Month: number | IQuotePriceFormat;
-    regularMarketPreviousClose: number | IQuotePriceFormat;
+    previousClose: number | IQuotePriceFormat;
     fiftyTwoWeekLow: number | IQuotePriceFormat;
     fiftyTwoWeekHigh: number | IQuotePriceFormat;
 
     dailyHistoricalData: IQuoteFullIntervalData[];
 
-    SMA5?: any;
+    SMA5: {
+        today:number,
+        previousDay:number
+    };
 }
 
 export interface ITDAmeritradePriceHistory {
@@ -54,4 +57,8 @@ export interface ITDAmeritradeIntervalData {
     close: number;
     volume: number;
     datetime: number;
+}
+
+export interface ITDAmeritradeIntervals {
+    [key:string]:ITDAmeritradeIntervalData;
 }

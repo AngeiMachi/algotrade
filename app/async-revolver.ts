@@ -1,5 +1,3 @@
-import moment from "moment-timezone";
-
 export class AsyncRevolver {
     private _bullets: any[];
     private _intervalTime: number;
@@ -40,7 +38,7 @@ export class AsyncRevolver {
             }
         });
 
-        this.printBulletsTimer();
+
     }
 
     public next(log?: string): Promise<any> {
@@ -50,7 +48,6 @@ export class AsyncRevolver {
             setTimeout(() => {
                 resolve(nextBullet);
             }, this.getComingBulletAwaitTime());
-            this.printBulletsTimer();
         });
     }
 
@@ -97,14 +94,5 @@ export class AsyncRevolver {
         return this._bullets[this._index];
     }
 
-    private printBulletsTimer() {
-        console.log(new Date() + ": ["+
-                        moment(this._bulletsTimer[0]).format("HH:mm:ss")+","+
-                        moment(this._bulletsTimer[1]).format("HH:mm:ss")+","+
-                        moment(this._bulletsTimer[2]).format("HH:mm:ss")+","+
-                        moment(this._bulletsTimer[3]).format("HH:mm:ss")+","+
-                        moment(this._bulletsTimer[4]).format("HH:mm:ss")+","+
-                        moment(this._bulletsTimer[5]).format("HH:mm:ss")+"]"
-                    );
-    }
+
 }

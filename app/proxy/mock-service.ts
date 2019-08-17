@@ -1,20 +1,30 @@
+import { logger } from "../config/winston.config";
 import * as globalConfig from "../config/globals.config";
 
 import * as quoteUtils from "../utils/quote-utils";
 
 import * as AlphaVantage from "./alpha-vantage-api";
 
+import * as TDAmeritrade from "./td-ameritrade-api";
+
 import {
     IAlphaVantageIntervals,
     INTERVAL_PROPERTY_NAME,
     METADATA_PROPERTY_NAME,
-    LAST_REFRESHED_PROPERTY_NAME
+    LAST_REFRESHED_PROPERTY_NAME,
+    IAlphaVantageQuoteData
 } from "../models/alpha-vantage.model";
+import { 
+    ITDAmeritradeIntervals, 
+    IQuoteIntervals, 
+} from "../models/stock-interval-data.model";
+
 
 
 
 interface IQuoteMockData {
-    mockDataResponse: any,
+    quote: string ,
+    mockDataResponse: IQuoteIntervals | IAlphaVantageQuoteData,
     mockDataResponseValues: any[];
     mockDataResponseKeys: any[];
     currentInterval: number;
@@ -23,10 +33,8 @@ interface IQuoteMockData {
 }
 
 const mockDataInitial: IQuoteMockData = {
-    mockDataResponse: {
-        [INTERVAL_PROPERTY_NAME]:{},
-        [METADATA_PROPERTY_NAME]:{}
-    },
+    quote:"",
+    mockDataResponse: {},
     mockDataResponseValues: [],
     mockDataResponseKeys: [],
     currentInterval: globalConfig.Mock.StartLiveSimulationAtInterval,
@@ -36,7 +44,7 @@ const mockDataInitial: IQuoteMockData = {
 
 const mockQuotes: { [key: string]: IQuoteMockData } = {};
 
-export async function prepareMockData(quote: string): Promise<any> {
+export async function prepareMockDataAlphaVantage(quote: string): Promise<any> {
     const mockData = {} as IAlphaVantageIntervals;
     const mockQuote = mockQuotes[quote] = mockQuotesFactory(quote);
 
@@ -66,7 +74,7 @@ export async function prepareMockData(quote: string): Promise<any> {
     }
 }
 
-export async function serveMockData(quote:string): Promise<any> {
+export async function serveMockDataAlphaVantage(quote:string): Promise<any> {
     const mockQuote = mockQuotes[quote];
     return new Promise((resolve, reject) => {
         try {
@@ -77,6 +85,47 @@ export async function serveMockData(quote:string): Promise<any> {
                                                                     mockQuote.mockDataResponseKeys[mockQuote.currentInterval];
                 mockQuote.currentInterval++;
             }
+            logger.debug("serving " +quote+"..." ,JSON.stringify(mockQuote));
+            resolve(mockQuote.mockDataResponse);
+        } catch (err) {
+            return reject(err);
+        }
+    });
+}
+
+export async function prepareMockDataTDAmeritrade(quote: string): Promise<any> {
+    let mockData = {} as IQuoteIntervals;
+    const mockQuote = mockQuotes[quote] = mockQuotesFactory(quote);
+
+    try {
+        mockData = await TDAmeritrade.getQuote5MinuteIntraday(quote, mockQuote.mockDataDate);
+
+        mockQuote.mockDataResponseValues = Object.values(mockData);
+        mockQuote.mockDataResponseKeys = Object.keys(mockData);
+
+        for (let i = 0; i < mockQuote.currentInterval; i++) {
+            (mockQuote.mockDataResponse as any)[mockQuote.mockDataResponseKeys[i]] = mockQuote.mockDataResponseValues[i];
+        }
+
+        mockQuote.isMockLoaded = true;
+
+        return Promise.resolve();
+    } catch (err) {
+        return Promise.reject(err);
+    }
+}
+
+export async function serveMockDataTDAmeritrade(quote:string): Promise<any> {
+    const mockQuote = mockQuotes[quote];
+    return new Promise((resolve, reject) => {
+        try {
+            if (mockQuote.mockDataResponseKeys[mockQuote.currentInterval]) {
+                (mockQuote.mockDataResponse as any)[mockQuote.mockDataResponseKeys[mockQuote.currentInterval]] =
+                                                    mockQuote.mockDataResponseValues[mockQuote.currentInterval];
+                mockQuote.currentInterval++;
+            }
+
+            //logger.info("serving " +quote+":" +JSON.stringify(mockQuote.mockDataResponse));
             resolve(mockQuote.mockDataResponse);
         } catch (err) {
             return reject(err);
@@ -89,5 +138,5 @@ export function isMockLoaded(quote:string): boolean {
 }
 
 function mockQuotesFactory(quote: string): IQuoteMockData {
-    return { ...{}, ...mockDataInitial, mockDataDate: quoteUtils.getCurrentTradingDay() };
+    return { ...{}, ...mockDataInitial, mockDataResponse:{}, mockDataDate: quoteUtils.getCurrentTradingDate() , quote };
 }

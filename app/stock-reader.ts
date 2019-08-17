@@ -1,22 +1,15 @@
 import * as quoteUtils from "./utils/quote-utils";
-import { convertAlphaVantageFormat,
-        convertAlphaVantageIntervals,
-       } from "./utils/convert-utils";
 
 import { INTERVAL_TIME } from "./config/globals.config";
 import { logger } from "./config/winston.config";
 
 import { ProxyService } from "./proxy/proxy-service";
 import { QuoteStats } from "./stock-stats";
+
 import { IQuotes,
          IQuoteFullIntervalData,
          IQuoteMetadata,
        } from "./models/stock-interval-data.model";
-
-import { INTERVAL_PROPERTY_NAME,
-         METADATA_PROPERTY_NAME,
-         LAST_REFRESHED_PROPERTY_NAME,
-       } from "./models/alpha-vantage.model";
 
 export class StockReader {
     private proxyService: ProxyService;
@@ -34,11 +27,8 @@ export class StockReader {
 
             for (let i = 0; i < Object.keys(this.quotes).length; i++) {
                 const quoteKey = Object.keys(this.quotes)[i];
-                const quoteMetadata: IQuoteMetadata = await this.proxyService.getMetaDataPerDay(quoteKey,
-                                                                                                quoteUtils.getCurrentTradingDay());
-                const promise = this.proxyService.getIntraday(quoteKey).then((data: any) => {
-                    const alphaVantageQuoteIntervals = data[INTERVAL_PROPERTY_NAME];
-                    const quoteIntervals = convertAlphaVantageIntervals(alphaVantageQuoteIntervals);
+                const promise = this.proxyService.getTDAmeritradeIntraday(quoteKey).then(async (quoteIntervals) => {
+                    const quoteMetadata: IQuoteMetadata = await this.proxyService.getMetaDataPerDay(quoteKey,quoteUtils.getCurrentTradingDate(),quoteIntervals);
                     this.quotes[quoteKey].initializeStockData(quoteIntervals, quoteMetadata);
                 });
                 promises.push(promise);
@@ -58,7 +48,7 @@ export class StockReader {
                 if (Object.keys(this.quotes).length === 0) {
                     clearInterval(iterateStockInterval);
                 }
-            }, INTERVAL_TIME + (i++ * 1000));
+            }, INTERVAL_TIME + (i++ * 100));
         } else {
             throw Error("No Stocks were initialized");
         }
@@ -76,33 +66,27 @@ export class StockReader {
             try {
                 const quoteStockStats: QuoteStats = this.quotes[quoteKey];
 
-                const data = await this.proxyService.getIntraday(quoteKey);
+                const data = await this.proxyService.getTDAmeritradeIntraday(quoteKey);
 
-                const stockInterval: IQuoteFullIntervalData = this.getStockLatestIntervalData(data);
+                const stockInterval: IQuoteFullIntervalData = quoteUtils.getRecentIntervalData(data);
                 quoteStockStats.recordNewStockInterval(stockInterval, true);
 
-                this.clearQuoteWhenIsLastInterval(quoteKey,data);
+                this.clearQuoteWhenIsLastInterval(quoteKey,stockInterval);
             } catch (err) {
                 logger.error("error at Stock-Reader.iterateStocks - quote=" + quoteKey + ",index=" + i + "err=" + err);
             }
         }
     }
 
-    private getStockLatestIntervalData(data: any): IQuoteFullIntervalData {
-        const timeSeries = data[INTERVAL_PROPERTY_NAME];
-        const lastIntervalIndex = data[METADATA_PROPERTY_NAME][LAST_REFRESHED_PROPERTY_NAME];
-        const stockLastInterval = timeSeries[lastIntervalIndex];
-        return convertAlphaVantageFormat(stockLastInterval, lastIntervalIndex);
-    }
 
-    private clearQuoteWhenIsLastInterval(quoteKey: string , data: any) {
-        if (this.isLastInterval(data)) {
+    private clearQuoteWhenIsLastInterval(quoteKey: string , interval: IQuoteFullIntervalData) {
+        if (this.isLastInterval(interval)) {
             delete this.quotes[quoteKey];
             logger.debug("Terminating quote " + quoteKey);
         }
     }
 
-    private isLastInterval(data: any): boolean {
-        return data[METADATA_PROPERTY_NAME][LAST_REFRESHED_PROPERTY_NAME].includes("16:00");
+    private isLastInterval(interval: any): boolean {
+        return interval.timeNewYork.getHours()===16;
     }
 }

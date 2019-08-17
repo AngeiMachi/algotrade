@@ -118,7 +118,7 @@ export class StockHistoricalReader {
             const { partialHistoryDailyIntervals,
                     fullYearDailyHistory } = await this.proxyService.getTDAmeritradeDailyHistory(this.quotes[i], 100);
             const quoteMoves = partialHistoryDailyIntervals.map((item) => {
-                const tradeDay = moment(item.time).format("YYYY-MM-DD");
+                const tradeDay = moment(item.timeIsrael).format("YYYY-MM-DD");
                 return {
                     diff: + (item.high - item.low).toFixed(2),
                     ...item,
@@ -164,7 +164,7 @@ export class StockHistoricalReader {
     private calculateProfitLossPerTradeDay(historicalData: any, currentQuote: string, tradeDay: string) {
 
         const quote5MinuteHistory = historicalData.quote5MinuteHistory;
-        const quoteMetadata = quoteUtils.composeMetadata(historicalData, tradeDay);
+        const quoteMetadata = quoteUtils.composeMetadata(tradeDay , historicalData,quoteUtils.getRecentFirstIntervalData(quote5MinuteHistory[tradeDay]));
         const quoteStats = new QuoteStats(currentQuote, tradeDay);
         const profitLossAccount = quoteStats.initializeStockData(quote5MinuteHistory[tradeDay], quoteMetadata);
 
