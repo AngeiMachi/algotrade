@@ -32,12 +32,13 @@ interface IQuotePriceFormat {
 export interface IQuoteMetadata {
     averageDailyVolume10Day: number | IQuotePriceFormat;
     averageDailyVolume3Month: number | IQuotePriceFormat;
+    average5Minute3Month:number;
     previousClose: number | IQuotePriceFormat;
     fiftyTwoWeekLow: number | IQuotePriceFormat;
     fiftyTwoWeekHigh: number | IQuotePriceFormat;
 
     dailyHistoricalData: IQuoteFullIntervalData[];
-
+    fullYearDailyHistory: ITDAmeritradeIntervalData[];
     SMA5: {
         today:number,
         previousDay:number

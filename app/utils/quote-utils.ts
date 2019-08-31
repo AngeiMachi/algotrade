@@ -53,15 +53,14 @@ export function calculateAverage(intervals: ITDAmeritradeIntervalData[], trading
 }
 
 export function calculateMovingAverage(intervals: ITDAmeritradeIntervalData[], tradingDate: string,
-                                       intervalsToAverageBack: number,firstIntradayInterval?: IQuoteFullIntervalData): number {
+                                       intervalsToAverageBack: number,firstIntradayInterval?: IQuoteFullIntervalData, type:"open" | "close"="close"): number {
     
-    const firstIntradayIntervalCopy = {...firstIntradayInterval}  as IQuoteFullIntervalData;
-    firstIntradayIntervalCopy.close =     firstIntradayIntervalCopy.open;                   
+    const firstIntradayIntervalCopy = {...firstIntradayInterval}  as IQuoteFullIntervalData;                  
     if (firstIntradayInterval) {
         const index = getIntervalIndex(intervals, getPreviousTradingDate(tradingDate)  as string);
         if (index > -1) {
             const intervalsForAverage = _.slice(intervals, index - intervalsToAverageBack+1 , index+1 );
-            const average = _.meanBy([...intervalsForAverage,firstIntradayIntervalCopy], "close");
+            const average = _.meanBy([...intervalsForAverage,firstIntradayIntervalCopy], type);
             return average;
         }
     }
@@ -69,7 +68,7 @@ export function calculateMovingAverage(intervals: ITDAmeritradeIntervalData[], t
         const index = getIntervalIndex(intervals, getPreviousTradingDate(tradingDate)  as string );
         if (index > -1) {
             const intervalsForAverage = _.slice(intervals, index - intervalsToAverageBack + 1, index + 1);
-            const average = _.meanBy(intervalsForAverage, "close");
+            const average = _.meanBy(intervalsForAverage, type);
             return average;
         }
     }
@@ -141,6 +140,9 @@ export function composeMetadata(tradingDate: string, historicalData: IQuotesHist
     const quoteMetadata: IQuoteMetadata = {
         averageDailyVolume10Day: calculateAverage(intervals, tradingDate, 10),
         averageDailyVolume3Month: calculateAverage(intervals, tradingDate, 90),
+        get average5Minute3Month() {
+            return ((this.averageDailyVolume3Month as number)/78);
+        },
         previousClose: getPreviousClose(intervals, tradingDate),
 
         SMA5: {
@@ -151,7 +153,9 @@ export function composeMetadata(tradingDate: string, historicalData: IQuotesHist
         // TODO :  put true values
         fiftyTwoWeekLow: 0,
         fiftyTwoWeekHigh: 0,
-        dailyHistoricalData: convertUtils.convertTDAmeritradeDailyIntervals(getPartialHistory(intervals, tradingDate, 5)),
+
+        fullYearDailyHistory: historicalData.quoteFullYearDailyHistory.candles,
+        dailyHistoricalData: convertUtils.convertTDAmeritradeDailyIntervals(getPartialHistory(intervals, tradingDate,10)),
     };
     return quoteMetadata;
 }

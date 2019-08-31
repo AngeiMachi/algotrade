@@ -16,10 +16,10 @@ import { AsyncRevolver } from "./async-revolver";
 // const sr = new StockReader(["AMD","ROKU","TSLA","DIS","AAPL","XLNX","NVDA","LULU","WDC","RH",
 // "WYNN","PYPL","AVGO","EA","CRM","PANW","HD","UNH","AMZN"]);
 
-// const sr = new StockReader(environmentConfig.quotes.quote1);
-// sr.initializeQuotesData().then(() => {
-//     sr.initiateStockWatch();
-// });
+const sr = new StockReader(environmentConfig.quotes.quote1);
+sr.initializeQuotesData().then(() => {
+    sr.initiateStockWatch();
+});
 
 //  TDAmeritradeAPI.getQuote5MinuteIntraday("AMZN","2019-08-09").then((intervals) => {
 //  });
@@ -28,9 +28,9 @@ import { AsyncRevolver } from "./async-revolver";
 // const shr = new StockHistoricalReader( environmentConfig.quotes.quote1);
 // shr.getQuotesHistoricalDataByAlphaVantage();
 
-const shr = new StockHistoricalReader( environmentConfig.quotes.quote1);
+// const shr = new StockHistoricalReader(environmentConfig.quotes.quote1);
 
-shr.getQuotesHistoricalDataByTDAmeritrade(0 );
+// shr.getQuotesHistoricalDataByTDAmeritrade(0,["2019-08-28"]);
 
 // alpha2.data.daily_adjusted('aapl','compact','json','5min').then(data => {
 //     console.log(data);
