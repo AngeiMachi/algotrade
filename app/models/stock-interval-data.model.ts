@@ -8,6 +8,7 @@ export interface IQuoteFullIntervalData {
     volume: number;
     timeIsrael: Date;
     timeNewYork: Date;
+    intervalNumber?: number;
 }
 
 export interface IQuotes {

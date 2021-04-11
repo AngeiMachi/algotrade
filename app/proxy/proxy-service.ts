@@ -1,9 +1,9 @@
 import moment from "moment-timezone";
 import * as request from "request-promise";
 
-import { logger } from "../config/winston.config.js";
+import { logger } from "../config/winston.config";
 import * as environmentConfig from "../config/environment.Config.json";
-import * as globalConfig from "../config/globals.config"
+import * as globalConfig from "../config/globals.config";
 
 import * as convertUtils from "../utils/convert-utils";
 import * as quoteUtils from "../utils/quote-utils";
@@ -18,7 +18,7 @@ import {
     IQuoteFullIntervalData,
     IQuotesHistoricalData,
     ITDAmeritradePriceHistory,
-    IQuoteIntervals
+    IQuoteIntervals,
 } from "../models/stock-interval-data.model";
 
 import {

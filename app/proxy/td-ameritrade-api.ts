@@ -3,13 +3,13 @@ import moment from "moment-timezone";
 import * as request from "request-promise";
 
 import * as environmentConfig from "../config/environment.Config.json";
-import { logger } from "../config/winston.config.js";
+import { logger } from "../config/winston.config";
 
 import { parseMustache } from "../utils/general";
 import * as convertUtils from "../utils/convert-utils";
 
 import { IQuoteHistoricalIntervals,
-         ITDAmeritradePriceHistory, 
+         ITDAmeritradePriceHistory,
          IQuoteIntervals,
          ITDAmeritradeIntervalData} from "../models/stock-interval-data.model";
 
@@ -17,8 +17,8 @@ import { IQuoteHistoricalIntervals,
 export const getQuote5MinuteHistory = async (quote: string, specificTradeDates: string[]= []): Promise<IQuoteHistoricalIntervals> => {
     try {
         const options = {
-            startDate:1530792613000,
-            endDate:moment(new Date()).unix()*1000,
+            startDate: 1530792613000,
+            endDate: moment(new Date()).unix() * 1000,
             quote: quote.toUpperCase(),
             api_key: environmentConfig.TDAmeritradeAPI.api_key,
         };
@@ -62,10 +62,10 @@ export const getQuote5MinuteIntraday = async (quote: string, tradeDate: string):
 
         });
 
-        
         const parsedResponse = JSON.parse(response);
-        
-        const preTradingHoursRemoved  = parsedResponse.candles.filter((intervals: ITDAmeritradeIntervalData) =>  intervals.datetime >= startDate);
+
+        const preTradingHoursRemoved  = parsedResponse.candles.filter(
+            (intervals: ITDAmeritradeIntervalData) =>  intervals.datetime >= startDate);
         const quote5MinutIntraday = convertUtils.convertTDAmeritrade5MinuteIntervals(preTradingHoursRemoved as any);
         return quote5MinutIntraday;
     } catch (err) {

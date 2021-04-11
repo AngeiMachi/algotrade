@@ -20,12 +20,16 @@
     "@types/app-root-path": "^1.2.4",
     "@types/request": "^2.48.2",
     "@types/request-promise": "^4.1.44",
-    "tslint": "^5.18.0"
+    "ts-node": "^9.0.0",
+    "tslint": "^5.18.0",
+    "typescript": "^4.0.5"
   },
   "scripts": {
+    "dev": "nodemon --config nodemon.json app/server.ts",
+    "dev:debug": "nodemon --config nodemon.json --inspect-brk app/server.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "tsc && node dist/server.js",
-    "watch-node": "tsc && nodemon dist/server.js"
+    "start": "tsc && node dist/app/server.js",
+    "watch-node": "tsc && nodemon dist/app/server.js"
   },
   "author": "",
   "license": "ISC"

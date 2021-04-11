@@ -6,8 +6,8 @@ import * as quoteUtiles from "./utils/quote-utils";
 
 import { IQuoteFullIntervalData, IQuoteIntervals, IQuoteMetadata } from "./models/stock-interval-data.model";
 import { BuyDirectionEnum, buyReasonEnum } from "./models/enums";
-import { logger } from "./config/winston.config.js";
-import { minuteDifference } from "./utils/general.js";
+import { logger } from "./config/winston.config";
+import { minuteDifference } from "./utils/general";
 
 export class QuoteStats {
 
@@ -67,7 +67,7 @@ export class QuoteStats {
         this.calculateAverageVolume(stockInterval);
         this.calculateMovingAverage(stockInterval);
         this.checkToSell(stockInterval);
-        
+    
         this.decideAllowedByDirectionForToday(stockInterval);
         this.checkToKnowIfReached5SMA(stockInterval);
         this.buyOnHighVolumeMovement(stockInterval);
@@ -89,7 +89,7 @@ export class QuoteStats {
         return 0;
     }
 
-    calculateMovingAverage(stockInterval: IQuoteFullIntervalData) {
+    private calculateMovingAverage(stockInterval: IQuoteFullIntervalData) {
 
         // volumeWeight = this.averageVolume/this.quoteMetadata.average5Minute3Month ;
         if (!this.didBuy) {

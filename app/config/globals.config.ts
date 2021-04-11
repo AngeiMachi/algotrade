@@ -1,9 +1,8 @@
-export const INTERVAL_TIME = 300000; // 300000 = 5 mins;
+export const INTERVAL_TIME = 10000; // 300000 = 5 mins;
 export const Mock = {
-    IsMock: false,
+    IsMock: true,
     StartLiveSimulationAtInterval: 1,
-    MockDataDate: "" ,
-    MockDataDateExample: "2019-07-16",
+    MockDataDate: "2020-11-13" ,
+    MockDataDateExample: "2020-11-13",
 };
 export const ShouldUsePushNotifications = false;
-

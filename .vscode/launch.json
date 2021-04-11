@@ -1,25 +1,24 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-        
-        {
-            "type": "node",
-            "request": "launch",
-            "preLaunchTask": "tsc",
-            "name": "Launch Program",
-            "program": "${workspaceFolder}\\dist\\app\\server.js",
-            "outputCapture": "std",
-            "skipFiles": [
-                "node_modules/**/*.js",
-                "lib/**/*.js",
-                "async_hooks.js",
-                "inspector_async_hook.js",
-                "next_tick.js",
-                "timers.js",
-              ]
-        }
+      
+      {
+        "type": "node",
+        "request": "attach",
+        "name": "Attach",
+        "restart": true,
+        "processId": "${command:PickProcess}",
+        "skipFiles": [
+          "node_modules/**/*.js",
+          "lib/**/*.js",
+          "async_hooks.js",
+          "inspector_async_hook.js",
+          "${workspaceFolder}/nodeApp/node_modules/**/*.js",
+          "${workspaceFolder}/lib/**/*.js",
+          "<node_internals>/**/*.js",
+          "<node_internals>/**",
+          "<node_internals>/internal/async_hooks.js"
+          ]
+      }
     ]
-}
+  }

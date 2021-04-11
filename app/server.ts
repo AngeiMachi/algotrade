@@ -6,17 +6,10 @@ import { StockReader } from "./stock-reader";
 import * as TDAmeritradeAPI from "./proxy/td-ameritrade-api";
 import { AsyncRevolver } from "./async-revolver";
 
-
-
-
-
-
-
-
 // const sr = new StockReader(["AMD","ROKU","TSLA","DIS","AAPL","XLNX","NVDA","LULU","WDC","RH",
 // "WYNN","PYPL","AVGO","EA","CRM","PANW","HD","UNH","AMZN"]);
 
-const sr = new StockReader(environmentConfig.quotes.quote1);
+const sr = new StockReader(environmentConfig.quotes.quote3);
 sr.initializeQuotesData().then(() => {
     sr.initiateStockWatch();
 });

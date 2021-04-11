@@ -41,7 +41,7 @@ export class StockReader {
     }
 
     public initiateStockWatch() {
-        let i= 0;
+        let i = 0;
         if (Object.keys(this.quotes).length > 0) {
             const iterateStockInterval = setInterval(() => {
                 this.iterateStocks();
@@ -61,7 +61,7 @@ export class StockReader {
     }
 
     private async iterateStocks() {
-        for (let i = 0; i<Object.keys(this.quotes).length; i++) {
+        for (let i = 0; i < Object.keys(this.quotes).length; i++) {
             const quoteKey = Object.keys(this.quotes)[i];
             try {
                 const quoteStockStats: QuoteStats = this.quotes[quoteKey];
@@ -78,7 +78,6 @@ export class StockReader {
         }
     }
 
-
     private clearQuoteWhenIsLastInterval(quoteKey: string , interval: IQuoteFullIntervalData) {
         if (this.isLastInterval(interval)) {
             delete this.quotes[quoteKey];
@@ -87,6 +86,6 @@ export class StockReader {
     }
 
     private isLastInterval(interval: any): boolean {
-        return interval.timeNewYork.getHours()===16;
+        return interval.timeNewYork.getHours() === 16;
     }
 }
