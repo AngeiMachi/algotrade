@@ -1,21 +1,26 @@
 import * as _ from "lodash";
-import { QuoteStats as QuoteStats } from "./stock-stats";
-import { IQuoteMetadata, IQuotesHistoricalData } from "./models/stock-interval-data.model";
-import { ProxyService } from "./proxy-service";
-import { INTERVAL_PROPERTY_NAME } from "./config/globals.config";
-import { convertAlphaVantageIntervals } from "./utils/utils";
-import { logger } from "./config/winston.config";
 import moment = require("moment");
-import * as quoteUtils from "./utils/quoteUtils";
-import * as convertUtils from "./utils/utils";
+
+import { logger } from "./config/winston.config";
+
+import { convertAlphaVantageIntervals } from "./utils/convert-utils";
+import * as quoteUtils from "./utils/quote-utils";
+
+import { ProxyService } from "./proxy/proxy-service";
+import { QuoteStats} from "./stock-stats";
+
+import { IQuoteMetadata,
+         IQuotesHistoricalData 
+       } from "./models/stock-interval-data.model";
+import { INTERVAL_PROPERTY_NAME } from "./models/alpha-vantage.model";
 
 export class StockHistoricalReader {
     private proxyService: ProxyService;
     private quotes: string[] = [];
     private profitLossAccountPerQuote = {} as { [key: string]: number };
-
-    constructor(quotes: string[] = [], alphaVantageKey: string) {
-        this.proxyService = new ProxyService(alphaVantageKey);
+    
+    constructor(quotes: string[] = []) {
+        this.proxyService = new ProxyService();
 
         this.initializeQuotes(quotes);
     }
@@ -55,10 +60,10 @@ export class StockHistoricalReader {
         try {
             const currentQuote = this.quotes[quoteIndex];
 
-            const historicalData: IQuotesHistoricalData =
-                await this.proxyService.getHistoricalData(this.quotes[quoteIndex], specificTradeDates);
+            const historicalData: IQuotesHistoricalData = await this.proxyService.getHistoricalData(this.quotes[quoteIndex],
+                                                                                                         specificTradeDates);
             const { quote5MinuteHistory } = historicalData;
-            const historicalIntervalsTradeDays = Object.keys(quote5MinuteHistory);
+            const historicalIntervalsTradeDays = Object.keys(quote5MinuteHistory as object);
 
             try {
                 let loosingTrade = 0;
@@ -113,7 +118,7 @@ export class StockHistoricalReader {
             const { partialHistoryDailyIntervals,
                     fullYearDailyHistory } = await this.proxyService.getTDAmeritradeDailyHistory(this.quotes[i], 100);
             const quoteMoves = partialHistoryDailyIntervals.map((item) => {
-                const tradeDay = moment(item.time).format("YYYY-MM-DD");
+                const tradeDay = moment(item.timeIsrael).format("YYYY-MM-DD");
                 return {
                     diff: + (item.high - item.low).toFixed(2),
                     ...item,
@@ -156,29 +161,10 @@ export class StockHistoricalReader {
         });
     }
 
-    private composeMetadata(historicalData: IQuotesHistoricalData, tradeDay: string): IQuoteMetadata {
-
-        const intervals = historicalData.quoteFullYearDailyHistory.candles;
-
-        const quoteMetadata: IQuoteMetadata = {
-            averageDailyVolume10Day: quoteUtils.calculateAverage(intervals, tradeDay, 10),
-            averageDailyVolume3Month: quoteUtils.calculateAverage(intervals, tradeDay, 90),
-            regularMarketPreviousClose: quoteUtils.getPreviousClose(intervals, tradeDay),
-
-            SMA5: historicalData.SMA,
-
-            // TODO :  put true values
-            fiftyTwoWeekLow: 0,
-            fiftyTwoWeekHigh: 0,
-            dailyHistoricalData: convertUtils.convertTDAmeritradeDailyIntervals(quoteUtils.getPartialHistory(intervals, tradeDay, 5)),
-        };
-        return quoteMetadata;
-    }
-
     private calculateProfitLossPerTradeDay(historicalData: any, currentQuote: string, tradeDay: string) {
 
         const quote5MinuteHistory = historicalData.quote5MinuteHistory;
-        const quoteMetadata = this.composeMetadata(historicalData, tradeDay);
+        const quoteMetadata = quoteUtils.composeMetadata(tradeDay , historicalData,quoteUtils.getRecentFirstIntervalData(quote5MinuteHistory[tradeDay]));
         const quoteStats = new QuoteStats(currentQuote, tradeDay);
         const profitLossAccount = quoteStats.initializeStockData(quote5MinuteHistory[tradeDay], quoteMetadata);
 

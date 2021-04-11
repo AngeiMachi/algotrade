@@ -1,20 +1,11 @@
-import * as environmentConfig from "./../config/environment.Config.json";
 import moment from "moment-timezone";
-import {IAlphaVantageIntervals,
+import {
         IQuoteFullIntervalData,
         IQuoteIntervals,
-        ITDAmeritradeIntervalData } from "../models/stock-interval-data.model";
-
-export function getCurrentTradingDay() {
-    let mockDataDate: string;
-    if (environmentConfig.Mock.IsMock || environmentConfig.Mock.MockDataDate) {
-        mockDataDate = environmentConfig.Mock.MockDataDate;
-    } else {
-        mockDataDate = moment(new Date()).format("YYYY-MM-DD");
-    }
-
-    return mockDataDate;
-}
+        ITDAmeritradeIntervalData 
+       } from "../models/stock-interval-data.model";
+       
+import { IAlphaVantageIntervals } from "../models/alpha-vantage.model";
 
 export function convertAlphaVantageFormat(stockIntervalData: IAlphaVantageIntervals, key: string): IQuoteFullIntervalData {
     const nasdaqTime = moment.tz(key, "America/New_York");
@@ -26,7 +17,8 @@ export function convertAlphaVantageFormat(stockIntervalData: IAlphaVantageInterv
         low :  Number(Object.values(stockIntervalData)[2]),
         close :  Number(Object.values(stockIntervalData)[3]),
         volume :  Number(Object.values(stockIntervalData)[4]),
-        time: new Date( israelTime.format("YYYY-MM-DD HH:mm:ss") ),
+        timeIsrael: new Date( israelTime.format("YYYY-MM-DD HH:mm:ss") ),
+        timeNewYork: new Date( nasdaqTime.format("YYYY-MM-DD HH:mm:ss") ),
     };
 
     return convertedStockIntervalData;
@@ -46,14 +38,15 @@ export function convertAlphaVantageIntervals(alphaVantageIntervals: IAlphaVantag
 export function convertYahooIntervals(timestamp: any[], yahooIntervals: any): IQuoteFullIntervalData[] {
     const convertedQuoteIntervalsData: IQuoteFullIntervalData[] = [];
 
-    timestamp.forEach((item, index) => {
+    timestamp && timestamp.forEach((item, index) => {
         const interval: IQuoteFullIntervalData = {
             open: yahooIntervals.open[index],
             high: yahooIntervals.high[index],
             low: yahooIntervals.low[index],
             close: yahooIntervals.close[index],
             volume: yahooIntervals.volume[index],
-            time: new Date(moment(item * 1000).tz("Asia/Jerusalem").format("YYYY-MM-DD HH:mm:ss"))
+            timeIsrael: new Date(moment(item * 1000).tz("Asia/Jerusalem").format("YYYY-MM-DD HH:mm:ss")),
+            timeNewYork: new Date(moment(item * 1000).tz("America/New_York").format("YYYY-MM-DD HH:mm:ss"))
         };
         convertedQuoteIntervalsData.push(interval);
     });
@@ -63,18 +56,21 @@ export function convertYahooIntervals(timestamp: any[], yahooIntervals: any): IQ
 export function convertTDAmeritrade5MinuteIntervals(intervals: any[]): IQuoteIntervals {
     const convertedQuoteIntervalsData: IQuoteIntervals = {};
 
-    intervals.forEach((item, index) => {
-        const key = moment(item.datetime).add(5,"minutes").tz("America/New_York").format("YYYY-MM-DD HH:mm:ss");
-        const interval: IQuoteFullIntervalData = {
-            open: item.open,
-            high: item.high,
-            low: item.low,
-            close: item.close,
-            volume: item.volume,
-            time: new Date(moment(item.datetime).add(5, "minutes").tz("Asia/Jerusalem").format("YYYY-MM-DD HH:mm:ss")),
-        };
-        convertedQuoteIntervalsData[key] =  interval;
-    });
+    if (intervals && intervals.length>0) {
+        intervals.forEach((item, index) => {
+            const key = moment(item.datetime).add(5,"minutes").tz("America/New_York").format("YYYY-MM-DD HH:mm:ss");
+            const interval: IQuoteFullIntervalData = {
+                open: item.open,
+                high: item.high,
+                low: item.low,
+                close: item.close,
+                volume: item.volume,
+                timeIsrael: new Date(moment(item.datetime).add(5, "minutes").tz("Asia/Jerusalem").format("YYYY-MM-DD HH:mm:ss")),
+                timeNewYork: new Date(moment(item.datetime).add(5, "minutes").tz("America/New_York").format("YYYY-MM-DD HH:mm:ss")),
+            };
+            convertedQuoteIntervalsData[key] =  interval;
+        });
+    }
     return convertedQuoteIntervalsData;
 }
 
@@ -98,7 +94,8 @@ export function convertTDAmeritradeDailyIntervals(intervals: ITDAmeritradeInterv
             low: item.low,
             close: item.close,
             volume: item.volume,
-            time: new Date(moment(item.datetime).format("YYYY-MM-DD HH:mm:ss")),
+            timeIsrael: new Date(moment(item.datetime).tz("Asia/Jerusalem").format("YYYY-MM-DD HH:mm:ss")),
+            timeNewYork: new Date(moment(item.datetime).tz( "America/New_York").format("YYYY-MM-DD HH:mm:ss")),
         };
         convertedQuoteIntervalsData.push(interval);
     });
