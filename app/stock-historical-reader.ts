@@ -1,173 +1,206 @@
-import * as _ from "lodash";
-import moment = require("moment");
+// import * as _ from 'lodash';
+// import moment = require('moment');
 
-import { logger } from "./config/winston.config";
+// import { logger } from './config/winston.config';
 
-import { convertAlphaVantageIntervals } from "./utils/convert-utils";
-import * as quoteUtils from "./utils/quote-utils";
+// import { convertAlphaVantageIntervals } from './utils/convert-utils';
+// import * as quoteUtils from './utils/quote-utils';
 
-import { ProxyService } from "./proxy/proxy-service";
-import { QuoteStats} from "./stock-stats";
+// import { ProxyService } from './proxy/proxy-service';
+// import { QuoteMonoRunner } from './quote-mono-reader';
 
-import { IQuoteMetadata,
-         IQuotesHistoricalData 
-       } from "./models/stock-interval-data.model";
-import { INTERVAL_PROPERTY_NAME } from "./models/alpha-vantage.model";
+// import { IQuoteMetadata, IQuotesHistoricalData } from './models/quote-data.model';
+// import { INTERVAL_PROPERTY_NAME } from './models/alpha-vantage.model';
 
-export class StockHistoricalReader {
-    private proxyService: ProxyService;
-    private quotes: string[] = [];
-    private profitLossAccountPerQuote = {} as { [key: string]: number };
-    
-    constructor(quotes: string[] = []) {
-        this.proxyService = new ProxyService();
+// export class StockHistoricalReader {
+//     private proxyService: ProxyService;
+//     private quotes: string[] = [];
+//     private profitLossAccountPerQuote = {} as { [key: string]: number };
 
-        this.initializeQuotes(quotes);
-    }
+//     constructor(quotes: string[] = []) {
+//         this.proxyService = new ProxyService();
 
-    public async getQuotesHistoricalDataByAlphaVantage(): Promise<any> {
-        try {
-            const promises: any[] | Array<Promise<void>> = [];
-            for (let j = 0; j < this.quotes.length; j++) {
-                const promise = setTimeout(async () => {
-                    const historicalData = await this.proxyService.getAlphaVantageHistoricalData(this.quotes[j]);
+//         this.initializeQuotes(quotes);
+//     }
 
-                    for (let i = 0; i < historicalData.length; i++) {
-                        const alphaVantageQuoteIntervals = historicalData[i][INTERVAL_PROPERTY_NAME];
-                        const tradeDay = Object.keys(alphaVantageQuoteIntervals)[0].substring(0, 10);
+//     public async getQuotesHistoricalDataByAlphaVantage(): Promise<any> {
+//         try {
+//             const promises: any[] | Array<Promise<void>> = [];
+//             for (let j = 0; j < this.quotes.length; j++) {
+//                 const promise = setTimeout(async () => {
+//                     const historicalData = await this.proxyService.getAlphaVantageHistoricalData(this.quotes[j]);
 
-                        logger.debug("index=" + i + ":" + this.quotes[j] + " Trade Day is " + tradeDay + ":");
+//                     for (let i = 0; i < historicalData.length; i++) {
+//                         const alphaVantageQuoteIntervals = historicalData[i][INTERVAL_PROPERTY_NAME];
+//                         const tradeDay = Object.keys(alphaVantageQuoteIntervals)[0].substring(0, 10);
 
-                        const quoteIntervals = convertAlphaVantageIntervals(alphaVantageQuoteIntervals);
+//                         logger.debug('index=' + i + ':' + this.quotes[j] + ' Trade Day is ' + tradeDay + ':');
 
-                        const quoteMetadata: IQuoteMetadata = await this.proxyService.getYahooFinanceMetadata(this.quotes[j],
-                                                                                                              moment(tradeDay));
+//                         const quoteIntervals = convertAlphaVantageIntervals(alphaVantageQuoteIntervals);
 
-                        const quoteStats = new QuoteStats(this.quotes[j], tradeDay);
+//                         const quoteMetadata: IQuoteMetadata = await this.proxyService.getYahooFinanceMetadata(
+//                             this.quotes[j],
+//                             moment(tradeDay)
+//                         );
 
-                        quoteStats.initializeStockData(quoteIntervals, quoteMetadata);
-                    }
+//                         const quoteStats = new QuoteMonoRunner(this.quotes[j], tradeDay);
 
-                }, j * 15 * 1000);
-            }
+//                         quoteStats.initializeStockData(quoteIntervals, quoteMetadata);
+//                     }
+//                 }, j * 15 * 1000);
+//             }
+//         } catch (err) {
+//             Promise.reject(err);
+//         }
+//     }
 
-        } catch (err) {
-            Promise.reject(err);
-        }
-    }
+//     public async getQuotesHistoricalDataByTDAmeritrade(quoteIndex: number = 0, specificTradeDates: string[] = []): Promise<any> {
+//         try {
+//             const currentQuote = this.quotes[quoteIndex];
 
-    public async getQuotesHistoricalDataByTDAmeritrade(quoteIndex: number = 0, specificTradeDates: string[]= []): Promise<any> {
-        try {
-            const currentQuote = this.quotes[quoteIndex];
+//             const historicalData: IQuotesHistoricalData = await this.proxyService.getHistoricalData(
+//                 this.quotes[quoteIndex],
+//                 specificTradeDates
+//             );
+//             const { quote5MinuteHistory } = historicalData;
+//             const historicalIntervalsTradeDays = Object.keys(quote5MinuteHistory as object);
 
-            const historicalData: IQuotesHistoricalData = await this.proxyService.getHistoricalData(this.quotes[quoteIndex],
-                                                                                                         specificTradeDates);
-            const { quote5MinuteHistory } = historicalData;
-            const historicalIntervalsTradeDays = Object.keys(quote5MinuteHistory as object);
+//             try {
+//                 let loosingTrade = 0;
+//                 let winningTrades = 0;
+//                 let loosingSum = 0;
+//                 let winningSum = 0;
+//                 for (let i = 0; i < historicalIntervalsTradeDays.length; i++) {
+//                     const tradeDay = historicalIntervalsTradeDays[i];
+//                     logger.debug('index=' + i + ':' + currentQuote + ' Trade Day is ' + tradeDay + ':');
 
-            try {
-                let loosingTrade = 0;
-                let winningTrades = 0;
-                let loosingSum = 0;
-                let winningSum = 0;
-                for (let i = 0; i < historicalIntervalsTradeDays.length; i++) {
-                    const tradeDay = historicalIntervalsTradeDays[i];
-                    logger.debug("index=" + i + ":" + currentQuote + " Trade Day is " + tradeDay + ":");
+//                     const profitLossAccount = this.calculateProfitLossPerTradeDay(historicalData, currentQuote, tradeDay);
 
-                    const profitLossAccount = this.calculateProfitLossPerTradeDay(historicalData, currentQuote, tradeDay);
+//                     if (profitLossAccount !== 0) {
+//                         if (profitLossAccount > 0) {
+//                             winningTrades++;
+//                             winningSum += profitLossAccount;
+//                         } else if (profitLossAccount < 0) {
+//                             loosingTrade++;
+//                             loosingSum += profitLossAccount;
+//                         }
+//                         logger.debug(
+//                             'index=' +
+//                                 i +
+//                                 ':' +
+//                                 this.quotes[quoteIndex] +
+//                                 ' Trade Day is ' +
+//                                 tradeDay +
+//                                 ' Profit / Loss:' +
+//                                 profitLossAccount
+//                         );
+//                         this.profitLossAccountPerQuote[currentQuote] += profitLossAccount;
+//                     }
+//                 }
+//                 logger.debug('----------------------------------------------------------------------------');
+//                 logger.debug(
+//                     'Loosing trades=' +
+//                         loosingTrade +
+//                         '(' +
+//                         loosingSum.toFixed(2) +
+//                         ')  ,Winning trades=' +
+//                         winningTrades +
+//                         '(' +
+//                         winningSum.toFixed(2) +
+//                         ')'
+//                 );
+//                 logger.debug('----------------------------------------------------------------------------');
+//                 logger.debug(
+//                     currentQuote +
+//                         ' Final Profit / Loss:' +
+//                         this.profitLossAccountPerQuote[currentQuote].toFixed(2) +
+//                         '. Success Ratio:' +
+//                         (winningTrades / loosingTrade).toFixed(2)
+//                 );
+//             } finally {
+//                 if (quoteIndex + 1 < this.quotes.length) {
+//                     this.getQuotesHistoricalDataByTDAmeritrade(quoteIndex + 1, specificTradeDates);
+//                 } else {
+//                     logger.debug('(-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-: ');
+//                 }
+//             }
+//         } catch (err) {
+//             logger.error('getQuotesHistoricalDataByTDAmeritrade :' + err);
+//         }
 
-                    if (profitLossAccount !== 0) {
-                        if (profitLossAccount > 0) {
-                            winningTrades++;
-                            winningSum += profitLossAccount;
-                        } else if (profitLossAccount < 0) {
-                            loosingTrade++;
-                            loosingSum += profitLossAccount;
-                        }
-                        logger.debug("index=" + i + ":" + this.quotes[quoteIndex] + " Trade Day is " +
-                            tradeDay + " Profit / Loss:" + profitLossAccount);
-                        this.profitLossAccountPerQuote[currentQuote] += profitLossAccount;
-                    }
-                }
-                logger.debug("----------------------------------------------------------------------------");
-                logger.debug("Loosing trades=" + loosingTrade + "(" + loosingSum.toFixed(2) +
-                            ")  ,Winning trades=" + winningTrades +  "(" + winningSum.toFixed(2) + ")");
-                logger.debug("----------------------------------------------------------------------------");
-                logger.debug(currentQuote + " Final Profit / Loss:" + this.profitLossAccountPerQuote[currentQuote].toFixed(2) +
-                ". Success Ratio:" + (winningTrades / loosingTrade ).toFixed(2));
-            } finally {
-                if (quoteIndex + 1 < this.quotes.length) {
-                    this.getQuotesHistoricalDataByTDAmeritrade(quoteIndex + 1, specificTradeDates);
-                } else {
-                    logger.debug("(-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-:  (-: ");
-                }
-            }
-        } catch (err) {
-            logger.error("getQuotesHistoricalDataByTDAmeritrade :" + err);
-        }
+//         logger.debug('----------------------------------------------------------------------------');
+//     }
 
-        logger.debug("----------------------------------------------------------------------------");
-    }
+//     public async getBiggestDailyMoves(BiggestMoversQuota: number) {
+//         logger.debug('Biggest Moves:');
+//         logger.debug('-------------------');
+//         for (let i = 0; i < this.quotes.length; i++) {
+//             logger.debug(this.quotes[i]);
+//             logger.debug('----------------------------------------------------------------------------');
+//             const { partialHistoryDailyIntervals, fullYearDailyHistory } = await this.proxyService.getTDAmeritradeDailyHistory(
+//                 this.quotes[i],
+//                 100
+//             );
+//             const quoteMoves = partialHistoryDailyIntervals.map((item) => {
+//                 const tradeDay = moment(item.timeIsrael).format('YYYY-MM-DD');
+//                 return {
+//                     diff: +(item.high - item.low).toFixed(2),
+//                     ...item,
+//                     time: tradeDay,
+//                     avg10Days: quoteUtils.calculateAverage(fullYearDailyHistory.candles, tradeDay, 10),
+//                     get avg10DaysRatio() {
+//                         // @ts-ignore
+//                         return +(this.volume / this.avg10Days).toFixed(2);
+//                     },
+//                     avg90Days: quoteUtils.calculateAverage(fullYearDailyHistory.candles, tradeDay, 90),
+//                     get avg90DaysRatio() {
+//                         // @ts-ignore
+//                         return +(this.volume / this.avg90Days).toFixed(2);
+//                     },
+//                 };
+//             });
+//             const maxTenMoves = _.sortBy(quoteMoves, ['diff']).reverse().slice(0, BiggestMoversQuota);
 
-    public async getBiggestDailyMoves(BiggestMoversQuota: number) {
-        logger.debug("Biggest Moves:");
-        logger.debug("-------------------");
-        for (let i = 0; i < this.quotes.length; i++) {
-            logger.debug(this.quotes[i]);
-            logger.debug("----------------------------------------------------------------------------");
-            const { partialHistoryDailyIntervals,
-                    fullYearDailyHistory } = await this.proxyService.getTDAmeritradeDailyHistory(this.quotes[i], 100);
-            const quoteMoves = partialHistoryDailyIntervals.map((item) => {
-                const tradeDay = moment(item.timeIsrael).format("YYYY-MM-DD");
-                return {
-                    diff: + (item.high - item.low).toFixed(2),
-                    ...item,
-                    time: tradeDay,
-                    avg10Days: quoteUtils.calculateAverage(fullYearDailyHistory.candles, tradeDay, 10),
-                    get avg10DaysRatio() {
-                        // @ts-ignore
-                        return +(this.volume / this.avg10Days).toFixed(2) ;
-                    },
-                    avg90Days: quoteUtils.calculateAverage(fullYearDailyHistory.candles, tradeDay, 90),
-                    get avg90DaysRatio() {
-                        // @ts-ignore
-                        return +(this.volume / this.avg90Days).toFixed(2) ;
-                    },
-                };
-            });
-            const maxTenMoves = _.sortBy(quoteMoves, ["diff"]).reverse().slice(0, BiggestMoversQuota);
+//             let datesArray = '[';
 
-            let datesArray = "[";
+//             for (let j = 0; j < maxTenMoves.length; j++) {
+//                 logger.debug(JSON.stringify(maxTenMoves[j]));
+//                 datesArray += '"' + maxTenMoves[j].time + '", ';
+//             }
+//             datesArray = datesArray.replace(/,(?=[^,]*$)/, ']');
 
-            for (let j = 0; j < maxTenMoves.length; j++) {
-                logger.debug(JSON.stringify(maxTenMoves[j]));
-                datesArray += "\"" + maxTenMoves[j].time + "\", ";
-            }
-            datesArray = datesArray.replace(/,(?=[^,]*$)/, "]");
+//             const avg10avg = _.meanBy(
+//                 quoteMoves.filter((item) => item.avg10DaysRatio > 1),
+//                 'avg10DaysRatio'
+//             ).toFixed(2);
+//             const avg90avg = _.meanBy(
+//                 quoteMoves.filter((item) => item.avg10DaysRatio > 1),
+//                 'avg90DaysRatio'
+//             ).toFixed(2);
+//             logger.debug('----------------------------------------------------------------------------');
+//             logger.debug('avg10avg=' + avg10avg + ' ,avg90avg=' + avg90avg);
+//             logger.debug(datesArray);
+//             logger.debug('----------------------------------------------------------------------------');
+//         }
+//     }
 
-            const avg10avg = _.meanBy(quoteMoves.filter((item) => item.avg10DaysRatio > 1), "avg10DaysRatio").toFixed(2);
-            const avg90avg = _.meanBy(quoteMoves.filter((item) => item.avg10DaysRatio > 1), "avg90DaysRatio").toFixed(2);
-            logger.debug("----------------------------------------------------------------------------");
-            logger.debug("avg10avg=" + avg10avg + " ,avg90avg=" + avg90avg  );
-            logger.debug( datesArray );
-            logger.debug("----------------------------------------------------------------------------");
-        }
-    }
+//     private initializeQuotes(quotes: string[]) {
+//         quotes.forEach((quote) => {
+//             this.quotes.push(quote);
+//             this.profitLossAccountPerQuote[quote] = 0;
+//         });
+//     }
 
-    private initializeQuotes(quotes: string[]) {
-        quotes.forEach((quote) => {
-            this.quotes.push(quote);
-            this.profitLossAccountPerQuote[quote] = 0;
-        });
-    }
+//     private calculateProfitLossPerTradeDay(historicalData: any, currentQuote: string, tradeDay: string) {
+//         const quote5MinuteHistory = historicalData.quote5MinuteHistory;
+//         const quoteMetadata = quoteUtils.composeMetadata(
+//             tradeDay,
+//             historicalData,
+//             quoteUtils.getRecentFirstIntervalData(quote5MinuteHistory[tradeDay])
+//         );
+//         const quoteStats = new QuoteMonoRunner(currentQuote, tradeDay);
+//         const profitLossAccount = quoteStats.initializeStockData(quote5MinuteHistory[tradeDay], quoteMetadata);
 
-    private calculateProfitLossPerTradeDay(historicalData: any, currentQuote: string, tradeDay: string) {
-
-        const quote5MinuteHistory = historicalData.quote5MinuteHistory;
-        const quoteMetadata = quoteUtils.composeMetadata(tradeDay , historicalData,quoteUtils.getRecentFirstIntervalData(quote5MinuteHistory[tradeDay]));
-        const quoteStats = new QuoteStats(currentQuote, tradeDay);
-        const profitLossAccount = quoteStats.initializeStockData(quote5MinuteHistory[tradeDay], quoteMetadata);
-
-        return profitLossAccount;
-    }
-}
+//         return profitLossAccount;
+//     }
+// }

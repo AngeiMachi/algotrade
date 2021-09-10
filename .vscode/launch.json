@@ -1,24 +1,26 @@
 {
     "version": "0.2.0",
     "configurations": [
-      
-      {
-        "type": "node",
-        "request": "attach",
-        "name": "Attach",
-        "restart": true,
-        "processId": "${command:PickProcess}",
-        "skipFiles": [
-          "node_modules/**/*.js",
-          "lib/**/*.js",
-          "async_hooks.js",
-          "inspector_async_hook.js",
-          "${workspaceFolder}/nodeApp/node_modules/**/*.js",
-          "${workspaceFolder}/lib/**/*.js",
-          "<node_internals>/**/*.js",
-          "<node_internals>/**",
-          "<node_internals>/internal/async_hooks.js"
-          ]
-      }
+        {
+            "type": "node",
+            "request": "attach",
+            "name": "Attach",
+            "restart": true,
+            "processId": "${command:PickProcess}",
+            "skipFiles": [
+                "node_modules/**/*.js",
+                "node_modules/**/*.ts",
+                "lib/**/*.js",
+                "async_hooks.js",
+                "inspector_async_hook.js",
+                "${workspaceFolder}/nodeApp/node_modules/**/*.js",
+                "${workspaceFolder}/lib/**/*.js",
+                "<node_internals>/**/*.js",
+                "<node_internals>/**",
+                "<node_internals>/*.js",
+                "<node_internals>/internal/async_hooks.js",
+                "<node_internals>/_tls_wrap.js"
+            ]
+        }
     ]
-  }
+}
