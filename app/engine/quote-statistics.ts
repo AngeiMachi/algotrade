@@ -3,9 +3,9 @@ import { logger } from '../config/winston.config';
 import * as quoteUtiles from '../utils/quote-utils';
 import { IQuoteFullIntervalData, IQuoteIntervals } from '../models/quote-data.model';
 import { IQuoteMetadata } from '../models/quote-data.model';
-export class QuoteStats {
+export class QuoteStatistics {
     private _quote: string;
-    public get quote() {
+    public get quoteName() {
         return this._quote;
     }
 
@@ -69,7 +69,7 @@ export class QuoteStats {
 
     public composeAndPrintCurrentIntervalStats(quoteInterval: IQuoteFullIntervalData, isLive: boolean) {
         let stats = {
-            quote: this.quote,
+            quote: this.quoteName,
             interval: moment(quoteInterval.timeIsrael).format('HH:mm:ss'),
             ...quoteInterval,
             intervalNumber: this._intervalCount,

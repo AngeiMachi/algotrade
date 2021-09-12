@@ -1,12 +1,12 @@
-import * as request from "request-promise";
+import * as request from 'request-promise';
 
-import * as environmentConfig from "../config/environment.Config.json";
+import * as environmentConfig from '../config/environment.Config.json';
 
-import { parseMustache } from "../utils/general";
+import { parseMustache } from '../utils/general';
 
-import { AsyncRevolver } from "../async-revolver";
+import { AsyncRevolver } from '../utils/async-revolver';
 
-const asyncRevolver  = new AsyncRevolver(environmentConfig.AlphaVantage.key, 16000, false);
+const asyncRevolver = new AsyncRevolver(environmentConfig.AlphaVantage.key, 16000, false);
 
 export const getIntraday5Minute = async (quote: string, outputSize: string): Promise<any> => {
     const apiKey = await asyncRevolver.next();
@@ -29,7 +29,7 @@ export const getDaily5SMA = async (quote: string): Promise<any> => {
         apiKey,
     };
     const fullURL = parseMustache(environmentConfig.AlphaVantage.URL.get_daily_5_sma, options);
-    const SMA =  JSON.parse(await request.get({ url: fullURL }));
+    const SMA = JSON.parse(await request.get({ url: fullURL }));
 
     return SMA;
 };

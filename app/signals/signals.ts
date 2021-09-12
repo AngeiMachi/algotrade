@@ -1,10 +1,10 @@
 import { SignalVerificationReasonEnum } from '../models/enums';
-import { QuoteStats } from '../engine/quote-stats';
+import { QuoteStatistics } from '../engine/quote-statistics';
 
 export abstract class Signals {
-    protected quoteStats: QuoteStats;
+    protected quoteStats: QuoteStatistics;
 
-    constructor(_quoteStats: QuoteStats, todayDate: string = '') {
+    constructor(_quoteStats: QuoteStatistics, todayDate: string = '') {
         this.quoteStats = _quoteStats;
     }
 

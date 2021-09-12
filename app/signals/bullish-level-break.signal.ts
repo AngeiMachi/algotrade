@@ -1,4 +1,4 @@
-import { QuoteStats } from '../engine/quote-stats';
+import { QuoteStatistics } from '../engine/quote-statistics';
 import { Signals } from './signals';
 import { SignalVerificationReasonEnum } from '../models/enums';
 
@@ -8,7 +8,7 @@ export class BullishLevelBreakSignal extends Signals {
     private didBreakPreviousDayHigh: boolean = false;
     private didBreakPreviousWeekHigh: boolean = false;
 
-    constructor(_quoteStats: QuoteStats) {
+    constructor(_quoteStats: QuoteStatistics) {
         super(_quoteStats);
     }
 

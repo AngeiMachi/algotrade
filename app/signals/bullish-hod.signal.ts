@@ -1,4 +1,4 @@
-import { QuoteStats } from '../engine/quote-stats';
+import { QuoteStatistics } from '../engine/quote-statistics';
 import { SignalVerificationReasonEnum } from '../models/enums';
 import { IQuoteFullIntervalData } from '../models/quote-data.model';
 import { Signals } from './signals';
@@ -11,7 +11,7 @@ export class BullishHODSignal extends Signals {
     private lastHODInterval = {} as IQuoteFullIntervalData;
     private lastHODIntervalCount: number = 0;
 
-    constructor(_quoteStats: QuoteStats) {
+    constructor(_quoteStats: QuoteStatistics) {
         super(_quoteStats);
         this.preHOD = this.quoteStats.metadata.preMarketMetadata?.preMarketHOD.high || 100000;
     }
