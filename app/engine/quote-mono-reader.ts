@@ -1,14 +1,15 @@
 import moment from 'moment-timezone';
 import * as _ from 'lodash';
 
-import * as pushed from './proxy/pushed-api';
-import * as quoteUtiles from './utils/quote-utils';
+import * as pushed from '../proxy/pushed-api';
+import * as quoteUtiles from '../utils/quote-utils';
 
-import { IMarketHours, IQuoteFullIntervalData, IQuoteIntervals, IQuoteMetadata } from './models/quote-data.model';
-import { BuyDirectionEnum, buyReasonEnum, SignalVerificationReasonEnum } from './models/enums';
-import { logger } from './config/winston.config';
-import { BullishHODSignal } from './signals/bullish-hod.signal';
+import { IMarketHours, IQuoteFullIntervalData, IQuoteIntervals, IQuoteMetadata } from '../models/quote-data.model';
+import { BuyDirectionEnum, buyReasonEnum, SignalVerificationReasonEnum } from '../models/enums';
+import { logger } from '../config/winston.config';
+import { BullishHODSignal } from '../signals/bullish-hod.signal';
 import { QuoteStats } from './quote-stats';
+import { BullishLevelBreakSignal } from '../signals/bullish-level-break.signal';
 
 export class QuoteMonoRunner {
     private quoteStats: QuoteStats;
@@ -18,6 +19,7 @@ export class QuoteMonoRunner {
     private signals: SignalVerificationReasonEnum[] = [];
 
     private bullishHODSignal!: BullishHODSignal;
+    private bullishLevelBreakSignal!: BullishLevelBreakSignal;
 
     constructor(quote: string, todayDate: string = '') {
         this.quoteStats = new QuoteStats(quote, todayDate);
@@ -30,6 +32,7 @@ export class QuoteMonoRunner {
         //this.quoteStats.initializeStockIntervalsSoFar(quoteIntervals);
 
         this.bullishHODSignal = new BullishHODSignal(this.quoteStats);
+        this.bullishLevelBreakSignal = new BullishLevelBreakSignal(this.quoteStats);
 
         Object.keys(quoteIntervals).forEach((key) => {
             this.recordNewStockInterval(quoteIntervals[key]);
@@ -40,7 +43,8 @@ export class QuoteMonoRunner {
         this.quoteStats.addNewInterval(quoteInterval, isLive);
         this.quoteStats.composeAndPrintCurrentIntervalStats(quoteInterval, isLive);
 
-        this.signals = [...this.bullishHODSignal.monitor()];
+        //...this.bullishHODSignal.monitor(),
+        this.signals = [...this.bullishHODSignal.monitor(), ...this.bullishLevelBreakSignal.monitor()];
 
         if (this.signals.length > 0) {
             //logger.debug(JSON.stringify(quoteInterval));

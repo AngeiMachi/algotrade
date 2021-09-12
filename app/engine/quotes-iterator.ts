@@ -1,12 +1,12 @@
-import * as quoteUtils from './utils/quote-utils';
+import * as quoteUtils from '../utils/quote-utils';
 
-import { INTERVAL_TIME } from './config/globals.config';
-import { logger } from './config/winston.config';
+import { INTERVAL_TIME } from '../config/globals.config';
+import { logger } from '../config/winston.config';
 
-import { ProxyService } from './proxy/proxy-service';
+import { ProxyService } from '../proxy/proxy-service';
 import { QuoteMonoRunner } from './quote-mono-reader';
 
-import { IQuotes, IQuoteFullIntervalData, IQuoteMetadata, IMarketHours } from './models/quote-data.model';
+import { IQuotes, IQuoteFullIntervalData, IQuoteMetadata, IMarketHours } from '../models/quote-data.model';
 
 export class QuotesIterator {
     private proxyService: ProxyService;
@@ -49,11 +49,11 @@ export class QuotesIterator {
         }
     }
 
-    public initiateQuotesWatch() {
+    public async initiateQuotesWatch() {
         let i = 0;
         if (Object.keys(this.quotes).length > 0) {
-            const iterateStockInterval = setInterval(() => {
-                this.iterateQuotes();
+            const iterateStockInterval = setInterval(async () => {
+                await this.iterateQuotes();
                 if (Object.keys(this.quotes).length === 0) {
                     clearInterval(iterateStockInterval);
                 }

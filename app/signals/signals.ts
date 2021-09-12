@@ -1,5 +1,5 @@
 import { SignalVerificationReasonEnum } from '../models/enums';
-import { QuoteStats } from '../quote-stats';
+import { QuoteStats } from '../engine/quote-stats';
 
 export abstract class Signals {
     protected quoteStats: QuoteStats;

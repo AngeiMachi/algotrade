@@ -1,8 +1,8 @@
 import moment from 'moment-timezone';
-import { logger } from './config/winston.config';
-import * as quoteUtiles from './utils/quote-utils';
-import { IQuoteFullIntervalData, IQuoteIntervals } from './models/quote-data.model';
-import { IQuoteMetadata } from './models/quote-data.model';
+import { logger } from '../config/winston.config';
+import * as quoteUtiles from '../utils/quote-utils';
+import { IQuoteFullIntervalData, IQuoteIntervals } from '../models/quote-data.model';
+import { IQuoteMetadata } from '../models/quote-data.model';
 export class QuoteStats {
     private _quote: string;
     public get quote() {

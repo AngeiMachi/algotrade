@@ -20,7 +20,8 @@ export enum SignalVerificationReasonEnum {
     BULLISH_HIGH_OF_DAY_WITH_PRIOR_DAY_BREAKOUT = 'Bullish High Of Day With Prior Day Breakout',
     BULLISH_HIGH_OF_DAY = 'Bullish High Of Day',
     BULLISH_HIGH_OF_DAY_WITH_PREMARKET_BREAKOUT = 'Bullish High Of Day With Premarket Breakout',
-    BULLISH_BREAK_PREVIOUS_DAY = 'Bullish Break ',
+    BULLISH_BREAK_PREVIOUS_DAY = 'Bullish Break Previous Day',
+    BULLISH_BREAK_PREVIOUS_WEEK = 'Bullish Break Previous Week',
 }
 
 export enum TimeFrame {

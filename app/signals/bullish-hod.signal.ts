@@ -1,4 +1,4 @@
-import { QuoteStats } from '../quote-stats';
+import { QuoteStats } from '../engine/quote-stats';
 import { SignalVerificationReasonEnum } from '../models/enums';
 import { IQuoteFullIntervalData } from '../models/quote-data.model';
 import { Signals } from './signals';
@@ -35,10 +35,7 @@ export class BullishHODSignal extends Signals {
         } else if (this.quoteStats.lastInterval.high > this.lastHODInterval.high) {
             this.lastHODInterval = this.quoteStats.lastInterval;
             this.didMakeHigherLow = false;
-        } else if (
-            this.quoteStats.lastInterval.close < this.quoteStats.lastInterval.open &&
-            this.quoteStats.lastInterval.close < this.lastHODInterval.close
-        ) {
+        } else if (this.quoteStats.lastInterval.close < this.quoteStats.lastInterval.open && this.quoteStats.lastInterval.close < this.lastHODInterval.close) {
             this.didMakeHigherLow = true;
         }
 

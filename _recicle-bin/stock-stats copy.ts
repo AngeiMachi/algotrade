@@ -1,13 +1,13 @@
 import moment from 'moment-timezone';
 import * as _ from 'lodash';
 
-import * as pushed from './proxy/pushed-api';
-import * as quoteUtiles from './utils/quote-utils';
+import * as pushed from '../app/proxy/pushed-api';
+import * as quoteUtiles from '../app/utils/quote-utils';
 
-import { IMarketHours, IQuoteFullIntervalData, IQuoteIntervals, IQuoteMetadata } from './models/quote-data.model';
-import { BuyDirectionEnum, buyReasonEnum } from './models/enums';
-import { logger } from './config/winston.config';
-import { minuteDifference } from './utils/general';
+import { IMarketHours, IQuoteFullIntervalData, IQuoteIntervals, IQuoteMetadata } from '../app/models/quote-data.model';
+import { BuyDirectionEnum, buyReasonEnum } from '../app/models/enums';
+import { logger } from '../app/config/winston.config';
+import { minuteDifference } from '../app/utils/general';
 
 export class QuoteStats {
     private quote: string;
@@ -76,17 +76,9 @@ export class QuoteStats {
         this.interval++;
 
         if (!isLive && this.didBuy && this.interval === 77) {
-            logger.debug(
-                '*** ' + this.quote + ' Ended with ' + this.calculatePercentageChange(this.boughtIntervalData, this.soldIntervalData) + '%'
-            );
+            logger.debug('*** ' + this.quote + ' Ended with ' + this.calculatePercentageChange(this.boughtIntervalData, this.soldIntervalData) + '%');
             if (this.didSellWithLoss) {
-                logger.debug(
-                    '*** ' +
-                        this.quote +
-                        ' Could of Ended with ' +
-                        this.calculatePercentageChange(this.boughtIntervalData, stockInterval) +
-                        '%'
-                );
+                logger.debug('*** ' + this.quote + ' Could of Ended with ' + this.calculatePercentageChange(this.boughtIntervalData, stockInterval) + '%');
             }
             return this.calculateLossProfit();
         }
@@ -97,20 +89,10 @@ export class QuoteStats {
         // volumeWeight = this.averageVolume/this.quoteMetadata.average5Minute3Month ;
         if (!this.didBuy) {
             if (this.allowedBuyDirection === BuyDirectionEnum.CALL) {
-                this.quoteMetadata.SMA5.today = quoteUtiles.calculateMovingAverage(
-                    this.quoteMetadata.fullYearDailyHistory,
-                    this.todayDate,
-                    5,
-                    this.HODIntervalData
-                );
+                this.quoteMetadata.SMA5.today = quoteUtiles.calculateMovingAverage(this.quoteMetadata.fullYearDailyHistory, this.todayDate, 5, this.HODIntervalData);
             }
             if (this.allowedBuyDirection === BuyDirectionEnum.PUT) {
-                this.quoteMetadata.SMA5.today = quoteUtiles.calculateMovingAverage(
-                    this.quoteMetadata.fullYearDailyHistory,
-                    this.todayDate,
-                    5,
-                    this.LODIntervalData
-                );
+                this.quoteMetadata.SMA5.today = quoteUtiles.calculateMovingAverage(this.quoteMetadata.fullYearDailyHistory, this.todayDate, 5, this.LODIntervalData);
             }
 
             this.strengthOf5MA = this.quoteMetadata.SMA5.today - this.quoteMetadata.SMA5.previousDay;
@@ -204,15 +186,9 @@ export class QuoteStats {
             // const vector =  (this.quoteIntervals[0].open / this.strengthOf5MA ) * 100;
             const vector = 0;
 
-            if (
-                this.allowedBuyDirection === BuyDirectionEnum.CALL &&
-                this.LODIntervalData.low - (this.strengthOf5MA + vector) <= this.quoteMetadata.SMA5.today
-            ) {
+            if (this.allowedBuyDirection === BuyDirectionEnum.CALL && this.LODIntervalData.low - (this.strengthOf5MA + vector) <= this.quoteMetadata.SMA5.today) {
                 this.didTouchSMA = true;
-            } else if (
-                this.allowedBuyDirection === BuyDirectionEnum.PUT &&
-                this.HODIntervalData.high - (this.strengthOf5MA + vector) >= this.quoteMetadata.SMA5.today
-            ) {
+            } else if (this.allowedBuyDirection === BuyDirectionEnum.PUT && this.HODIntervalData.high - (this.strengthOf5MA + vector) >= this.quoteMetadata.SMA5.today) {
                 this.didTouchSMA = true;
             }
         }

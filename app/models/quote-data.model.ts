@@ -1,4 +1,4 @@
-import { QuoteMonoRunner } from '../quote-mono-reader';
+import { QuoteMonoRunner } from '../engine/quote-mono-reader';
 
 export interface IQuoteFullIntervalData {
     open: number;
