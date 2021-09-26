@@ -32,14 +32,14 @@ export class BullishHODSignal extends Signals {
             }
             this.lastHODInterval = { ...this.quoteStats.lastInterval };
             this.lastHODIntervalCount = this.quoteStats.intervalCount;
-        } else if (this.quoteStats.lastInterval.high > this.lastHODInterval.high) {
+        } else if (this.quoteStats.lastInterval.high > this.lastHODInterval.high && this.quoteStats.intervalCount - this.lastHODIntervalCount <= 2) {
             this.lastHODInterval = this.quoteStats.lastInterval;
             this.didMakeHigherLow = false;
         } else if (this.quoteStats.lastInterval.close < this.quoteStats.lastInterval.open && this.quoteStats.lastInterval.close < this.lastHODInterval.close) {
             this.didMakeHigherLow = true;
         }
 
-        if (this.quoteStats.lastInterval.close > this.preHOD && !this.didBreakOutPreHOD) {
+        if (this.quoteStats.lastInterval.close > this.preHOD && !this.didBreakOutPreHOD && this.quoteStats.intervalCount > 2) {
             this.didBreakOutPreHOD = true;
             signals.push(SignalVerificationReasonEnum.BULLISH_HIGH_OF_DAY_WITH_PREMARKET_BREAKOUT);
         }

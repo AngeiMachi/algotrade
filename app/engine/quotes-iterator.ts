@@ -28,19 +28,15 @@ export class QuotesIterator {
 
             for (let i = 0; i < Object.keys(this.quotes).length; i++) {
                 const quoteKey = Object.keys(this.quotes)[i];
-                const quoteIntervals = await this.proxyService.getTDAmeritradeIntraday(quoteKey);
-                const quoteMetadata: IQuoteMetadata = await this.proxyService.getMetaDataPerDay(
-                    quoteKey,
-                    quoteUtils.getCurrentTradingDate(),
-                    quoteIntervals,
-                    this.marketHours
-                );
-                const initializeQuote = new Promise((resolve, reject) => {
-                    this.quotes[quoteKey].initializeStockData(quoteIntervals, quoteMetadata, this.marketHours);
-                    resolve('done');
+                const getTDAmeritradeIntraday = this.proxyService.getTDAmeritradeIntraday(quoteKey).then((quoteIntervals) => {
+                    const getMetaDataPerDay = this.proxyService
+                        .getMetaDataPerDay(quoteKey, quoteUtils.getCurrentTradingDate(), quoteIntervals, this.marketHours)
+                        .then((quoteMetadata) => {
+                            this.quotes[quoteKey].initializeStockData(quoteIntervals, quoteMetadata, this.marketHours);
+                        });
                 });
 
-                promises.push([quoteIntervals, quoteMetadata, initializeQuote]);
+                promises.push(getTDAmeritradeIntraday);
             }
             await Promise.all(promises);
             return Promise.resolve();

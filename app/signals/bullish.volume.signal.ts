@@ -1,0 +1,70 @@
+import * as quoteUtils from '../utils/quote-utils';
+
+import { QuoteStatistics } from '../engine/quote-statistics';
+import { Signals } from './signals';
+import { SignalVerificationReasonEnum } from '../models/enums';
+
+export class BullishVolumeSignal extends Signals {
+    private movingAverageVolumeTen: number = 0;
+    private isAsFirstVolumeSignalAccoured: boolean = false;
+
+    constructor(_quoteStats: QuoteStatistics) {
+        super(_quoteStats);
+    }
+
+    public monitor(): SignalVerificationReasonEnum[] {
+        const signals: SignalVerificationReasonEnum[] = [];
+
+        this.recordMovingAverage();
+
+        if (this.quoteStats.intervalCount >= 2 && this.quoteStats.intervalCount < 71) {
+            if (this.isExtremeVolume()) {
+                signals.push(SignalVerificationReasonEnum.VOLUME_AVERAGE_SPIKE);
+            }
+            if (this.isSuperExtremeVolumeInterval()) {
+                signals.push(SignalVerificationReasonEnum.SUPER_VOLUME_INTERVAL);
+            }
+            if (this.isAsFirstVolume()) {
+                signals.push(SignalVerificationReasonEnum.AS_FIRST_VOLUME_INTERVAL);
+            }
+        }
+        return signals;
+    }
+
+    private isAsFirstVolume() {
+        if (this.quoteStats.lastInterval.volume * 1.2 >= this.quoteStats.quoteIntervals[0].volume && !this.isAsFirstVolumeSignalAccoured) {
+            if (((this.quoteStats.metadata.averageDailyVolume3Month as number) / 78) * 1.5 <= this.quoteStats.lastInterval.volume) {
+                if (quoteUtils.isCandleBullish(this.quoteStats.lastInterval)) {
+                    this.isAsFirstVolumeSignalAccoured = true;
+                    return true;
+                }
+            }
+        }
+    }
+
+    private isExtremeVolume(): boolean {
+        if (this.quoteStats.lastInterval.volume > this.movingAverageVolumeTen * 5 && this.movingAverageVolumeTen != 0) {
+            if (quoteUtils.isCandleBullish(this.quoteStats.lastInterval)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private isSuperExtremeVolumeInterval(): boolean {
+        if (this.quoteStats.metadata.averageDailyVolume10Day <= this.quoteStats.lastInterval.volume) {
+            return true;
+        }
+        return false;
+    }
+
+    private recordMovingAverage() {
+        let sum = 0;
+        if (this.quoteStats.intervalCount > 10) {
+            for (let i = this.quoteStats.intervalCount - 10; i < this.quoteStats.intervalCount; i++) {
+                sum += this.quoteStats.quoteIntervals[i].volume;
+            }
+        }
+        this.movingAverageVolumeTen = sum / 10;
+    }
+}

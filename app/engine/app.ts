@@ -1,3 +1,4 @@
+import { INTERVAL_TIME } from '../config/globals.config';
 import * as environmentConfig from '../config/environment.Config.json';
 
 import { QuotesIterator } from './quotes-iterator';
@@ -5,10 +6,24 @@ import { QuotesIterator } from './quotes-iterator';
 //const tdaclient = require('tda-api-client');
 
 export default function startApp() {
-    const sr = new QuotesIterator(['AMD', 'NVDA']);
+    const sr = new QuotesIterator(environmentConfig.quotes.quote6);
     sr.initializeQuotesData().then(() => {
         sr.initiateQuotesWatch();
     });
+
+    // setTimeout(() => {
+    //     const sr = new QuotesIterator(environmentConfig.quotes.quote7);
+    //     sr.initializeQuotesData().then(() => {
+    //         sr.initiateQuotesWatch();
+    //     });
+    // }, INTERVAL_TIME);
+
+    // setTimeout(() => {
+    //     const sr = new QuotesIterator(environmentConfig.quotes.quote8);
+    //     sr.initializeQuotesData().then(() => {
+    //         sr.initiateQuotesWatch();
+    //     });
+    // }, INTERVAL_TIME * 2);
 }
 
 // const sr = new StockReader( environmentConfig.AlphaVantageAPIKeys[1].key , [...environmentConfig.AlphaVantageAPIKeys[1].quotes]);

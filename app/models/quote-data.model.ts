@@ -62,6 +62,21 @@ export interface IQuoteMetadata {
         previousDay: number;
         didOpenOboveSMA?: boolean;
     };
+    SMA50: {
+        today: number;
+        previousDay: number;
+        didOpenOboveSMA?: boolean;
+    };
+    SMA100: {
+        today: number;
+        previousDay: number;
+        didOpenOboveSMA?: boolean;
+    };
+    SMA200: {
+        today: number;
+        previousDay: number;
+        didOpenOboveSMA?: boolean;
+    };
 }
 
 export interface ITDAmeritradePriceHistory {

@@ -80,11 +80,7 @@ export function calculateMovingAverage(
     return -1;
 }
 
-export function getPreviousCandle(
-    intervals: ITDAmeritradeIntervalData[],
-    tradingDate: string,
-    timeFrame: TimeFrame = TimeFrame.Daily
-): ITDAmeritradeIntervalData | null {
+export function getPreviousCandle(intervals: ITDAmeritradeIntervalData[], tradingDate: string, timeFrame: TimeFrame = TimeFrame.Daily): ITDAmeritradeIntervalData | null {
     let previousDay: string;
     let index: number = -1;
 
@@ -101,11 +97,7 @@ export function getPreviousCandle(
     return null;
 }
 
-export function getPartialHistory(
-    intervals: ITDAmeritradeIntervalData[],
-    tradingDate: string | number,
-    intervalsToHistoryBack: number
-): ITDAmeritradeIntervalData[] {
+export function getPartialHistory(intervals: ITDAmeritradeIntervalData[], tradingDate: string | number, intervalsToHistoryBack: number): ITDAmeritradeIntervalData[] {
     let index;
 
     if (typeof tradingDate === 'string') {
@@ -185,12 +177,8 @@ export function composeMetadata(
         get average5Minute3Month() {
             return (this.averageDailyVolume3Month as number) / 78;
         },
-        previousDay: convertUtils.convertTDAmeritradeDailyIntervals([
-            getPreviousCandle(dailyIntervals, tradingDate) as ITDAmeritradeIntervalData,
-        ])[0],
-        previousWeek: convertUtils.convertTDAmeritradeDailyIntervals([
-            getPreviousCandle(weeklyIntervals, tradingDate, TimeFrame.Weekly) as ITDAmeritradeIntervalData,
-        ])[0],
+        previousDay: convertUtils.convertTDAmeritradeDailyIntervals([getPreviousCandle(dailyIntervals, tradingDate) as ITDAmeritradeIntervalData])[0],
+        previousWeek: convertUtils.convertTDAmeritradeDailyIntervals([getPreviousCandle(weeklyIntervals, tradingDate, TimeFrame.Weekly) as ITDAmeritradeIntervalData])[0],
         SMA5: {
             today: calculateMovingAverage(dailyIntervals, tradingDate, 5, firstInterval),
             previousDay: calculateMovingAverage(dailyIntervals, tradingDate, 5),
@@ -202,6 +190,18 @@ export function composeMetadata(
         SMA20: {
             today: calculateMovingAverage(dailyIntervals, tradingDate, 20, firstInterval),
             previousDay: calculateMovingAverage(dailyIntervals, tradingDate, 20),
+        },
+        SMA50: {
+            today: calculateMovingAverage(dailyIntervals, tradingDate, 50, firstInterval),
+            previousDay: calculateMovingAverage(dailyIntervals, tradingDate, 50),
+        },
+        SMA100: {
+            today: calculateMovingAverage(dailyIntervals, tradingDate, 100, firstInterval),
+            previousDay: calculateMovingAverage(dailyIntervals, tradingDate, 100),
+        },
+        SMA200: {
+            today: calculateMovingAverage(dailyIntervals, tradingDate, 200, firstInterval),
+            previousDay: calculateMovingAverage(dailyIntervals, tradingDate, 200),
         },
 
         // TODO :  put true values
@@ -215,6 +215,9 @@ export function composeMetadata(
     quoteMetadata.SMA5.didOpenOboveSMA = isAboveMovingAverage(firstInterval, quoteMetadata.SMA5.today);
     quoteMetadata.SMA10.didOpenOboveSMA = isAboveMovingAverage(firstInterval, quoteMetadata.SMA10.today);
     quoteMetadata.SMA20.didOpenOboveSMA = isAboveMovingAverage(firstInterval, quoteMetadata.SMA20.today);
+    quoteMetadata.SMA50.didOpenOboveSMA = isAboveMovingAverage(firstInterval, quoteMetadata.SMA50.today);
+    quoteMetadata.SMA100.didOpenOboveSMA = isAboveMovingAverage(firstInterval, quoteMetadata.SMA100.today);
+    quoteMetadata.SMA200.didOpenOboveSMA = isAboveMovingAverage(firstInterval, quoteMetadata.SMA200.today);
 
     return quoteMetadata;
 }
@@ -247,7 +250,7 @@ export function getRecentFirstIntervalData(intervals: IQuoteIntervals, markethou
 export function getPreMarketIntervalData(intervals: IQuoteIntervals, markethours: IMarketHours) {
     const preMarketIntervals: IQuoteIntervals = {};
     let maxInterval: IQuoteFullIntervalData = getRecentFirstIntervalData(intervals, markethours, true);
-    const maxHigh = 0;
+    let maxHigh = 0;
 
     for (let key of Object.keys(intervals)) {
         if (key === markethours.sessionHours.preMarket.end) {
@@ -256,6 +259,7 @@ export function getPreMarketIntervalData(intervals: IQuoteIntervals, markethours
         preMarketIntervals[key] = { ...intervals[key] };
         if (intervals[key].high > maxHigh) {
             maxInterval = intervals[key];
+            maxHigh = intervals[key].high;
         }
     }
 
