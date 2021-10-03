@@ -2,7 +2,8 @@ import * as quoteUtils from '../utils/quote-utils';
 
 import { QuoteStatistics } from '../engine/quote-statistics';
 import { Signals } from './signals';
-import { SignalVerificationReasonEnum } from '../models/enums';
+import { SignalGroupType, SignalType, SignalVerificationReasonEnum } from '../models/enums';
+import { SignalModel } from '../models/signal.model';
 
 export class BullishVolumeSignal extends Signals {
     private movingAverageVolumeTen: number = 0;
@@ -12,20 +13,32 @@ export class BullishVolumeSignal extends Signals {
         super(_quoteStats);
     }
 
-    public monitor(): SignalVerificationReasonEnum[] {
-        const signals: SignalVerificationReasonEnum[] = [];
+    public monitor(): SignalModel[] {
+        const signals: SignalModel[] = [];
 
         this.recordMovingAverage();
 
         if (this.quoteStats.intervalCount >= 2 && this.quoteStats.intervalCount < 71) {
             if (this.isExtremeVolume()) {
-                signals.push(SignalVerificationReasonEnum.VOLUME_AVERAGE_SPIKE);
+                signals.push({
+                    signalGroupType: SignalGroupType.BULLISH_VOLUME,
+                    signalType: SignalType.VOLUME_AVERAGE_SPIKE,
+                    signalDescription: SignalVerificationReasonEnum.VOLUME_AVERAGE_SPIKE,
+                });
             }
             if (this.isSuperExtremeVolumeInterval()) {
-                signals.push(SignalVerificationReasonEnum.SUPER_VOLUME_INTERVAL);
+                signals.push({
+                    signalGroupType: SignalGroupType.BULLISH_VOLUME,
+                    signalType: SignalType.SUPER_VOLUME_INTERVAL,
+                    signalDescription: SignalVerificationReasonEnum.SUPER_VOLUME_INTERVAL,
+                });
             }
             if (this.isAsFirstVolume()) {
-                signals.push(SignalVerificationReasonEnum.AS_FIRST_VOLUME_INTERVAL);
+                signals.push({
+                    signalGroupType: SignalGroupType.BULLISH_VOLUME,
+                    signalType: SignalType.AS_FIRST_VOLUME_INTERVAL,
+                    signalDescription: SignalVerificationReasonEnum.AS_FIRST_VOLUME_INTERVAL,
+                });
             }
         }
         return signals;

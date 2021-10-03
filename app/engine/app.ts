@@ -11,19 +11,26 @@ export default function startApp() {
         sr.initiateQuotesWatch();
     });
 
-    // setTimeout(() => {
-    //     const sr = new QuotesIterator(environmentConfig.quotes.quote7);
-    //     sr.initializeQuotesData().then(() => {
-    //         sr.initiateQuotesWatch();
-    //     });
-    // }, INTERVAL_TIME);
+    setTimeout(() => {
+        const sr = new QuotesIterator(environmentConfig.quotes.quote7);
+        sr.initializeQuotesData().then(() => {
+            sr.initiateQuotesWatch();
+        });
+    }, 1000 * 61);
 
     // setTimeout(() => {
     //     const sr = new QuotesIterator(environmentConfig.quotes.quote8);
     //     sr.initializeQuotesData().then(() => {
     //         sr.initiateQuotesWatch();
     //     });
-    // }, INTERVAL_TIME * 2);
+    // }, 1000 * 125);
+
+    // setTimeout(() => {
+    //     const sr = new QuotesIterator(environmentConfig.quotes.quote9);
+    //     sr.initializeQuotesData().then(() => {
+    //         sr.initiateQuotesWatch();
+    //     });
+    // }, 1000 * 190);
 }
 
 // const sr = new StockReader( environmentConfig.AlphaVantageAPIKeys[1].key , [...environmentConfig.AlphaVantageAPIKeys[1].quotes]);

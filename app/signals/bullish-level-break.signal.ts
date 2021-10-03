@@ -1,6 +1,7 @@
 import { QuoteStatistics } from '../engine/quote-statistics';
 import { Signals } from './signals';
-import { SignalVerificationReasonEnum } from '../models/enums';
+import { SignalGroupType, SignalType, SignalVerificationReasonEnum } from '../models/enums';
+import { SignalModel } from '../models/signal.model';
 
 export class BullishLevelBreakSignal extends Signals {
     private didOpenBelowPreviousDay: boolean = false;
@@ -14,8 +15,8 @@ export class BullishLevelBreakSignal extends Signals {
         super(_quoteStats);
     }
 
-    public monitor(): SignalVerificationReasonEnum[] {
-        const signals: SignalVerificationReasonEnum[] = [];
+    public monitor(): SignalModel[] {
+        const signals: SignalModel[] = [];
         if (this.quoteStats.intervalCount === 0) {
             this.didOpenBelowPreviousDay = this.quoteStats.metadata.previousDay.high > this.quoteStats.lastInterval.open ? true : false;
             this.didOpenBelowPreviousWeek = this.quoteStats.metadata.previousWeek.high > this.quoteStats.lastInterval.open ? true : false;
@@ -23,15 +24,27 @@ export class BullishLevelBreakSignal extends Signals {
         } else {
             if (this.didOpenBelowPreviousDay && this.quoteStats.lastInterval.close > this.quoteStats.metadata.previousDay.high && !this.didBreakPreviousDayHigh) {
                 this.didBreakPreviousDayHigh = true;
-                signals.push(SignalVerificationReasonEnum.BULLISH_BREAK_PREVIOUS_DAY);
+                signals.push({
+                    signalGroupType: SignalGroupType.BULLISH_LEVEL_BREAK,
+                    signalType: SignalType.BULLISH_BREAK_PREVIOUS_DAY,
+                    signalDescription: SignalVerificationReasonEnum.BULLISH_BREAK_PREVIOUS_DAY,
+                });
             }
             if (this.didOpenBelowPreviousWeek && this.quoteStats.lastInterval.close > this.quoteStats.metadata.previousWeek.high && !this.didBreakPreviousWeekHigh) {
                 this.didBreakPreviousWeekHigh = true;
-                signals.push(SignalVerificationReasonEnum.BULLISH_BREAK_PREVIOUS_WEEK);
+                signals.push({
+                    signalGroupType: SignalGroupType.BULLISH_LEVEL_BREAK,
+                    signalType: SignalType.BULLISH_BREAK_PREVIOUS_WEEK,
+                    signalDescription: SignalVerificationReasonEnum.BULLISH_BREAK_PREVIOUS_WEEK,
+                });
             }
             if (this.didOpenBelowFiftyTwoWeekHigh && this.quoteStats.lastInterval.close > this.quoteStats.metadata.fiftyTwoWeekHigh && !this.didBreakFiftyTwoWeekHig) {
                 this.didBreakFiftyTwoWeekHig = true;
-                signals.push(SignalVerificationReasonEnum.BULLISH_BREAK_52_WEEK_HIGH);
+                signals.push({
+                    signalGroupType: SignalGroupType.BULLISH_LEVEL_BREAK,
+                    signalType: SignalType.BULLISH_BREAK_52_WEEK_HIGH,
+                    signalDescription: SignalVerificationReasonEnum.BULLISH_BREAK_52_WEEK_HIGH,
+                });
             }
         }
 

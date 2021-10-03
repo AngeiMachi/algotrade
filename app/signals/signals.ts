@@ -1,4 +1,5 @@
 import { SignalVerificationReasonEnum } from '../models/enums';
+import { SignalModel } from '../models/signal.model';
 import { QuoteStatistics } from '../engine/quote-statistics';
 
 export abstract class Signals {
@@ -8,5 +9,5 @@ export abstract class Signals {
         this.quoteStats = _quoteStats;
     }
 
-    public abstract monitor(): SignalVerificationReasonEnum[];
+    public abstract monitor(): SignalModel[];
 }

@@ -5,7 +5,7 @@ import * as pushed from '../app/proxy/pushed-api';
 import * as quoteUtiles from '../app/utils/quote-utils';
 
 import { IMarketHours, IQuoteFullIntervalData, IQuoteIntervals, IQuoteMetadata } from '../app/models/quote-data.model';
-import { BuyDirectionEnum, buyReasonEnum } from '../app/models/enums';
+import { SentimentDirectionEnum, buyReasonEnum } from '../app/models/enums';
 import { logger } from '../app/config/winston.config';
 import { minuteDifference } from '../app/utils/general';
 
@@ -20,14 +20,14 @@ export class QuoteStats {
     private todayDate: string;
     private quoteIntervals: IQuoteFullIntervalData[] = [];
 
-    private allowedBuyDirection: BuyDirectionEnum = BuyDirectionEnum.NONE;
+    private allowedBuyDirection: SentimentDirectionEnum = SentimentDirectionEnum.NONE;
     private didTouchSMA: boolean = false;
     private didBuy: boolean = false;
     private didSell: boolean = false;
     private didSellWithLoss: boolean = false;
     private isDirty: boolean = false; // flag to know if bought once
     private strengthOf5MA: number = 0;
-    private isInBuyDirection: BuyDirectionEnum = BuyDirectionEnum.NONE;
+    private isInBuyDirection: SentimentDirectionEnum = SentimentDirectionEnum.NONE;
 
     private HODIntervalData = {} as IQuoteFullIntervalData;
     private LODIntervalData = {} as IQuoteFullIntervalData;
@@ -88,10 +88,10 @@ export class QuoteStats {
     private calculateMovingAverage(stockInterval: IQuoteFullIntervalData) {
         // volumeWeight = this.averageVolume/this.quoteMetadata.average5Minute3Month ;
         if (!this.didBuy) {
-            if (this.allowedBuyDirection === BuyDirectionEnum.CALL) {
+            if (this.allowedBuyDirection === SentimentDirectionEnum.CALL) {
                 this.quoteMetadata.SMA5.today = quoteUtiles.calculateMovingAverage(this.quoteMetadata.fullYearDailyHistory, this.todayDate, 5, this.HODIntervalData);
             }
-            if (this.allowedBuyDirection === BuyDirectionEnum.PUT) {
+            if (this.allowedBuyDirection === SentimentDirectionEnum.PUT) {
                 this.quoteMetadata.SMA5.today = quoteUtiles.calculateMovingAverage(this.quoteMetadata.fullYearDailyHistory, this.todayDate, 5, this.LODIntervalData);
             }
 
@@ -165,18 +165,18 @@ export class QuoteStats {
 
             if (this.strengthOf5MA > 0.2) {
                 if (this.quoteMetadata.SMA5.today <= quoteInterval.open + this.strengthOf5MA / 2) {
-                    this.allowedBuyDirection = BuyDirectionEnum.CALL;
+                    this.allowedBuyDirection = SentimentDirectionEnum.CALL;
                 } else {
-                    this.allowedBuyDirection = BuyDirectionEnum.NONE;
+                    this.allowedBuyDirection = SentimentDirectionEnum.NONE;
                 }
             } else if (this.strengthOf5MA < -0.2) {
                 if (this.quoteMetadata.SMA5.today >= quoteInterval.open + this.strengthOf5MA / 2) {
-                    this.allowedBuyDirection = BuyDirectionEnum.PUT;
+                    this.allowedBuyDirection = SentimentDirectionEnum.PUT;
                 } else {
-                    this.allowedBuyDirection = BuyDirectionEnum.NONE;
+                    this.allowedBuyDirection = SentimentDirectionEnum.NONE;
                 }
             } else {
-                this.allowedBuyDirection = BuyDirectionEnum.NONE;
+                this.allowedBuyDirection = SentimentDirectionEnum.NONE;
             }
         }
     }
@@ -186,9 +186,12 @@ export class QuoteStats {
             // const vector =  (this.quoteIntervals[0].open / this.strengthOf5MA ) * 100;
             const vector = 0;
 
-            if (this.allowedBuyDirection === BuyDirectionEnum.CALL && this.LODIntervalData.low - (this.strengthOf5MA + vector) <= this.quoteMetadata.SMA5.today) {
+            if (this.allowedBuyDirection === SentimentDirectionEnum.CALL && this.LODIntervalData.low - (this.strengthOf5MA + vector) <= this.quoteMetadata.SMA5.today) {
                 this.didTouchSMA = true;
-            } else if (this.allowedBuyDirection === BuyDirectionEnum.PUT && this.HODIntervalData.high - (this.strengthOf5MA + vector) >= this.quoteMetadata.SMA5.today) {
+            } else if (
+                this.allowedBuyDirection === SentimentDirectionEnum.PUT &&
+                this.HODIntervalData.high - (this.strengthOf5MA + vector) >= this.quoteMetadata.SMA5.today
+            ) {
                 this.didTouchSMA = true;
             }
         }
@@ -209,7 +212,7 @@ export class QuoteStats {
                     '*** ' +
                     this.quote +
                     ' *** Entered Buy ' +
-                    BuyDirectionEnum[this.isInBuyDirection] +
+                    SentimentDirectionEnum[this.isInBuyDirection] +
                     ' Mode  at ' +
                     moment(quoteInterval.timeIsrael).format('HH:mm:ss') +
                     ' - Reason: ' +
@@ -219,7 +222,7 @@ export class QuoteStats {
                     'CANCELED *** ' +
                     this.quote +
                     ' *** Entered Buy ' +
-                    BuyDirectionEnum[this.isInBuyDirection] +
+                    SentimentDirectionEnum[this.isInBuyDirection] +
                     ' Mode  at ' +
                     moment(quoteInterval.timeIsrael).format('HH:mm:ss');
             }
@@ -235,7 +238,7 @@ export class QuoteStats {
                 this.soldIntervalData = { ...quoteInterval };
                 this.didSell = true;
             } else if (
-                this.isInBuyDirection === BuyDirectionEnum.CALL &&
+                this.isInBuyDirection === SentimentDirectionEnum.CALL &&
                 quoteInterval.low < this.quoteMetadata.SMA5.today - this.strengthOf5MA &&
                 minuteDifference(this.boughtIntervalData.timeIsrael, quoteInterval.timeIsrael) > 15 &&
                 quoteInterval.close < this.boughtIntervalData.low &&
@@ -246,7 +249,7 @@ export class QuoteStats {
                 this.didSellWithLoss = true;
                 logger.debug('CALLS NOT WORKING - SOLD WITH LOSS AT ' + moment(quoteInterval.timeIsrael).format('HH:mm:ss'));
             } else if (
-                this.isInBuyDirection === BuyDirectionEnum.PUT &&
+                this.isInBuyDirection === SentimentDirectionEnum.PUT &&
                 quoteInterval.high > this.quoteMetadata.SMA5.today - this.strengthOf5MA &&
                 minuteDifference(this.boughtIntervalData.timeIsrael, quoteInterval.timeIsrael) > 15 &&
                 quoteInterval.close > this.boughtIntervalData.high &&
@@ -276,9 +279,9 @@ export class QuoteStats {
     }
 
     private calculateLossProfit(): number {
-        if (this.isInBuyDirection === BuyDirectionEnum.CALL) {
+        if (this.isInBuyDirection === SentimentDirectionEnum.CALL) {
             return +(this.soldIntervalData.close - this.boughtIntervalData.close).toFixed(2);
-        } else if (this.isInBuyDirection === BuyDirectionEnum.PUT) {
+        } else if (this.isInBuyDirection === SentimentDirectionEnum.PUT) {
             return +(this.boughtIntervalData.close - this.soldIntervalData.close).toFixed(2);
         } else {
             return 0;

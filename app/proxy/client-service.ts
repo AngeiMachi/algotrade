@@ -1,4 +1,5 @@
 import * as _ from 'lodash';
+import { v4 as uuidv4 } from 'uuid';
 import { QuoteState } from '../models/state.model';
 import { getState } from '../engine/state';
 import express from 'express';
@@ -64,17 +65,26 @@ server.listen(PORT, () => {
 
 export const updateQuote = (quote: QuoteState) => {
     const quoteToUpdate = _.omit(quote, ['quoteStatistics']);
-    sendPush(quoteToUpdate.quoteName + ':' + quoteToUpdate.signalsHistory[quoteToUpdate.signalsHistory.length - 1].signalType);
+    sendPush(quote);
     ioGlobal.emit('updateQuote', quoteToUpdate);
 };
 
-let index = 0;
-const sendPush = async (message: string) => {
+const sendPush = async (quote: QuoteState) => {
+    let message = quote.quoteName + ': ';
+
+    //@ts-ignore
+    const signals = _.filter(quote.signalsHistory, { interval: quote.quoteStatistics.intervalCount }) as QuoteStateSignals[];
+    signals.forEach((signal) => {
+        message += signal.signalDetails.signalDescription + '\r\n';
+    });
+    if (message.length > 59) {
+        message = quote.quoteName + ': ' + signals.length + ' Simultanious Signals - Open to view details!';
+    }
     const notification = {
         contents: {
             en: message,
         },
-        web_push_topic: '' + index++,
+        web_push_topic: '' + uuidv4(),
         included_segments: ['Subscribed Users'],
     };
 

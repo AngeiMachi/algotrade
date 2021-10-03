@@ -6,8 +6,10 @@ import { logger } from '../config/winston.config';
 import { MovingAverageType, SignalVerificationReasonEnum } from '../models/enums';
 import { QuotesState, QuoteState, QuoteStateSignals, IMovingAverageData } from '../models/state.model';
 import { QuoteStatistics } from './quote-statistics';
+import { SignalModel } from '../models/signal.model';
 
 let state: QuoteState[] = [];
+let lastIntervalCount = -1;
 
 function initQuote(quoteStatistics: QuoteStatistics) {
     const quoteState = {} as QuoteState;
@@ -58,19 +60,35 @@ export function addNewQuote(quoteStats: QuoteStatistics) {
     }
 }
 
-export function updateSignals(quoteName: string, signals: SignalVerificationReasonEnum[]) {
+export function updateSignals(quoteName: string, signals: SignalModel[]) {
     try {
         const updatedQuote = _.remove(state, { quoteName: quoteName })[0] as QuoteState;
         for (let signal of signals) {
-            updatedQuote.signalsHistory.push({
+            updatedQuote.signalsHistory.unshift({
                 id: updatedQuote.signalsHistory.length,
-                signalType: signal,
+                signalDetails: signal,
                 interval: updatedQuote.quoteStatistics.intervalCount,
                 timeNY: moment(updatedQuote.quoteStatistics.lastInterval.timeNewYork).format('HH:mm'),
                 timeIL: moment(updatedQuote.quoteStatistics.lastInterval.timeIsrael).format('HH:mm'),
             });
         }
-        state.unshift(updatedQuote);
+
+        if (updatedQuote.quoteStatistics.intervalCount >= lastIntervalCount) {
+            lastIntervalCount = updatedQuote.quoteStatistics.intervalCount;
+            state.unshift(updatedQuote);
+        } else {
+            let didInsert = false;
+            for (let i = 0; i < state.length; i++) {
+                if (state[i].signalsHistory[0]?.interval <= updatedQuote.quoteStatistics.intervalCount || state[i].signalsHistory.length === 0) {
+                    state.splice(i, 0, updatedQuote);
+                    didInsert = true;
+                    break;
+                }
+            }
+            if (!didInsert) {
+                state.push(updatedQuote);
+            }
+        }
 
         clientService.updateQuote(updatedQuote);
     } catch (err) {

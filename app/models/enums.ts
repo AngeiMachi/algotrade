@@ -1,4 +1,4 @@
-export enum BuyDirectionEnum {
+export enum SentimentDirectionEnum {
     NONE = 0,
     CALL = 1,
     PUT = 2,
@@ -23,7 +23,33 @@ export enum SignalVerificationReasonEnum {
     BULLISH_BREAK_PREVIOUS_DAY = 'Bullish Break Previous Day',
     BULLISH_BREAK_PREVIOUS_WEEK = 'Bullish Break Previous Week',
     BULLISH_BREAK_52_WEEK_HIGH = 'Bullish Break 52 week High',
+    MOVING_AVERAGE_TOUCH_FROM_BELOW = 'Moving Average touch from below',
+    MOVING_AVERAGE_TOUCH_FROM_ABOVE = 'Moving Average touch from Above',
 }
+
+export enum SignalGroupType {
+    BULLISH_HOD,
+    BULLISH_LEVEL_BREAK,
+    BULLISH_VOLUME,
+    MOVING_AVERAGES,
+}
+
+export enum SignalType {
+    NONE,
+    AS_FIRST_VOLUME_INTERVAL,
+    SUPER_VOLUME_INTERVAL,
+    VOLUME_AVERAGE_SPIKE,
+    BULLISH_HIGH_OF_DAY_WITH_PRIOR_DAY_BREAKOUT,
+    BULLISH_HIGH_OF_DAY,
+    BULLISH_HIGH_OF_DAY_WITH_PREMARKET_BREAKOUT,
+    BULLISH_BREAK_PREVIOUS_DAY,
+    BULLISH_BREAK_PREVIOUS_WEEK,
+    BULLISH_BREAK_52_WEEK_HIGH,
+    MOVING_AVERAGE_TOUCH_FROM_BELOW,
+    MOVING_AVERAGE_TOUCH_FROM_ABOVE,
+}
+
+export enum SignalCode {}
 
 export enum TimeFrame {
     FiveMinutes,

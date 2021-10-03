@@ -77,8 +77,7 @@ export async function serveMockDataAlphaVantage(quote: string): Promise<any> {
             if (mockQuote.mockDataResponseKeys[mockQuote.currentInterval]) {
                 mockQuote.mockDataResponse[INTERVAL_PROPERTY_NAME][mockQuote.mockDataResponseKeys[mockQuote.currentInterval]] =
                     mockQuote.mockDataResponseValues[mockQuote.currentInterval];
-                mockQuote.mockDataResponse[METADATA_PROPERTY_NAME][LAST_REFRESHED_PROPERTY_NAME] =
-                    mockQuote.mockDataResponseKeys[mockQuote.currentInterval];
+                mockQuote.mockDataResponse[METADATA_PROPERTY_NAME][LAST_REFRESHED_PROPERTY_NAME] = mockQuote.mockDataResponseKeys[mockQuote.currentInterval];
                 mockQuote.currentInterval++;
             }
             logger.debug('serving ' + quote + '...', JSON.stringify(mockQuote));
@@ -103,14 +102,16 @@ export async function prepareMockDataTDAmeritrade(quote: string, _marketHours: I
 
         let i = 0;
         while (mockQuote.mockDataResponseKeys[mockQuote.currentInterval] !== marketHours.sessionHours.regularMarket.start) {
-            (mockQuote.mockDataResponse as any)[mockQuote.mockDataResponseKeys[mockQuote.currentInterval]] =
-                mockQuote.mockDataResponseValues[mockQuote.currentInterval];
+            (mockQuote.mockDataResponse as any)[mockQuote.mockDataResponseKeys[mockQuote.currentInterval]] = mockQuote.mockDataResponseValues[mockQuote.currentInterval];
             mockQuote.currentInterval++;
+
+            if (mockQuote.currentInterval > 200) {
+                logger.error('prepareMockDataTDAmeritrade ' + quote + '- mock data corrupted');
+            }
         }
 
         for (let i = 0; i < globalConfig.Mock.StartLiveSimulationAtInterval; i++) {
-            (mockQuote.mockDataResponse as any)[mockQuote.mockDataResponseKeys[mockQuote.currentInterval]] =
-                mockQuote.mockDataResponseValues[mockQuote.currentInterval];
+            (mockQuote.mockDataResponse as any)[mockQuote.mockDataResponseKeys[mockQuote.currentInterval]] = mockQuote.mockDataResponseValues[mockQuote.currentInterval];
             mockQuote.currentInterval++;
         }
         mockQuote.currentInterval--;

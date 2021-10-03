@@ -1,9 +1,10 @@
 import { QuoteStatistics } from '../engine/quote-statistics';
-import { MovingAverageType, SignalVerificationReasonEnum } from './enums';
+import { MovingAverageType } from './enums';
+import { SignalModel } from './signal.model';
 
 export interface QuoteStateSignals {
     id: number;
-    signalType: SignalVerificationReasonEnum;
+    signalDetails: SignalModel;
     interval: number;
     timeNY: string;
     timeIL: string;

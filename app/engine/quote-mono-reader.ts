@@ -7,19 +7,21 @@ import * as quoteState from './state';
 import { IMarketHours, IQuoteFullIntervalData, IQuoteIntervals, IQuoteMetadata } from '../models/quote-data.model';
 import { SignalVerificationReasonEnum } from '../models/enums';
 import { logger } from '../config/winston.config';
-import { BullishHODSignal, BullishLevelBreakSignal, BullishVolumeSignal } from '../signals';
+import { BullishHODSignal, BullishLevelBreakSignal, BullishVolumeSignal, MovingAveragesSignal } from '../signals';
 import { QuoteStatistics } from './quote-statistics';
+import { SignalModel } from '../models/signal.model';
 
 export class QuoteMonoRunner {
     private quoteStats: QuoteStatistics;
 
     public quoteIntervals: IQuoteFullIntervalData[] = [];
 
-    private signals: SignalVerificationReasonEnum[] = [];
+    private signals: SignalModel[] = [];
 
     private bullishHODSignal!: BullishHODSignal;
     private bullishLevelBreakSignal!: BullishLevelBreakSignal;
     private bullishVolumeSignal!: BullishVolumeSignal;
+    private movingAveragesSignal!: MovingAveragesSignal;
 
     constructor(quote: string, todayDate: string = '') {
         this.quoteStats = new QuoteStatistics(quote, todayDate);
@@ -36,6 +38,7 @@ export class QuoteMonoRunner {
         this.bullishHODSignal = new BullishHODSignal(this.quoteStats);
         this.bullishLevelBreakSignal = new BullishLevelBreakSignal(this.quoteStats);
         this.bullishVolumeSignal = new BullishVolumeSignal(this.quoteStats);
+        this.movingAveragesSignal = new MovingAveragesSignal(this.quoteStats);
 
         Object.keys(quoteIntervals).forEach((key) => {
             this.recordNewStockInterval(quoteIntervals[key]);
@@ -46,12 +49,17 @@ export class QuoteMonoRunner {
         this.quoteStats.addNewInterval(quoteInterval, isLive);
         this.quoteStats.composeAndPrintCurrentIntervalStats(quoteInterval, isLive);
 
-        this.signals = [...this.bullishHODSignal.monitor(), ...this.bullishLevelBreakSignal.monitor(), ...this.bullishVolumeSignal.monitor()];
+        this.signals = [
+            ...this.bullishHODSignal.monitor(),
+            ...this.bullishLevelBreakSignal.monitor(),
+            ...this.bullishVolumeSignal.monitor(),
+            ...this.movingAveragesSignal.monitor(),
+        ];
 
         if (this.signals.length > 0) {
             quoteState.updateSignals(this.quoteStats.quoteName, this.signals);
             this.signals.forEach((signal) => {
-                logger.info(signal);
+                logger.info(signal.signalDescription);
             });
         }
 
