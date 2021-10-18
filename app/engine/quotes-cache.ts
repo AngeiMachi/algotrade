@@ -1,0 +1,1 @@
+weeklyQuotesCache: ICacheHistoricalData;

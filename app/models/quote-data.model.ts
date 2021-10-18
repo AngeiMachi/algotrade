@@ -26,6 +26,10 @@ export interface IQuotesHistoricalData {
     quoteFullYearWeeklyHistory: ITDAmeritradePriceHistory;
 }
 
+export interface ICacheHistoricalData {
+    [key: string]: IQuotesHistoricalData;
+}
+
 interface IQuotePriceFormat {
     raw: number;
     fmt: string;
