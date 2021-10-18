@@ -4,6 +4,7 @@ import { QuoteState } from '../models/state.model';
 import { getState } from '../engine/state';
 import express from 'express';
 import * as OneSignal from 'onesignal-node';
+import { ShouldUsePushNotifications } from '../config/globals.config';
 const app = express();
 
 const oneSignalclient = new OneSignal.Client('6caf4483-266e-4b54-a9f8-c3e53671ebf6', 'MjZjMDNkODctMGE3Ny00ODZjLTk2MjItMjA1NTAxMzU4ZGQw');
@@ -65,7 +66,10 @@ server.listen(PORT, () => {
 
 export const updateQuote = (quote: QuoteState) => {
     const quoteToUpdate = _.omit(quote, ['quoteStatistics']);
-    sendPush(quote);
+    if (ShouldUsePushNotifications) {
+        sendPush(quote);
+    }
+
     ioGlobal.emit('updateQuote', quoteToUpdate);
 };
 

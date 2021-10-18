@@ -5,33 +5,35 @@ import { QuotesIterator } from './quotes-iterator';
 
 //const tdaclient = require('tda-api-client');
 
-export default function startApp() {
-    const sr = new QuotesIterator(environmentConfig.quotes.quote6);
-    sr.initializeQuotesData().then(() => {
-        sr.initiateQuotesWatch();
-    });
-
-    setTimeout(() => {
-        const sr = new QuotesIterator(environmentConfig.quotes.quote7);
-        sr.initializeQuotesData().then(() => {
-            sr.initiateQuotesWatch();
-        });
-    }, 1000 * 61);
-
-    // setTimeout(() => {
-    //     const sr = new QuotesIterator(environmentConfig.quotes.quote8);
-    //     sr.initializeQuotesData().then(() => {
-    //         sr.initiateQuotesWatch();
-    //     });
-    // }, 1000 * 125);
-
-    // setTimeout(() => {
-    //     const sr = new QuotesIterator(environmentConfig.quotes.quote9);
-    //     sr.initializeQuotesData().then(() => {
-    //         sr.initiateQuotesWatch();
-    //     });
-    // }, 1000 * 190);
+export default async function startApp() {
+    try {
+        const sr = new QuotesIterator(environmentConfig.quotes.quote6);
+        sr.initializeQuotesData();
+    } catch (error) {
+        let i = error;
+    }
 }
+
+// setTimeout(() => {
+//     const sr = new QuotesIterator(environmentConfig.quotes.quote7);
+//     sr.initializeQuotesData().then(() => {
+//         sr.initiateQuotesWatch();
+//     });
+// }, 1000 * 61);
+
+// setTimeout(() => {
+//     const sr = new QuotesIterator(environmentConfig.quotes.quote8);
+//     sr.initializeQuotesData().then(() => {
+//         sr.initiateQuotesWatch();
+//     });
+// }, 1000 * 125);
+
+// setTimeout(() => {
+//     const sr = new QuotesIterator(environmentConfig.quotes.quote9);
+//     sr.initializeQuotesData().then(() => {
+//         sr.initiateQuotesWatch();
+//     });
+// }, 1000 * 190);
 
 // const sr = new StockReader( environmentConfig.AlphaVantageAPIKeys[1].key , [...environmentConfig.AlphaVantageAPIKeys[1].quotes]);
 // sr.initializeQuotesData().then(() => {

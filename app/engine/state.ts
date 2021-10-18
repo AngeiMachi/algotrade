@@ -17,6 +17,9 @@ function initQuote(quoteStatistics: QuoteStatistics) {
     quoteState.quoteStatistics = quoteStatistics;
     quoteState.quoteName = quoteStatistics.quoteName;
     quoteState.signalsHistory = [];
+    quoteState.metadata = {
+        prevPrice: quoteStatistics.metadata.previousDay.close,
+    };
 
     quoteState.sma = initSmaData(quoteStatistics);
 
@@ -67,11 +70,13 @@ export function updateSignals(quoteName: string, signals: SignalModel[]) {
             updatedQuote.signalsHistory.unshift({
                 id: updatedQuote.signalsHistory.length,
                 signalDetails: signal,
+                price: Math.round(updatedQuote.quoteStatistics.lastInterval.close * 10) / 10,
                 interval: updatedQuote.quoteStatistics.intervalCount,
                 timeNY: moment(updatedQuote.quoteStatistics.lastInterval.timeNewYork).format('HH:mm'),
                 timeIL: moment(updatedQuote.quoteStatistics.lastInterval.timeIsrael).format('HH:mm'),
             });
         }
+        updatedQuote.quotePrice = updatedQuote.quoteStatistics.lastInterval.close;
 
         if (updatedQuote.quoteStatistics.intervalCount >= lastIntervalCount) {
             lastIntervalCount = updatedQuote.quoteStatistics.intervalCount;

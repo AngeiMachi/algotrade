@@ -1,3 +1,7 @@
+var moment = require('moment');
+var momentDurationFormatSetup = require('moment-duration-format');
+momentDurationFormatSetup(moment);
+
 import { SignalModel } from '../models/signal.model';
 import { QuoteStatistics } from '../engine/quote-statistics';
 import { SignalGroupType, SignalType, SignalVerificationReasonEnum } from '../models/enums';
@@ -11,6 +15,7 @@ export class BullishHODSignal extends Signals {
 
     private lastHODInterval = {} as IQuoteFullIntervalData;
     private lastHODIntervalCount: number = 0;
+    private HODSignalCount: number = 1;
 
     constructor(_quoteStats: QuoteStatistics) {
         super(_quoteStats);
@@ -31,7 +36,7 @@ export class BullishHODSignal extends Signals {
                 signals.push({
                     signalGroupType: SignalGroupType.BULLISH_HOD,
                     signalType: SignalType.BULLISH_HIGH_OF_DAY,
-                    signalDescription: SignalVerificationReasonEnum.BULLISH_HIGH_OF_DAY,
+                    signalDescription: SignalVerificationReasonEnum.BULLISH_HIGH_OF_DAY + ' (' + this.getDurationText() + ') - #' + this.HODSignalCount++,
                 });
                 this.didMakeHigherLow = false;
             }
@@ -53,5 +58,10 @@ export class BullishHODSignal extends Signals {
             });
         }
         return signals;
+    }
+
+    private getDurationText(): string {
+        let text: string = moment.duration((this.quoteStats.intervalCount - this.lastHODIntervalCount) * 5, 'minutes').format('H:mm');
+        return text.includes(':') ? text : text + 'min';
     }
 }

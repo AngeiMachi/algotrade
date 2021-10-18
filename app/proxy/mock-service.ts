@@ -117,6 +117,7 @@ export async function prepareMockDataTDAmeritrade(quote: string, _marketHours: I
         mockQuote.currentInterval--;
 
         mockQuote.isMockLoaded = true;
+        mockQuotes[quote] = mockQuote;
 
         return Promise.resolve();
     } catch (err) {
@@ -134,7 +135,7 @@ export async function serveMockDataTDAmeritrade(quote: string): Promise<any> {
                 mockQuote.currentInterval++;
             }
 
-            //logger.info("serving " +quote+":" +JSON.stringify(mockQuote.mockDataResponse));
+            //logger.info('serving ' + quote + ':' + JSON.stringify(mockQuote.mockDataResponse));
             resolve({ ...mockQuote.mockDataResponse });
         } catch (err) {
             return reject(err);

@@ -14,17 +14,17 @@ export enum buyReasonEnum {
 
 export enum SignalVerificationReasonEnum {
     NONE = '',
-    AS_FIRST_VOLUME_INTERVAL = 'As First Volume ',
-    SUPER_VOLUME_INTERVAL = ' SUPER Volume',
-    VOLUME_AVERAGE_SPIKE = 'Volume spike obove last 10 average Volume',
-    BULLISH_HIGH_OF_DAY_WITH_PRIOR_DAY_BREAKOUT = 'Bullish High Of Day With Prior Day Breakout',
-    BULLISH_HIGH_OF_DAY = 'Bullish High Of Day',
-    BULLISH_HIGH_OF_DAY_WITH_PREMARKET_BREAKOUT = 'Bullish High Of Day With Premarket Breakout',
-    BULLISH_BREAK_PREVIOUS_DAY = 'Bullish Break Previous Day',
-    BULLISH_BREAK_PREVIOUS_WEEK = 'Bullish Break Previous Week',
-    BULLISH_BREAK_52_WEEK_HIGH = 'Bullish Break 52 week High',
-    MOVING_AVERAGE_TOUCH_FROM_BELOW = 'Moving Average touch from below',
-    MOVING_AVERAGE_TOUCH_FROM_ABOVE = 'Moving Average touch from Above',
+    AS_FIRST_VOLUME_INTERVAL = 'VOL=As First  ',
+    SUPER_VOLUME_INTERVAL = ' VOL=SUPER',
+    VOLUME_AVERAGE_SPIKE = 'VOL=10 Avg Vol Spike',
+    BULLISH_HIGH_OF_DAY_WITH_PRIOR_DAY_BREAKOUT = 'Bull HOD With Day Break',
+    BULLISH_HIGH_OF_DAY = 'Bull HOD',
+    BULLISH_HIGH_OF_DAY_WITH_PREMARKET_BREAKOUT = 'Bull HOD-Pre mrkt Break',
+    BULLISH_BREAK_PREVIOUS_DAY = 'Bull Break Prev Day',
+    BULLISH_BREAK_PREVIOUS_WEEK = 'Bull Break Prev Week',
+    BULLISH_BREAK_52_WEEK_HIGH = 'Bull Break 52 week High',
+    MOVING_AVERAGE_TOUCH_FROM_BELOW = 'Mov Avg touch Down',
+    MOVING_AVERAGE_TOUCH_FROM_ABOVE = 'Mov Avg touch Up',
 }
 
 export enum SignalGroupType {

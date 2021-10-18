@@ -28,17 +28,11 @@ export class QuotesIterator {
 
             for (let i = 0; i < Object.keys(this.quotes).length; i++) {
                 const quoteKey = Object.keys(this.quotes)[i];
-                const getTDAmeritradeIntraday = this.proxyService.getTDAmeritradeIntraday(quoteKey).then((quoteIntervals) => {
-                    const getMetaDataPerDay = this.proxyService
-                        .getMetaDataPerDay(quoteKey, quoteUtils.getCurrentTradingDate(), quoteIntervals, this.marketHours)
-                        .then((quoteMetadata) => {
-                            this.quotes[quoteKey].initializeStockData(quoteIntervals, quoteMetadata, this.marketHours);
-                        });
-                });
-
-                promises.push(getTDAmeritradeIntraday);
+                const quoteIntervals = await this.proxyService.getTDAmeritradeIntraday(quoteKey);
+                const quoteMetadata = await this.proxyService.getMetaDataPerDay(quoteKey, quoteUtils.getCurrentTradingDate(), quoteIntervals, this.marketHours);
+                this.quotes[quoteKey].initializeStockData(quoteIntervals, quoteMetadata, this.marketHours);
+                this.initiateQuoteWatch(quoteKey);
             }
-            await Promise.all(promises);
             return Promise.resolve();
         } catch (err) {
             Promise.reject(err);
@@ -59,12 +53,35 @@ export class QuotesIterator {
         }
     }
 
+    initiateQuoteWatch(quoteName: string) {
+        const quoteSetInteval = setInterval(async () => {
+            if (!this.quotes.hasOwnProperty(quoteName)) {
+                clearInterval(quoteSetInteval);
+            }
+            await this.iterateQuote(quoteName);
+        }, INTERVAL_TIME);
+    }
+
     private initializeQuotes(quotes: string[]) {
         quotes.forEach((quote) => {
             this.quotes[quote] = new QuoteMonoRunner(quote);
         });
     }
 
+    private async iterateQuote(quoteName: string) {
+        try {
+            const quoteStockStats: QuoteMonoRunner = this.quotes[quoteName];
+
+            const data = await this.proxyService.getTDAmeritradeIntraday(quoteName, false);
+
+            const stockInterval: IQuoteFullIntervalData = quoteUtils.getRecentIntervalData(data);
+            quoteStockStats.recordNewStockInterval(stockInterval, true);
+
+            this.clearQuoteWhenIsLastInterval(quoteName, stockInterval);
+        } catch (err) {
+            logger.error('error at Stock-Reader.iterateStocks - quote=' + quoteName + ' + ' + 'err=' + err);
+        }
+    }
     private async iterateQuotes() {
         for (let i = 0; i < Object.keys(this.quotes).length; i++) {
             const quoteKey = Object.keys(this.quotes)[i];

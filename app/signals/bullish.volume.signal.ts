@@ -57,7 +57,10 @@ export class BullishVolumeSignal extends Signals {
 
     private isExtremeVolume(): boolean {
         if (this.quoteStats.lastInterval.volume > this.movingAverageVolumeTen * 5 && this.movingAverageVolumeTen != 0) {
-            if (quoteUtils.isCandleBullish(this.quoteStats.lastInterval)) {
+            if (
+                quoteUtils.isCandleBullish(this.quoteStats.lastInterval) &&
+                quoteUtils.getPercentageChange(this.quoteStats.lastInterval, this.quoteStats.metadata.previousDay.close, false) > 1
+            ) {
                 return true;
             }
         }

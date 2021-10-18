@@ -310,6 +310,16 @@ export function isCandleBullish(interval: IQuoteFullIntervalData): boolean {
     return interval.close - interval.open > interval.high - interval.close ? true : false;
 }
 
+export function getPercentageChange(interval: IQuoteFullIntervalData, basePrice: number, isFromOpen: boolean = true) {
+    if (isFromOpen) {
+        const change = interval.close - interval.open;
+        return (change / interval.open) * 100.0;
+    } else {
+        const change = interval.close - interval.low;
+        return (change / interval.low) * 100.0;
+    }
+}
+
 function get52WeekHighAndLow(quoteFullYearWeeklyHistory: ITDAmeritradePriceHistory) {
     let week52low: number = 10000,
         week52high: number = 0;

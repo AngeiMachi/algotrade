@@ -8,15 +8,19 @@ import { logger } from '../config/winston.config';
 import { parseMustache } from '../utils/general';
 import * as convertUtils from '../utils/convert-utils';
 import * as tdConfig from '../../config/tdaclientauth.json';
+import Bottleneck from 'bottleneck';
 
 const tdaclient = require('tda-api-client');
 
-import {
-    IQuoteHistoricalIntervals,
-    ITDAmeritradePriceHistory,
-    IQuoteIntervals,
-    ITDAmeritradeIntervalData,
-} from '../models/quote-data.model';
+import { IQuoteHistoricalIntervals, ITDAmeritradePriceHistory, IQuoteIntervals, ITDAmeritradeIntervalData } from '../models/quote-data.model';
+
+const limiter = new Bottleneck({
+    reservoir: 110, // initial value
+    reservoirRefreshAmount: 110,
+    reservoirRefreshInterval: 61 * 1000,
+    maxConcurrent: 110,
+    minTime: 0,
+});
 
 export const getQuote5MinuteHistory = async (quote: string, specificTradeDates: string[] = []): Promise<IQuoteHistoricalIntervals> => {
     try {
@@ -28,9 +32,7 @@ export const getQuote5MinuteHistory = async (quote: string, specificTradeDates: 
         };
         const fullURL = parseMustache(environmentConfig.TDAmeritradeAPI.URL.get_historical_5_minutes, options);
 
-        const response = await request.get({
-            url: fullURL,
-        });
+        const response = await limiter.schedule(() => request.get({ url: fullURL }));
 
         const parsedResponse = JSON.parse(response);
         let groupedIntervalsByDay = _.groupBy(parsedResponse.candles, groupByDateFunction);
@@ -48,11 +50,7 @@ export const getQuote5MinuteHistory = async (quote: string, specificTradeDates: 
         throw err;
     }
 };
-export const getQuote5MinuteIntraday = async (
-    quote: string,
-    tradeDate: string,
-    getExtendedHours: boolean = true
-): Promise<IQuoteIntervals> => {
+export const getQuote5MinuteIntraday = async (quote: string, tradeDate: string, getExtendedHours: boolean = true): Promise<IQuoteIntervals> => {
     try {
         const startDate = moment.tz(tradeDate, 'America/New_York').add(9, 'hours').add(25, 'minutes').unix() * 1000;
 
@@ -66,7 +64,7 @@ export const getQuote5MinuteIntraday = async (
             getExtendedHours: getExtendedHours.toString(),
         };
 
-        const getPriceHistoryResult = await tdaclient.pricehistory.getPriceHistory(priceHistoryConfig);
+        const getPriceHistoryResult = (await limiter.schedule(() => tdaclient.pricehistory.getPriceHistory(priceHistoryConfig))) as any;
 
         const quote5MinutIntraday = convertUtils.convertTDAmeritrade5MinuteIntervals(getPriceHistoryResult.candles as any);
 
@@ -92,15 +90,11 @@ export const getQuote5MinuteIntraday_old = async (quote: string, tradeDate: stri
         };
         const fullURL = parseMustache(environmentConfig.TDAmeritradeAPI.URL.get_historical_5_minutes, options);
 
-        const response = await request.get({
-            url: fullURL,
-        });
+        const response = await limiter.schedule(() => request.get({ url: fullURL }));
 
         const parsedResponse = JSON.parse(response);
 
-        const preTradingHoursRemoved = parsedResponse.candles.filter(
-            (intervals: ITDAmeritradeIntervalData) => intervals.datetime >= startDate
-        );
+        const preTradingHoursRemoved = parsedResponse.candles.filter((intervals: ITDAmeritradeIntervalData) => intervals.datetime >= startDate);
         const quote5MinutIntraday = convertUtils.convertTDAmeritrade5MinuteIntervals(preTradingHoursRemoved as any);
         return quote5MinutIntraday;
     } catch (err) {
@@ -116,9 +110,7 @@ export const getQuoteFullYearDailyHistory = async (quote: string): Promise<ITDAm
 
         const fullURL = parseMustache(environmentConfig.TDAmeritradeAPI.URL.get_historical_daily_full_year, options);
 
-        const response = await request.get({
-            url: fullURL,
-        });
+        const response = await limiter.schedule(() => request.get({ url: fullURL }));
 
         const dailyIntervals = JSON.parse(response) as ITDAmeritradePriceHistory;
 
@@ -137,9 +129,7 @@ export const getQuoteFullYearWeeklyHistory = async (quote: string): Promise<ITDA
 
         const fullURL = parseMustache(environmentConfig.TDAmeritradeAPI.URL.get_historical_weekly_full_year, options);
 
-        const response = await request.get({
-            url: fullURL,
-        });
+        const response = await limiter.schedule(() => request.get({ url: fullURL }));
 
         const dailyIntervals = JSON.parse(response) as ITDAmeritradePriceHistory;
 
@@ -164,3 +154,14 @@ export const getMarketHours = async (tradeDate: string): Promise<any> => {
 function groupByDateFunction(interval: any) {
     return moment(interval.datetime).format('YYYY-MM-DD');
 }
+
+limiter.on('debug', function (message, data) {
+    // Useful to figure out what the limiter is doing in real time
+    // and to help debug your application
+    //@ts-ignore
+    console.log(limiter.jobs('RUNNING'));
+});
+
+limiter.on('failed', function (error, jobInfo) {
+    console.log(error);
+});
