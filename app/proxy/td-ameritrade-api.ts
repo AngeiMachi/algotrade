@@ -18,7 +18,7 @@ const limiter = new Bottleneck({
     reservoir: 110, // initial value
     reservoirRefreshAmount: 110,
     reservoirRefreshInterval: 61 * 1000,
-    maxConcurrent: 110,
+    maxConcurrent: 30,
     minTime: 0,
 });
 
@@ -159,9 +159,15 @@ limiter.on('debug', function (message, data) {
     // Useful to figure out what the limiter is doing in real time
     // and to help debug your application
     //@ts-ignore
-    console.log(limiter.jobs('RUNNING'));
+    //console.log(limiter.jobs('RUNNING'));
 });
 
 limiter.on('failed', function (error, jobInfo) {
-    console.log(error);
+    logger.error('Fail TD Ameritrade API call Error :' + error);
+    
+    if (jobInfo.retryCount <= 9) { // Here we only retry once
+        logger.info(`Retrying API call in 10 second(try #${jobInfo.retryCount})...`);
+        return 10000;
+    }
+    logger.info(`Aborting job after 10 retries`);
 });

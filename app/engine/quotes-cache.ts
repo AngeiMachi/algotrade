@@ -1,1 +1,67 @@
-weeklyQuotesCache: ICacheHistoricalData;
+import { TimeFrame } from '../models/enums';
+import { ICacheHistoricalData, ITDAmeritradePriceHistory } from '../models/quote-data.model';
+import * as TDAmeritradeAPI from '../proxy/td-ameritrade-api';
+import { logger } from '../config/winston.config';
+export let cacheState = {} as ICacheHistoricalData;
+
+export const addNewQuoteToCache = (quoteName: string) => {
+    if (!cacheState.hasOwnProperty(quoteName)) {
+        cacheState[quoteName] = {
+            quoteFullYearDailyHistory: {} as ITDAmeritradePriceHistory,
+            quoteFullYearWeeklyHistory: {} as ITDAmeritradePriceHistory,
+        };
+    }
+};
+
+export const cacheQuote = ((quoteName:string,pricehistory:ITDAmeritradePriceHistory,timeFrame:TimeFrame) => {
+    if (cacheState[quoteName]) {
+        if (timeFrame===TimeFrame.Weekly){
+            cacheState[quoteName].quoteFullYearWeeklyHistory = pricehistory;
+        }
+        else if (timeFrame===TimeFrame.Daily){
+            cacheState[quoteName].quoteFullYearDailyHistory = pricehistory;
+        }
+    }
+});
+
+
+export const getQuoteFromCache = ((quoteName:string,timeFrame:TimeFrame): ITDAmeritradePriceHistory | null => {
+    if (cacheState[quoteName]) {
+        if (timeFrame===TimeFrame.Weekly){
+            return cacheState[quoteName].quoteFullYearWeeklyHistory;
+        }
+        else if (timeFrame===TimeFrame.Daily){
+            return cacheState[quoteName].quoteFullYearDailyHistory;
+        }
+    }
+    return null;
+});
+
+export const cacheQuoteFromTDAmeritradeAPI = async (quoteName:string) => {
+    if (!cacheState[quoteName]) {
+        addNewQuoteToCache(quoteName);
+        const quoteFullYearDailyHistory = await TDAmeritradeAPI.getQuoteFullYearDailyHistory(quoteName);
+        cacheQuote(quoteName,quoteFullYearDailyHistory,TimeFrame.Daily);
+        const quoteFullYearWeeklyHistory = await TDAmeritradeAPI.getQuoteFullYearWeeklyHistory(quoteName);
+        cacheQuote(quoteName,quoteFullYearWeeklyHistory,TimeFrame.Weekly); 
+    }
+}
+
+export const cacheQuoteListFromTDAmeritradeAPI = async (quoteListNames:string[]) => {
+    try {
+        logger.info("Initiating Quote caching...");
+        for (let quoteName of quoteListNames) {
+            await cacheQuoteFromTDAmeritradeAPI(quoteName);
+            logger.info(`${quoteName} has been cached`);
+        }
+        logger.info("All Quotes have been cached succesfully");
+    }
+    catch (err) {
+        logger.error('cacheQuoteListFromTDAmeritradeAPI failed ' + err);
+    }
+    
+}
+
+export const deleteCache = (quoteName:string) => {
+    delete cacheState[quoteName];
+}

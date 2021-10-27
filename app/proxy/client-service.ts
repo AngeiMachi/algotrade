@@ -64,9 +64,9 @@ server.listen(PORT, () => {
     console.log(`Listening on port ${PORT}`);
 });
 
-export const updateQuote = (quote: QuoteState) => {
+export const updateQuote = (quote: QuoteState,shouldSendPush:boolean) => {
     const quoteToUpdate = _.omit(quote, ['quoteStatistics']);
-    if (ShouldUsePushNotifications) {
+    if (ShouldUsePushNotifications && shouldSendPush) {
         sendPush(quote);
     }
 

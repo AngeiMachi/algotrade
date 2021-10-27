@@ -1,17 +1,54 @@
-import { INTERVAL_TIME } from '../config/globals.config';
+const schedule = require('node-schedule');
+import moment from 'moment-timezone';
+import { logger } from '../config/winston.config';
 import * as environmentConfig from '../config/environment.Config.json';
 
 import { QuotesIterator } from './quotes-iterator';
-
+import * as quoteCache from './quotes-cache';
 //const tdaclient = require('tda-api-client');
 
 export default async function startApp() {
     try {
+        await quoteCache.cacheQuoteListFromTDAmeritradeAPI(environmentConfig.quotes.quote6);
+       
         const sr = new QuotesIterator(environmentConfig.quotes.quote6);
-        sr.initializeQuotesData();
+
+        const initTime = calculateInitializationTime();
+        logger.info(`Quote initialization is set to start at ${initTime}...`);
+        const job = schedule.scheduleJob(initTime , ()=>{
+            sr.initializeQuotesData(initTime);
+        });
+        
     } catch (error) {
-        let i = error;
+        logger.error("StartApp="+ error);
     }
+}
+
+const calculateInitializationTime = ():Date=> {
+    const extraWaitTime =6;
+
+    const now = new Date();
+    const minutesDiff = now.getMinutes()%5 ;
+    let minutesToAdd = 0;
+    let secondsToAdd = 0;
+    if(minutesDiff!==0) {
+        minutesToAdd=5-minutesDiff;
+    }
+    const secondsDiff = now.getSeconds();
+    if (secondsDiff<10) {
+        secondsToAdd = extraWaitTime -secondsDiff
+    } else if (secondsDiff > extraWaitTime) {
+        secondsToAdd = 60-secondsDiff+extraWaitTime
+        if (minutesToAdd===0) {
+            minutesToAdd +=4;
+        }
+        else {
+            minutesToAdd--;
+        }
+    }
+
+   let date = moment(now).add(minutesToAdd, 'm').add(secondsToAdd,'s').toDate();
+   return date;
 }
 
 // setTimeout(() => {
@@ -28,7 +65,7 @@ export default async function startApp() {
 //     });
 // }, 1000 * 125);
 
-// setTimeout(() => {
+// setTimeout(() = new  => {
 //     const sr = new QuotesIterator(environmentConfig.quotes.quote9);
 //     sr.initializeQuotesData().then(() => {
 //         sr.initiateQuotesWatch();

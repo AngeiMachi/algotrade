@@ -1,11 +1,9 @@
-import moment from 'moment-timezone';
 import * as _ from 'lodash';
 
 import * as quoteUtiles from '../utils/quote-utils';
 import * as quoteState from './state';
 
 import { IMarketHours, IQuoteFullIntervalData, IQuoteIntervals, IQuoteMetadata } from '../models/quote-data.model';
-import { SignalVerificationReasonEnum } from '../models/enums';
 import { logger } from '../config/winston.config';
 import { BullishHODSignal, BullishLevelBreakSignal, BullishVolumeSignal, MovingAveragesSignal } from '../signals';
 import { QuoteStatistics } from './quote-statistics';
@@ -57,7 +55,7 @@ export class QuoteMonoRunner {
         ];
 
         if (this.signals.length > 0) {
-            quoteState.updateSignals(this.quoteStats.quoteName, this.signals);
+            quoteState.updateSignals(this.quoteStats.quoteName, this.signals,isLive);
             this.signals.forEach((signal) => {
                 logger.info(signal.signalDescription);
             });

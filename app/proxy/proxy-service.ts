@@ -12,10 +12,12 @@ import { parseMustache } from '../utils/general';
 import * as TDAmeritradeAPI from './td-ameritrade-api';
 import * as AlphaVantage from './alpha-vantage-api';
 import * as mockService from './mock-service';
+import * as QuotesCache from '../engine/quotes-cache';
 
 import { IQuoteMetadata, IQuoteFullIntervalData, IQuotesHistoricalData, ITDAmeritradePriceHistory, IQuoteIntervals, IMarketHours } from '../models/quote-data.model';
 
 import { IAlphaVantageIntervals, INTERVAL_PROPERTY_NAME, METADATA_PROPERTY_NAME, LAST_REFRESHED_PROPERTY_NAME } from '../models/alpha-vantage.model';
+import { TimeFrame } from '../models/enums';
 
 export class ProxyService {
     private _marketHours = {} as IMarketHours;
@@ -122,13 +124,22 @@ export class ProxyService {
 
     public async getMetaDataPerDay(quote: string, tradeDay: string, quoteIntervals: IQuoteIntervals, markethours: IMarketHours): Promise<IQuoteMetadata> {
         try {
-            const quoteFullYearDailyHistory = await TDAmeritradeAPI.getQuoteFullYearDailyHistory(quote);
-            const quoteFullYearWeeklyHistory = await TDAmeritradeAPI.getQuoteFullYearWeeklyHistory(quote);
-
+            
+            let quoteFullYearDailyHistory = QuotesCache.getQuoteFromCache(quote,TimeFrame.Daily);
+            if (!quoteFullYearDailyHistory) {
+                quoteFullYearDailyHistory = await TDAmeritradeAPI.getQuoteFullYearDailyHistory(quote);
+            }
+            let quoteFullYearWeeklyHistory = QuotesCache.getQuoteFromCache(quote,TimeFrame.Weekly);
+            if (!quoteFullYearWeeklyHistory) {
+                quoteFullYearWeeklyHistory = await TDAmeritradeAPI.getQuoteFullYearDailyHistory(quote);
+            }
+            
             const quotesHistoricalData: IQuotesHistoricalData = {
                 quoteFullYearDailyHistory,
                 quoteFullYearWeeklyHistory,
             };
+
+            QuotesCache.deleteCache(quote);
 
             const metadata: IQuoteMetadata = quoteUtils.composeMetadata(tradeDay, quotesHistoricalData, quoteIntervals, markethours);
             return metadata;

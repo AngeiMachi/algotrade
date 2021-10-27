@@ -63,7 +63,7 @@ export function addNewQuote(quoteStats: QuoteStatistics) {
     }
 }
 
-export function updateSignals(quoteName: string, signals: SignalModel[]) {
+export function updateSignals(quoteName: string, signals: SignalModel[],isLive:boolean) {
     try {
         const updatedQuote = _.remove(state, { quoteName: quoteName })[0] as QuoteState;
         for (let signal of signals) {
@@ -95,7 +95,7 @@ export function updateSignals(quoteName: string, signals: SignalModel[]) {
             }
         }
 
-        clientService.updateQuote(updatedQuote);
+        clientService.updateQuote(updatedQuote,isLive);
     } catch (err) {
         logger.error('error at state.updateSignals - quote=' + quoteName + ',err=' + err);
     }

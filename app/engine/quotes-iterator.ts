@@ -1,5 +1,7 @@
-import * as quoteUtils from '../utils/quote-utils';
+const schedule = require('node-schedule');
+import moment from 'moment-timezone';
 
+import * as quoteUtils from '../utils/quote-utils';
 import { INTERVAL_TIME } from '../config/globals.config';
 import { logger } from '../config/winston.config';
 
@@ -11,7 +13,9 @@ import { IQuotes, IQuoteFullIntervalData, IQuoteMetadata, IMarketHours } from '.
 export class QuotesIterator {
     private proxyService: ProxyService;
     private quotes: IQuotes = {};
+    private quoteIndex: {[key:string]:number}={};
     private marketHours = {} as IMarketHours;
+    private initializationTime!:Date
 
     constructor(quotes: string[] = []) {
         this.proxyService = new ProxyService();
@@ -19,19 +23,21 @@ export class QuotesIterator {
         this.initializeQuotes(quotes);
     }
 
-    public async initializeQuotesData(): Promise<any> {
+    public async initializeQuotesData(initTime:Date): Promise<any> {
+        this.initializationTime=initTime;
         try {
+
             await this.proxyService.initialize();
             this.marketHours = this.proxyService.marketHours;
-
-            const promises = [];
 
             for (let i = 0; i < Object.keys(this.quotes).length; i++) {
                 const quoteKey = Object.keys(this.quotes)[i];
                 const quoteIntervals = await this.proxyService.getTDAmeritradeIntraday(quoteKey);
                 const quoteMetadata = await this.proxyService.getMetaDataPerDay(quoteKey, quoteUtils.getCurrentTradingDate(), quoteIntervals, this.marketHours);
                 this.quotes[quoteKey].initializeStockData(quoteIntervals, quoteMetadata, this.marketHours);
+                this.quoteIndex[quoteKey] =i;
                 this.initiateQuoteWatch(quoteKey);
+                
             }
             return Promise.resolve();
         } catch (err) {
@@ -54,12 +60,20 @@ export class QuotesIterator {
     }
 
     initiateQuoteWatch(quoteName: string) {
-        const quoteSetInteval = setInterval(async () => {
-            if (!this.quotes.hasOwnProperty(quoteName)) {
-                clearInterval(quoteSetInteval);
-            }
+        const nextRunTime = moment(this.initializationTime).add(INTERVAL_TIME+this.quoteIndex[quoteName], 'ms').toDate();
+
+        schedule.scheduleJob(nextRunTime, async () => {
+
+            const quoteSetInteval = setInterval(async () => {
+                if (!this.quotes.hasOwnProperty(quoteName)) {
+                    clearInterval(quoteSetInteval);
+                }
+                await this.iterateQuote(quoteName);
+            }, INTERVAL_TIME);
+
             await this.iterateQuote(quoteName);
-        }, INTERVAL_TIME);
+        });
+        
     }
 
     private initializeQuotes(quotes: string[]) {
@@ -70,6 +84,7 @@ export class QuotesIterator {
 
     private async iterateQuote(quoteName: string) {
         try {
+
             const quoteStockStats: QuoteMonoRunner = this.quotes[quoteName];
 
             const data = await this.proxyService.getTDAmeritradeIntraday(quoteName, false);
@@ -108,6 +123,6 @@ export class QuotesIterator {
     }
 
     private isLastInterval(interval: any): boolean {
-        return interval.timeNewYork.getHours() === 16;
+        return interval.timeNewYork.getHours() === 15 && interval.timeNewYork.getMinutes()===50;
     }
 }
