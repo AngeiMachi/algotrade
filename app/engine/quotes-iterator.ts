@@ -5,21 +5,18 @@ import * as quoteUtils from '../utils/quote-utils';
 import { INTERVAL_TIME } from '../config/globals.config';
 import { logger } from '../config/winston.config';
 
-import { ProxyService } from '../proxy/proxy-service';
+import * as  proxyService  from '../proxy/proxy-service';
 import { QuoteMonoRunner } from './quote-mono-reader';
 
 import { IQuotes, IQuoteFullIntervalData, IQuoteMetadata, IMarketHours } from '../models/quote-data.model';
 
 export class QuotesIterator {
-    private proxyService: ProxyService;
     private quotes: IQuotes = {};
     private quoteIndex: {[key:string]:number}={};
     private marketHours = {} as IMarketHours;
     private initializationTime!:Date
 
     constructor(quotes: string[] = []) {
-        this.proxyService = new ProxyService();
-
         this.initializeQuotes(quotes);
     }
 
@@ -27,13 +24,12 @@ export class QuotesIterator {
         this.initializationTime=initTime;
         try {
 
-            await this.proxyService.initialize();
-            this.marketHours = this.proxyService.marketHours;
+            this.marketHours = proxyService.getMarketHours();
 
             for (let i = 0; i < Object.keys(this.quotes).length; i++) {
                 const quoteKey = Object.keys(this.quotes)[i];
-                const quoteIntervals = await this.proxyService.getTDAmeritradeIntraday(quoteKey);
-                const quoteMetadata = await this.proxyService.getMetaDataPerDay(quoteKey, quoteUtils.getCurrentTradingDate(), quoteIntervals, this.marketHours);
+                const quoteIntervals = await proxyService.getTDAmeritradeIntraday(quoteKey);
+                const quoteMetadata = await proxyService.getMetaDataPerDay(quoteKey, quoteUtils.getCurrentTradingDate(), quoteIntervals, this.marketHours);
                 this.quotes[quoteKey].initializeStockData(quoteIntervals, quoteMetadata, this.marketHours);
                 this.quoteIndex[quoteKey] =i;
                 this.initiateQuoteWatch(quoteKey);
@@ -87,7 +83,7 @@ export class QuotesIterator {
 
             const quoteStockStats: QuoteMonoRunner = this.quotes[quoteName];
 
-            const data = await this.proxyService.getTDAmeritradeIntraday(quoteName, false);
+            const data = await proxyService.getTDAmeritradeIntraday(quoteName, false);
 
             const stockInterval: IQuoteFullIntervalData = quoteUtils.getRecentIntervalData(data);
             quoteStockStats.recordNewStockInterval(stockInterval, true);
@@ -103,7 +99,7 @@ export class QuotesIterator {
             try {
                 const quoteStockStats: QuoteMonoRunner = this.quotes[quoteKey];
 
-                const data = await this.proxyService.getTDAmeritradeIntraday(quoteKey, false);
+                const data = await proxyService.getTDAmeritradeIntraday(quoteKey, false);
 
                 const stockInterval: IQuoteFullIntervalData = quoteUtils.getRecentIntervalData(data);
                 quoteStockStats.recordNewStockInterval(stockInterval, true);

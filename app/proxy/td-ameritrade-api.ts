@@ -18,7 +18,7 @@ const limiter = new Bottleneck({
     reservoir: 110, // initial value
     reservoirRefreshAmount: 110,
     reservoirRefreshInterval: 61 * 1000,
-    maxConcurrent: 30,
+    maxConcurrent: 110,
     minTime: 0,
 });
 
@@ -146,7 +146,8 @@ export const getMarketHours = async (tradeDate: string): Promise<any> => {
         date: tradeDate,
         apikey: tdConfig.client_id,
     };
-    const hrs = await tdaclient.markethours.getSingleMarketHours(configGetMarketHrs);
+    
+    const hrs =  (await limiter.schedule(() => tdaclient.markethours.getSingleMarketHours(configGetMarketHrs)));
 
     return hrs;
 };
@@ -165,9 +166,12 @@ limiter.on('debug', function (message, data) {
 limiter.on('failed', function (error, jobInfo) {
     logger.error('Fail TD Ameritrade API call Error :' + error);
     
+    if (error.includes('markethours')) {
+        throw "Can't get market hours from TD Ameritrade API";
+    }
     if (jobInfo.retryCount <= 9) { // Here we only retry once
-        logger.info(`Retrying API call in 10 second(try #${jobInfo.retryCount})...`);
-        return 10000;
+        logger.info(`Retrying API call in 30 second(try #${jobInfo.retryCount})...`);
+        return 30000;
     }
     logger.info(`Aborting job after 10 retries`);
 });

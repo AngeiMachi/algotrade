@@ -7,9 +7,19 @@ import { MovingAverageType, SignalVerificationReasonEnum } from '../models/enums
 import { QuotesState, QuoteState, QuoteStateSignals, IMovingAverageData } from '../models/state.model';
 import { QuoteStatistics } from './quote-statistics';
 import { SignalModel } from '../models/signal.model';
+import { IMarketHours } from '../models/quote-data.model';
 
 let state: QuoteState[] = [];
+let _marketHours = {} as IMarketHours; 
+
 let lastIntervalCount = -1;
+
+export const setMarketHours = (mrkHours:IMarketHours) => {
+    _marketHours =mrkHours;
+}
+export const getMarketHours = ():IMarketHours => {
+    return _marketHours;
+}
 
 function initQuote(quoteStatistics: QuoteStatistics) {
     const quoteState = {} as QuoteState;
@@ -110,3 +120,5 @@ export function getState() {
     }
     return returnedState;
 }
+
+

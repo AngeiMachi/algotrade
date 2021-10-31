@@ -299,7 +299,11 @@ export function generateDefaultMarketHours() {
 }
 
 export function isAboveMovingAverage(interval: IQuoteFullIntervalData, movingAverage: number): boolean {
-    return interval.open > movingAverage ? true : false;
+    if (!interval) {
+        logger.info("isAboveMovingAverage- interval is empty");
+        true;
+    }
+    return interval?.open > movingAverage ? true : false;
 }
 
 export function isCandleBullish(interval: IQuoteFullIntervalData): boolean {
