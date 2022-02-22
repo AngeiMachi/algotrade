@@ -74,6 +74,31 @@ export const getQuote5MinuteIntraday = async (quote: string, tradeDate: string, 
         throw err;
     }
 };
+export const getQuote5MinuteMultipleDays = async (quote: string, tradeDate: string,daysBack:number=0, getExtendedHours: boolean = true): Promise<IQuoteIntervals> => {
+    try {
+        const startDate = moment.tz(tradeDate, 'America/New_York').subtract(daysBack,'days').add(9, 'hours').add(25, 'minutes').unix() * 1000;
+        const endDate = moment.tz(tradeDate, 'America/New_York').add(9, 'hours').add(25, 'minutes').unix() * 1000;
+
+        const priceHistoryConfig = {
+            startDate: startDate,
+            endDate: endDate,
+            periodType: tdaclient.pricehistory.PERIOD_TYPE.DAY,
+            frequencyType: tdaclient.pricehistory.FREQUENCY_TYPE.DAY.MINUTE,
+            frequency: tdaclient.pricehistory.FREQUENCY.MINUTE.FIVE,
+            symbol: quote.toUpperCase(),
+            getExtendedHours: getExtendedHours.toString(),
+        };
+
+        const getPriceHistoryResult = (await limiter.schedule(() => tdaclient.pricehistory.getPriceHistory(priceHistoryConfig))) as any;
+
+        const quote5MinutIntraday = convertUtils.convertTDAmeritrade5MinuteIntervals(getPriceHistoryResult.candles as any);
+
+        return quote5MinutIntraday;
+    } catch (err) {
+        logger.error('getQuote5MinuteIntraday failed ' + err);
+        throw err;
+    }
+};
 export const getQuote5MinuteIntraday_old = async (quote: string, tradeDate: string): Promise<IQuoteIntervals> => {
     try {
         const startDate = moment.tz(tradeDate, 'America/New_York').add(9, 'hours').add(25, 'minutes').unix() * 1000;

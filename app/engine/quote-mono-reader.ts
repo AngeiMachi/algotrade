@@ -5,7 +5,7 @@ import * as quoteState from './state';
 
 import { IMarketHours, IQuoteFullIntervalData, IQuoteIntervals, IQuoteMetadata } from '../models/quote-data.model';
 import { logger } from '../config/winston.config';
-import { BullishHODSignal, BullishLevelBreakSignal, BullishVolumeSignal, MovingAveragesSignal } from '../signals';
+import { BullishHODSignal, BullishLevelBreakSignal, BullishVolumeSignal, MovingAverageDailyTwentySignal, MovingAveragesSignal } from '../signals';
 import { QuoteStatistics } from './quote-statistics';
 import { SignalModel } from '../models/signal.model';
 
@@ -20,6 +20,7 @@ export class QuoteMonoRunner {
     private bullishLevelBreakSignal!: BullishLevelBreakSignal;
     private bullishVolumeSignal!: BullishVolumeSignal;
     private movingAveragesSignal!: MovingAveragesSignal;
+    private movingAverageDailyTwentySignal!: MovingAverageDailyTwentySignal;
 
     constructor(quote: string, todayDate: string = '') {
         this.quoteStats = new QuoteStatistics(quote, todayDate);
@@ -37,6 +38,7 @@ export class QuoteMonoRunner {
         this.bullishLevelBreakSignal = new BullishLevelBreakSignal(this.quoteStats);
         this.bullishVolumeSignal = new BullishVolumeSignal(this.quoteStats);
         this.movingAveragesSignal = new MovingAveragesSignal(this.quoteStats);
+        this.movingAverageDailyTwentySignal =  new MovingAverageDailyTwentySignal(this.quoteStats);
 
         Object.keys(quoteIntervals).forEach((key) => {
             this.recordNewStockInterval(quoteIntervals[key]);
@@ -52,6 +54,7 @@ export class QuoteMonoRunner {
             ...this.bullishLevelBreakSignal.monitor(),
             ...this.bullishVolumeSignal.monitor(),
             ...this.movingAveragesSignal.monitor(),
+            ...this.movingAverageDailyTwentySignal.monitor(),
         ];
 
         if (this.signals.length > 0) {

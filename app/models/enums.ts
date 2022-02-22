@@ -25,6 +25,7 @@ export enum SignalVerificationReasonEnum {
     BULLISH_BREAK_52_WEEK_HIGH = 'Bull Break 52 week High',
     MOVING_AVERAGE_TOUCH_FROM_BELOW = 'Mov Avg touch Down',
     MOVING_AVERAGE_TOUCH_FROM_ABOVE = 'Mov Avg touch Up',
+    MOVING_AVERAGE_INTRADAY_TWENTY_BREAK_ABOVE = "Yellow MA break UP"
 }
 
 export enum SignalGroupType {
@@ -32,6 +33,7 @@ export enum SignalGroupType {
     BULLISH_LEVEL_BREAK,
     BULLISH_VOLUME,
     MOVING_AVERAGES,
+    INTRADAY_MOVING_AVERAGE
 }
 
 export enum SignalType {
@@ -47,6 +49,7 @@ export enum SignalType {
     BULLISH_BREAK_52_WEEK_HIGH,
     MOVING_AVERAGE_TOUCH_FROM_BELOW,
     MOVING_AVERAGE_TOUCH_FROM_ABOVE,
+    MOVING_AVERAGE_INTRADAY_TWENTY_BREAK_ABOVE
 }
 
 export enum SignalCode {}

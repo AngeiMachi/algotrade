@@ -85,5 +85,26 @@ export class QuoteStatistics {
         this.quoteIntervals.push(quoteInterval);
         this._lastInterval = quoteInterval;
         this._intervalCount++;
+        this._lastInterval.MA20 = this.calculateMA20();
+    }
+
+    private calculateMA20() {
+        let sum=0;
+        let i;
+        for ( i=0;i<this._quoteIntervals.length;i++) {
+            sum+=this._quoteIntervals[this._quoteIntervals.length-1-i].close;
+            if (i===19) return sum/20;
+        }
+
+        const intervalsKeysArr = Object.keys(this._metadata.preMarketMetadata?.preMarketIntervals as IQuoteIntervals);
+
+        for (let j=0;j<intervalsKeysArr.length;j++) {
+            sum+=(this._metadata.preMarketMetadata?.preMarketIntervals[intervalsKeysArr[intervalsKeysArr.length-1-j]] as IQuoteFullIntervalData).close;
+            if (i===19) return sum/20;
+            i++ 
+        }
+
+        return 0;
+
     }
 }

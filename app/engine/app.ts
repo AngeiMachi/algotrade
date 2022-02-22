@@ -2,16 +2,19 @@ const schedule = require('node-schedule');
 import moment from 'moment-timezone';
 import { logger } from '../config/winston.config';
 import * as environmentConfig from '../config/environment.Config.json';
+import * as globalConfig from '../config/globals.config';
 
 import { QuotesIterator } from './quotes-iterator';
 import * as quoteCache from './quotes-cache';
 //const tdaclient = require('tda-api-client');
 
+const quotes = ["AAPL","AMD","NVDA","TSLA","AMZN","QQQ"];
+
 export default async function startApp() {
     try {
-        await quoteCache.cacheQuoteListFromTDAmeritradeAPI(environmentConfig.quotes.quote6);
+        await quoteCache.cacheQuoteListFromTDAmeritradeAPI(environmentConfig.quotes.LEADERS);
        
-        const sr = new QuotesIterator(environmentConfig.quotes.quote6);
+        const sr = new QuotesIterator(environmentConfig.quotes.LEADERS);
 
         const initTime = calculateInitializationTime();
         logger.info(`Quote initialization is set to start at ${initTime}...`);
@@ -25,6 +28,10 @@ export default async function startApp() {
 }
 
 const calculateInitializationTime = ():Date=> {
+    if (globalConfig.Mock.IsMock) {
+        return moment(new Date()).add(10,'s').toDate();
+    }
+
     const extraWaitTime =6;
 
     const now = new Date();

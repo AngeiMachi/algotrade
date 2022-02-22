@@ -2,3 +2,4 @@ export * from './bullish-level-break.signal';
 export * from './bullish-hod.signal';
 export * from './bullish.volume.signal';
 export * from './moving-averages.signal';
+export * from './moving-average-daily-twenty.signals';

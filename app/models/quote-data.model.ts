@@ -9,6 +9,7 @@ export interface IQuoteFullIntervalData {
     timeIsrael: Date;
     timeNewYork: Date;
     intervalNumber?: number;
+    MA20?: number;
 }
 
 export interface IQuotes {

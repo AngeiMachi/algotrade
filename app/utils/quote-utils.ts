@@ -249,10 +249,13 @@ export function getRecentFirstIntervalData(intervals: IQuoteIntervals, markethou
 
 export function getPreMarketIntervalData(intervals: IQuoteIntervals, markethours: IMarketHours) {
     const preMarketIntervals: IQuoteIntervals = {};
-    let maxInterval: IQuoteFullIntervalData = getRecentFirstIntervalData(intervals, markethours, true);
+    let maxInterval= {} as IQuoteFullIntervalData;
     let maxHigh = 0;
 
     for (let key of Object.keys(intervals)) {
+        if (!key.includes(markethours.date)) {
+            continue;
+        }
         if (key === markethours.sessionHours.preMarket.end) {
             break;
         }

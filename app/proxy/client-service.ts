@@ -1,10 +1,12 @@
 import * as _ from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
-import { QuoteState } from '../models/state.model';
+import { QuoteState, QuoteStateSignals } from '../models/state.model';
 import { getState } from '../engine/state';
 import express from 'express';
 import * as OneSignal from 'onesignal-node';
 import { ShouldUsePushNotifications } from '../config/globals.config';
+import * as environmentConfig from '../config/environment.Config.json';
+
 const app = express();
 
 const oneSignalclient = new OneSignal.Client('6caf4483-266e-4b54-a9f8-c3e53671ebf6', 'MjZjMDNkODctMGE3Ny00ODZjLTk2MjItMjA1NTAxMzU4ZGQw');
@@ -39,7 +41,7 @@ app.get('/getAllQuotes', function (req, res) {
     res.json(getState());
 });
 
-const PORT = 55555;
+const PORT = 11111;
 
 export const ioGlobal = io.on('connection', (socket: any) => {
     console.log(`Client ${socket.id} connected`);
@@ -76,7 +78,10 @@ export const updateQuote = (quote: QuoteState,shouldSendPush:boolean) => {
 const sendPush = async (quote: QuoteState) => {
     let message = quote.quoteName + ': ';
 
-    //@ts-ignore
+    if (!isInPushPolicy(quote)) {
+        return;
+    }
+
     const signals = _.filter(quote.signalsHistory, { interval: quote.quoteStatistics.intervalCount }) as QuoteStateSignals[];
     signals.forEach((signal) => {
         message += signal.signalDetails.signalDescription + '\r\n';
@@ -104,3 +109,17 @@ const sendPush = async (quote: QuoteState) => {
         }
     }
 };
+
+const isInPushPolicy = (quote: QuoteState) => {
+    const leaders = environmentConfig.quotes.LEADERS;
+    const signals = _.filter(quote.signalsHistory, { interval: quote.quoteStatistics.intervalCount }) as QuoteStateSignals[];
+    if (_.includes(leaders,quote.quoteName)) {
+        return true;
+    }
+    else if (signals.length>1) {
+        return true;
+    }
+    else {
+        return false
+    }
+}
