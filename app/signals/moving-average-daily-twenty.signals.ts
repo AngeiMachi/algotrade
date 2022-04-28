@@ -4,12 +4,13 @@ import { Signals } from './signals';
 import _ from 'lodash';
 import { SignalModel } from '../models/signal.model';
 
-const MINIMUM_ONE_SIDE_INTERVALS =10;
+const MINIMUM_ONE_SIDE_INTERVALS =7;
 
 export class MovingAverageDailyTwentySignal extends Signals {
 
     private isAboveDailyTwentyMovingAverage:boolean = false;
     private intervalCount = 0 ;
+    private twentyMovingAvgBreakTimesCount:number=0;
 
     public monitor(): SignalModel[] {
         const signals: SignalModel[] = [];
@@ -19,10 +20,12 @@ export class MovingAverageDailyTwentySignal extends Signals {
             if (this.quoteStats.lastInterval.open<MA20 && this.quoteStats.lastInterval.close>MA20) {
                 if (this.intervalCount>MINIMUM_ONE_SIDE_INTERVALS && !this.isAboveDailyTwentyMovingAverage) {
                         //Signal Broke up
+                        this.twentyMovingAvgBreakTimesCount++;
                         signals.push({
                             signalGroupType: SignalGroupType.INTRADAY_MOVING_AVERAGE,
                             signalType: SignalType.MOVING_AVERAGE_INTRADAY_TWENTY_BREAK_ABOVE,
-                            signalDescription: SignalVerificationReasonEnum.MOVING_AVERAGE_INTRADAY_TWENTY_BREAK_ABOVE
+                            signalDescription: SignalVerificationReasonEnum.MOVING_AVERAGE_INTRADAY_TWENTY_BREAK_ABOVE +"("
+                            +this.twentyMovingAvgBreakTimesCount+")"
                         });
                 }
                 else {

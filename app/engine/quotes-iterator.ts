@@ -29,6 +29,11 @@ export class QuotesIterator {
             for (let i = 0; i < Object.keys(this.quotes).length; i++) {
                 const quoteKey = Object.keys(this.quotes)[i];
                 const quoteIntervals = await proxyService.getTDAmeritradeIntraday(quoteKey);
+                if (Object.keys(quoteIntervals).length==0) {
+                    delete this.quotes[quoteKey];
+                    logger.error('error at Stock-Reader.initializeQuotesData - quote=' + quoteKey + ' does not Exist and being deprecated');
+                    continue;
+                }
                 const quoteMetadata = await proxyService.getMetaDataPerDay(quoteKey, quoteUtils.getCurrentTradingDate(), quoteIntervals, this.marketHours);
                 this.quotes[quoteKey].initializeStockData(quoteIntervals, quoteMetadata, this.marketHours);
                 this.quoteIndex[quoteKey] =i;
