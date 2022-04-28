@@ -11,10 +11,10 @@ import * as quoteCache from './quotes-cache';
 const quotes = ["AAPL","AMD","NVDA","TSLA","AMZN","QQQ"];
 
 export default async function startApp() {
-    try {
-        await quoteCache.cacheQuoteListFromTDAmeritradeAPI(environmentConfig.quotes.LEADERS);
+    try { 
+        await quoteCache.cacheQuoteListFromTDAmeritradeAPI(environmentConfig.quotes.quote6);
        
-        const sr = new QuotesIterator(environmentConfig.quotes.LEADERS);
+        const sr = new QuotesIterator(environmentConfig.quotes.quote6);
 
         const initTime = calculateInitializationTime();
         logger.info(`Quote initialization is set to start at ${initTime}...`);
