@@ -31,7 +31,7 @@ const calculateInitializationTime = ():Date=> {
     if (globalConfig.Mock.IsMock) {
         return moment(new Date()).add(10,'s').toDate();
     }
-
+ 
     const extraWaitTime =6;
 
     const now = new Date();
