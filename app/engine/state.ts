@@ -21,6 +21,10 @@ export const getMarketHours = ():IMarketHours => {
     return _marketHours;
 }
 
+export const getQuoteStateByName =(quoteName:string): QuoteState => {
+   return _.find(state, { quoteName: quoteName }) as QuoteState;
+}
+
 function initQuote(quoteStatistics: QuoteStatistics) {
     const quoteState = {} as QuoteState;
 

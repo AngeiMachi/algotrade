@@ -22,12 +22,13 @@ export class QuotesIterator {
 
     public async initializeQuotesData(initTime:Date): Promise<any> {
         this.initializationTime=initTime;
+        let quoteKey:string='';
         try {
 
             this.marketHours = proxyService.getMarketHours();
 
             for (let i = 0; i < Object.keys(this.quotes).length; i++) {
-                const quoteKey = Object.keys(this.quotes)[i];
+                quoteKey = Object.keys(this.quotes)[i];
                 const quoteIntervals = await proxyService.getTDAmeritradeIntraday(quoteKey);
                 if (Object.keys(quoteIntervals).length==0) {
                     delete this.quotes[quoteKey];
@@ -35,6 +36,11 @@ export class QuotesIterator {
                     continue;
                 }
                 const quoteMetadata = await proxyService.getMetaDataPerDay(quoteKey, quoteUtils.getCurrentTradingDate(), quoteIntervals, this.marketHours);
+                if (!quoteMetadata) {
+                    delete this.quotes[quoteKey];
+                    logger.error('error at Stock-Reader.initializeQuotesData - quote=' + quoteKey + ' could not load metadata and being deprecated');
+                    continue;
+                }
                 this.quotes[quoteKey].initializeStockData(quoteIntervals, quoteMetadata, this.marketHours);
                 this.quoteIndex[quoteKey] =i;
                 this.initiateQuoteWatch(quoteKey);

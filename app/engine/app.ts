@@ -8,13 +8,12 @@ import { QuotesIterator } from './quotes-iterator';
 import * as quoteCache from './quotes-cache';
 //const tdaclient = require('tda-api-client');
 
-const quotes = ["AAPL","AMD","NVDA","TSLA","AMZN","QQQ"];
+const quotes = ["SPY"];
 
 export default async function startApp() {
     try { 
-        await quoteCache.cacheQuoteListFromTDAmeritradeAPI(environmentConfig.quotes.quote6);
-       
-        const sr = new QuotesIterator(environmentConfig.quotes.quote6);
+        await quoteCache.cacheQuoteListFromTDAmeritradeAPI(environmentConfig.quotes.LEADERS);
+        const sr = new QuotesIterator(environmentConfig.quotes.LEADERS);
 
         const initTime = calculateInitializationTime();
         logger.info(`Quote initialization is set to start at ${initTime}...`);
@@ -31,8 +30,8 @@ const calculateInitializationTime = ():Date=> {
     if (globalConfig.Mock.IsMock) {
         return moment(new Date()).add(10,'s').toDate();
     }
- 
-    const extraWaitTime =6;
+
+    const extraWaitTime =0;
 
     const now = new Date();
     const minutesDiff = now.getMinutes()%5 ;

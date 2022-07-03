@@ -3,6 +3,7 @@ import { logger } from '../config/winston.config';
 import * as quoteUtiles from '../utils/quote-utils';
 import { IQuoteFullIntervalData, IQuoteIntervals } from '../models/quote-data.model';
 import { IQuoteMetadata } from '../models/quote-data.model';
+import { MovingAverageType } from '../models/enums';
 export class QuoteStatistics {
     private _quote: string;
     public get quoteName() {
@@ -27,6 +28,10 @@ export class QuoteStatistics {
     private _lastInterval: IQuoteFullIntervalData = {} as IQuoteFullIntervalData;
     public get lastInterval() {
         return this._lastInterval;
+    }
+
+    public get previousInterval() {
+        return this._quoteIntervals[this.quoteIntervals.length-2];
     }
 
     private _metadata: IQuoteMetadata = {} as IQuoteMetadata;
@@ -85,26 +90,26 @@ export class QuoteStatistics {
         this.quoteIntervals.push(quoteInterval);
         this._lastInterval = quoteInterval;
         this._intervalCount++;
-        this._lastInterval.MA20 = this.calculateMA20();
+        this._lastInterval.MA20 = this.calculateFiveMinuteMA(MovingAverageType.SMA20);
+        this._lastInterval.MA50 = this.calculateFiveMinuteMA(MovingAverageType.SMA50);
     }
 
-    private calculateMA20() {
+    private calculateFiveMinuteMA(MA:MovingAverageType) {
         let sum=0;
         let i;
         for ( i=0;i<this._quoteIntervals.length;i++) {
             sum+=this._quoteIntervals[this._quoteIntervals.length-1-i].close;
-            if (i===19) return sum/20;
+            if (i===MA-1) return sum/MA;
         }
 
         const intervalsKeysArr = Object.keys(this._metadata.preMarketMetadata?.preMarketIntervals as IQuoteIntervals);
 
         for (let j=0;j<intervalsKeysArr.length;j++) {
             sum+=(this._metadata.preMarketMetadata?.preMarketIntervals[intervalsKeysArr[intervalsKeysArr.length-1-j]] as IQuoteFullIntervalData).close;
-            if (i===19) return sum/20;
+            if (i===MA-1) return sum/MA;
             i++ 
         }
 
         return 0;
-
     }
 }

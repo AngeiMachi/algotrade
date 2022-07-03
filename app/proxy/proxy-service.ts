@@ -19,6 +19,7 @@ import { IQuoteMetadata, IQuoteFullIntervalData, IQuotesHistoricalData, ITDAmeri
 
 import { IAlphaVantageIntervals, INTERVAL_PROPERTY_NAME, METADATA_PROPERTY_NAME, LAST_REFRESHED_PROPERTY_NAME } from '../models/alpha-vantage.model';
 import { TimeFrame } from '../models/enums';
+import { resolve } from 'app-root-path';
 
 
 let  _marketHours = {} as IMarketHours;
@@ -124,7 +125,7 @@ export const getHistoricalData= async (quote: string, specificTradeDates: string
     }
 }
 
-export const getMetaDataPerDay= async (quote: string, tradeDay: string, quoteIntervals: IQuoteIntervals, markethours: IMarketHours): Promise<IQuoteMetadata> =>{
+export const getMetaDataPerDay= async (quote: string, tradeDay: string, quoteIntervals: IQuoteIntervals, markethours: IMarketHours): Promise<IQuoteMetadata | null> =>{
         try {
             
             let quoteFullYearDailyHistory = QuotesCache.getQuoteFromCache(quote,TimeFrame.Daily);
@@ -143,6 +144,11 @@ export const getMetaDataPerDay= async (quote: string, tradeDay: string, quoteInt
 
             QuotesCache.deleteCache(quote);
 
+            if (quotesHistoricalData.quoteFullYearDailyHistory.candles.length==0 || 
+                quotesHistoricalData.quoteFullYearWeeklyHistory.candles.length==0) {
+                    return null
+                }
+                
             const metadata: IQuoteMetadata = quoteUtils.composeMetadata(tradeDay, quotesHistoricalData, quoteIntervals, markethours);
             return metadata;
         } catch (err) {
