@@ -156,11 +156,29 @@ export const getQuoteFullYearWeeklyHistory = async (quote: string): Promise<ITDA
 
         const response = await limiter.schedule(() => request.get({ url: fullURL }));
 
-        const dailyIntervals = JSON.parse(response) as ITDAmeritradePriceHistory;
+        const weeklyIntervals = JSON.parse(response) as ITDAmeritradePriceHistory;
 
-        return dailyIntervals;
+        return weeklyIntervals;
     } catch (err) {
         logger.error('getQuoteFullYearDailyHistory failed ' + err);
+        throw err;
+    }
+};
+export const getQuoteHourlyHistory = async (quote: string): Promise<ITDAmeritradePriceHistory> => {
+    try {
+        const options = {
+            quote: quote.toUpperCase(),
+        };
+
+        const fullURL = parseMustache(environmentConfig.TDAmeritradeAPI.URL.get_historical_hourly, options);
+
+        const response = await limiter.schedule(() => request.get({ url: fullURL }));
+
+        const hourlyIntervals = JSON.parse(response) as ITDAmeritradePriceHistory;
+
+        return hourlyIntervals;
+    } catch (err) {
+        logger.error('getQuoteHourlyHistory failed ' + err);
         throw err;
     }
 };

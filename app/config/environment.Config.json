@@ -1,0 +1,46 @@
+{
+    "quotes": {
+        "quote1": ["ROKU", "BA", "NFLX", "FB", "TLRY", "DIS", "CAT", "AMZN", "AAPL", "GOOGL", "QCOM",
+            "BABA", "CGC", "JD", "AMD", "MSFT", "XLNX", "NVDA", "LULU", "BAC", "GS", "WYNN", "RH",
+            "MU", "PYPL", "AVGO", "EA", "CRM", "PANW", "COST", "YELP", "JPM", "CMG", "WDC",
+            "SQ", "TWTR", "BIDU", "HD", "CVX", "UNH", "FDX", "V", "MOMO", "BBY", "TSLA"],
+        "quote2": ["AMD", "ROKU", "TSLA", "DIS", "AAPL", "XLNX", "NVDA", "LULU", "WDC", "RH",
+            "WYNN", "PYPL", "AVGO", "EA", "CRM", "PANW", "HD", "UNH", "AMZN"],
+        "quote3": ["NIO"],
+        "LEADERS":["SPY","QQQ","SQQQ","TQQQ","IWM","AAPL","AMZN","GOOGL","AMD","NVDA","TSLA","NFLX","META","MSFT","DOCU"]
+ 
+    },
+    "AlphaVantage": {
+        "URL": {
+            "get_5_minutes": "https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol={{quote}}&interval=5min&outputsize={{outputSize}}&apikey={{apiKey}}",
+            "get_daily_5_sma": "https://www.alphavantage.co/query?function=SMA&symbol={{quote}}&interval=daily&time_period=5&series_type=close&apikey={{apiKey}}"
+        },
+        "key": ["S5AMKCFQEKG7S7DW", "SDNN0HEHB06GNTFB",
+            "M2ADSGO7ANB9QO3O", "LSUWITF3SOPFNPSN",
+            "V05WN4FKRFF26U9C", "11QN3LPOXAKCOZ5F"]
+    },
+    "TDAmeritradeAPI": {
+        "api_key": "ANGELMALCA",
+        "refresh_token": "KCODlzMldxY1r+07JIDxPxqwTjL9id+hDPagCJFkCZv2VzBIE9BK1xCHxRz/obyUu/riYv3TwY0MkXpZQvtYQ0ucdM43dEEhi9CiMKd5Upo69FJJkcn07WfZFmYJ0XZid1MqP/ETK5zcHlWufX1n2EbD5L18axYX2JO7abHQeP+/sbcDSMP+Kdx+hKthuh1G3A2zHesuCUjSQOIpX07kpf4MSs//RWx4nezvYLi4Yhrr3fbHs7zZyxdsqGS5hOt9Ep9nD93Nj4KWbuuo2NF0MHLkMK3G6p2I6h6obtIUb83HgoSupLZqVMqnSmLnpSRgBv7D/O6Tno7ghfeN71KPjNcO8RiMdjxs+8QWgolQSMvQbPcgJf7qIumJzCqUvkxUvTQ/6/HJ2woacfdVcc8Tzg+bHBDg7kVj+moq3cRUsiMpjo+FQLPFSAnr/Rt100MQuG4LYrgoVi/JHHvlNMuPho7T/9/OZZqCMM51w6j2HuElRmGC8hGR1aPzKaRXWcWJgK5pN1ZzqR7lCvf96y4I9IXT1yjV7oD35xdlXJbqy91QuqGTltbHRPmKrAZeOMDAboYltt5eeKvHlvU1SZA0XW08FNkuFxY3BOLTpyMdUP3UB6P0cRPe53mX1kTVg20lUzSk8j4nCuo34P4t0oaJ/wfu42319L/E03QchYTDn1cGU+NoXAAhbWwIm1OBMW1lU7oJDZG+w2Lizy/HNMcwGSyCgEI0HbTcVie42fFiEIyJ3DYLj3YTIdVTubPsvqC6WcE6wvzn0qqUbQIb/YvbDtq1v3529Yly/w9qhVrimM5cXDUHAPIgTRy5X81ovBnIvfH+x6hdeP31VNZ+CQiDohATo7mQmeuMPnIA2NGHtmMwB6TFBXsIZcTL4OpDOrfq/1kW+FhT75Q=212FD3x19z9sWBHDJACbC00B75E",
+        "bearer_token": "a6A0D9GfX2gq2gPsvoToc6bsa5pQOehPYT/lQ4HjpVEMresLSroIyg5WYqgSkHlJR0YVeRTarWW0znH5x52yd9VYwn3oZG6JvSfYsyoIw4xyYuQ//q9NBMwO1rlbm9nOwpOk8nuEhum+35k4EiXkITbWcuSX6SIm42dBQG/eSef42N3xqw0s9mND2rBGI9vepOvHFWEO/O+jKKrbuurOjl3ZnPtINbWqYg0WNjByL0f19ZYc67A3GVD/En4JboGwiAGwudYO/8H8faL92YPHsd3lb0+8wcZ2Ooz0v448EvWxRE5EZZFXOwHphLbT0noVJXYfxFsMJJY6efR1Sp3wMpfbndayITzh57pfG2KH8nit/gWd/2pa4vjzsR6CscRiNfSKucD59V2sEWqgo95A5zP5T+7yaaJfPPQkKSr1qSDzsLc0Kmm6MMm8IoHoD6LTTBaaJ3wAEL8NLGUq8ItX3UbNDqeWxdS4R7ZqGPojm2GhBLECU1AbJZ4d3dgVDjSORqDLogpsdBKR6rQVl100MQuG4LYrgoVi/JHHvldCy2HcQb15W+C7YPVRgjjOjdipk+BncV3k6Aj3IoNBIYIVuvSuOmUr2bgQrES3PgqZwThXuutQP8P2084iN3h1Vw4x4e6aNHfBBBKEUojI9yz7OugxgpuWuWiRDTLpaIRsUt15geeOXDIwVl+UcrrEocVmcnueujHhEbMwEC1P1likap8KcSkFNM2mv9o+cRe/LZxKRPfsWWrWC+sIzhJ4BzoqN7iVuykTitiJWbgAirIOGA5TzNr4ClxndblS/tEVgBUP1Cd/4yFyTY5GDDjDCDP4lapitzP+luPuDHRp3Kk+A/3WFjH/5f4FU4xOQaxcgen5AaPjSwiutj4H0S75yLog60XTMKGBqpTX8D/cEwODIfBdWByC4sSL0gCBoBvEsrIzcPXd2TjYm8+2z+B5xvl1BSZsFnoQCbwU2yfohwlLFN50UHLmyKHtYafEzse09Nv9VcGXgbqzeSAgLTWys5c7EGWmIYgnffqNgA0F42+YUROp4DtHD/YinECqn3mk1Q+JO09sOb0qkw==212FD3x19z9sWBHDJACbC00B75E",
+        "bearer_token1": "",
+        "manual": "https://www.reddit.com/r/algotrading/comments/914q22/successful_access_to_td_ameritrade_api/",
+        "URL": {
+            "get_historical_5_minutes": "https://api.tdameritrade.com/v1/marketdata/{{quote}}/pricehistory?apikey=D8Y1ATTY00KIFISCV7JDIFOXLI1G6XHV&frequencyType=minute&frequency=5&startDate=1530792613000&needExtendedHoursData=false",
+            "get_historical_daily_full_year": "https://api.tdameritrade.com/v1/marketdata/{{quote}}/pricehistory?apikey=D8Y1ATTY00KIFISCV7JDIFOXLI1G6XHV&periodType=year&frequencyType=daily",
+            "get_historical_weekly_full_year":"https://api.tdameritrade.com/v1/marketdata/{{quote}}/pricehistory?apikey=D8Y1ATTY00KIFISCV7JDIFOXLI1G6XHV&periodType=year&frequencyType=weekly",
+            "get_historical_hourly":"https://api.tdameritrade.com/v1/marketdata/{{quote}}/pricehistory?apikey=D8Y1ATTY00KIFISCV7JDIFOXLI1G6XHV&periodType=day&period=5&frequencyType=minute&frequency=60&needExtendedHoursData=true"
+        
+        }
+    },
+    "Yahoo": {
+        "get_metadata": "https://query1.finance.yahoo.com/v10/finance/quoteSummary/{{quote}}?formatted=true&crumb=FAWB2%2F34p5f&lang=en-US&region=US&modules=price%2CsummaryDetail%2CpageViews&corsDomain=finance.yahoo.com",
+        "get_historical_daily": "https://query1.finance.yahoo.com/v8/finance/chart/{{quote}}?symbol={{quote}}&period1={{startDay}}&period2={{endDay}}&interval=1d&includePrePost=false&events=div%7Csplit%7Cearn&lang=en-US&region=US&crumb=FAWB2%2F34p5f&corsDomain=finance.yahoo.com"
+    },
+    "PushedNotifications": {
+        "appKey": "6MHfu13fe8x87a8xhhU6",
+        "appSecret": "FgEq6GBXyaN5ItNuEDxYGzeYWwHj5hAMjGsp5jI4dfXFnCFeSYmPjVhLhCsMdllb",
+        "targetType": "app",
+        "URL": "https://api.pushed.co/1/push"
+    }
+}

@@ -170,6 +170,7 @@ export function composeMetadata(
 
     const dailyIntervals = historicalData?.quoteFullYearDailyHistory.candles;
     const weeklyIntervals = historicalData?.quoteFullYearWeeklyHistory.candles;
+    const hourlyIntervals = historicalData?.quoteHourlyHistory.candles;
 
     const { week52high, week52low } = get52WeekHighAndLow(historicalData.quoteFullYearWeeklyHistory);
 
@@ -213,6 +214,7 @@ export function composeMetadata(
 
         fullYearDailyHistory: historicalData.quoteFullYearDailyHistory.candles,
         fullYearWeeklyHistory: historicalData.quoteFullYearWeeklyHistory.candles,
+        hourlyHistory:convertUtils.convertTDAmeritradeDailyIntervals(historicalData.quoteHourlyHistory.candles),
         dailyHistoricalData: convertUtils.convertTDAmeritradeDailyIntervals(getPartialHistory(dailyIntervals, tradingDate, 10)),
     };
     quoteMetadata.SMA5.didOpenOboveSMA = isAboveMovingAverage(firstInterval, quoteMetadata.SMA5.today);

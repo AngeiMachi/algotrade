@@ -114,11 +114,13 @@ export const getHistoricalData= async (quote: string, specificTradeDates: string
         const quote5MinuteHistory = await TDAmeritradeAPI.getQuote5MinuteHistory(quote, specificTradeDates);
         const quoteFullYearDailyHistory = await TDAmeritradeAPI.getQuoteFullYearDailyHistory(quote);
         const quoteFullYearWeeklyHistory = await TDAmeritradeAPI.getQuoteFullYearWeeklyHistory(quote);
+        const quoteHourlyHistory = await TDAmeritradeAPI.getQuoteHourlyHistory(quote);
 
         return {
             quote5MinuteHistory,
             quoteFullYearDailyHistory,
             quoteFullYearWeeklyHistory,
+            quoteHourlyHistory,
         };
     } catch (err) {
         throw err;
@@ -136,16 +138,22 @@ export const getMetaDataPerDay= async (quote: string, tradeDay: string, quoteInt
             if (!quoteFullYearWeeklyHistory) {
                 quoteFullYearWeeklyHistory = await TDAmeritradeAPI.getQuoteFullYearDailyHistory(quote);
             }
+            let quoteHourlyHistory = QuotesCache.getQuoteFromCache(quote,TimeFrame.Hourly);
+            if (!quoteHourlyHistory) {
+                quoteHourlyHistory = await TDAmeritradeAPI.getQuoteHourlyHistory(quote);
+            }
             
             const quotesHistoricalData: IQuotesHistoricalData = {
                 quoteFullYearDailyHistory,
                 quoteFullYearWeeklyHistory,
+                quoteHourlyHistory
             };
 
             QuotesCache.deleteCache(quote);
 
             if (quotesHistoricalData.quoteFullYearDailyHistory.candles.length==0 || 
-                quotesHistoricalData.quoteFullYearWeeklyHistory.candles.length==0) {
+                quotesHistoricalData.quoteFullYearWeeklyHistory.candles.length==0 || 
+                quotesHistoricalData.quoteHourlyHistory.candles.length==0) {
                     return null
                 }
                 

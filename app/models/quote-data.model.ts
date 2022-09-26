@@ -26,6 +26,7 @@ export interface IQuotesHistoricalData {
     quote5MinuteHistory?: IQuoteHistoricalIntervals;
     quoteFullYearDailyHistory: ITDAmeritradePriceHistory;
     quoteFullYearWeeklyHistory: ITDAmeritradePriceHistory;
+    quoteHourlyHistory: ITDAmeritradePriceHistory;
 }
 
 export interface ICacheHistoricalData {
@@ -38,6 +39,7 @@ interface IQuotePriceFormat {
 }
 
 export interface IQuoteMetadata {
+    
     preMarketMetadata?: {
         preMarketIntervals: IQuoteIntervals;
         preMarketHOD: IQuoteFullIntervalData;
@@ -51,8 +53,10 @@ export interface IQuoteMetadata {
     dailyHistoricalData: IQuoteFullIntervalData[];
     fullYearDailyHistory: ITDAmeritradeIntervalData[];
     fullYearWeeklyHistory: ITDAmeritradeIntervalData[];
+    hourlyHistory: IQuoteFullIntervalData[];
     previousDay: IQuoteFullIntervalData;
     previousWeek: IQuoteFullIntervalData;
+    
     SMA5: {
         today: number;
         previousDay: number;

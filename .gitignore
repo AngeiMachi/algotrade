@@ -1,5 +1,4 @@
 /node_modules/
 /dist/
 /logs/
-/app/config/environment.config.json
 /.VSCodeCounter/

@@ -9,6 +9,7 @@ export const addNewQuoteToCache = (quoteName: string) => {
         cacheState[quoteName] = {
             quoteFullYearDailyHistory: {} as ITDAmeritradePriceHistory,
             quoteFullYearWeeklyHistory: {} as ITDAmeritradePriceHistory,
+            quoteHourlyHistory: {} as ITDAmeritradePriceHistory,
         };
     }
 };
@@ -20,6 +21,9 @@ export const cacheQuote = ((quoteName:string,pricehistory:ITDAmeritradePriceHist
         }
         else if (timeFrame===TimeFrame.Daily){
             cacheState[quoteName].quoteFullYearDailyHistory = pricehistory;
+        }
+        else if (timeFrame===TimeFrame.Hourly){
+            cacheState[quoteName].quoteHourlyHistory = pricehistory;
         }
     }
 });
@@ -33,6 +37,9 @@ export const getQuoteFromCache = ((quoteName:string,timeFrame:TimeFrame): ITDAme
         else if (timeFrame===TimeFrame.Daily){
             return cacheState[quoteName].quoteFullYearDailyHistory;
         }
+        else if (timeFrame===TimeFrame.Hourly){
+            return cacheState[quoteName].quoteHourlyHistory;
+        }
     }
     return null;
 });
@@ -44,6 +51,8 @@ export const cacheQuoteFromTDAmeritradeAPI = async (quoteName:string) => {
         cacheQuote(quoteName,quoteFullYearDailyHistory,TimeFrame.Daily);
         const quoteFullYearWeeklyHistory = await TDAmeritradeAPI.getQuoteFullYearWeeklyHistory(quoteName);
         cacheQuote(quoteName,quoteFullYearWeeklyHistory,TimeFrame.Weekly); 
+        const quoteHourlyHistory = await TDAmeritradeAPI.getQuoteHourlyHistory(quoteName);
+        cacheQuote(quoteName,quoteHourlyHistory,TimeFrame.Hourly); 
     }
 }
 
