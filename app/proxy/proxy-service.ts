@@ -60,13 +60,18 @@ export const  getTDAmeritradeIntraday = async (quote: string, getExtendedHours: 
 }
 
 export const getMarketHoursFromTDAmeritrade= async (): Promise<IMarketHours> =>{
+    let marketHours={} as IMarketHours;
     try {
         const mrkHrs = await TDAmeritradeAPI.getMarketHours(quoteUtils.getCurrentTradingDate());
-        const convertedMarketHours = convertUtils.converTDAmeritradeMarketHours(mrkHrs);
-         return convertedMarketHours;
+        marketHours = convertUtils.converTDAmeritradeMarketHours(mrkHrs);
+        
     } catch (err) {
-        return quoteUtils.generateDefaultMarketHours();
+        marketHours = quoteUtils.generateDefaultMarketHours();
     }
+    finally {
+        quoteUtils.setMarketHours(marketHours);
+    }
+    return  marketHours;
 }
 
 export const getAlphaVantageHistoricalData= async(quote: string): Promise<any> => {

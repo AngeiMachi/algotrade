@@ -21,3 +21,10 @@ export function minuteDifference(dt2: Date, dt1: Date) {
     diff /= 60;
     return Math.abs(Math.round(diff));
 }
+
+export function getPercentageDifference(number1:number,number2:number):number{
+    const upper =Math.abs(number1-number2);
+    const lower = Math.abs((number1+number2)/2);
+    return (upper/lower)*100;
+
+}

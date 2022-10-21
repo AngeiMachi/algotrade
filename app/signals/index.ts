@@ -4,3 +4,4 @@ export * from './bullish.volume.signal';
 export * from './moving-averages.signal';
 export * from './moving-average-daily-twenty.signals';
 export * from './moving-average-daily-fifty.signals';
+export * from './moving-averages-hourly-bullish.signal';

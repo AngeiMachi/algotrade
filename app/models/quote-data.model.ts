@@ -43,6 +43,7 @@ export interface IQuoteMetadata {
     preMarketMetadata?: {
         preMarketIntervals: IQuoteIntervals;
         preMarketHOD: IQuoteFullIntervalData;
+        premarketCloseIntervals:IQuoteFullIntervalData[];
     };
     averageDailyVolume10Day: number | IQuotePriceFormat;
     averageDailyVolume3Month: number | IQuotePriceFormat;
