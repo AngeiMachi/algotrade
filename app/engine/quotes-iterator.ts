@@ -94,10 +94,10 @@ export class QuotesIterator {
 
             const quoteStockStats: QuoteMonoRunner = this.quotes[quoteName];
 
-            const data = await proxyService.getTDAmeritradeIntraday(quoteName, false);
+            const quoteIntervals = await proxyService.getTDAmeritradeIntraday(quoteName, false);
 
-            const stockInterval: IQuoteFullIntervalData = quoteUtils.getRecentIntervalData(data);
-            quoteStockStats.recordNewStockInterval(stockInterval, true);
+            const stockInterval: IQuoteFullIntervalData = quoteUtils.getRecentIntervalData(quoteIntervals);
+            quoteStockStats.recordQuoteIntervalsIncludingMissed(quoteIntervals, true);
 
             this.clearQuoteWhenIsLastInterval(quoteName, stockInterval);
         } catch (err) {
@@ -110,10 +110,11 @@ export class QuotesIterator {
             try {
                 const quoteStockStats: QuoteMonoRunner = this.quotes[quoteKey];
 
-                const data = await proxyService.getTDAmeritradeIntraday(quoteKey, false);
+                const quoteIntervals = await proxyService.getTDAmeritradeIntraday(quoteKey, false);
 
-                const stockInterval: IQuoteFullIntervalData = quoteUtils.getRecentIntervalData(data);
-                quoteStockStats.recordNewStockInterval(stockInterval, true);
+                const stockInterval: IQuoteFullIntervalData = quoteUtils.getRecentIntervalData(quoteIntervals);
+
+                quoteStockStats.recordQuoteIntervalsIncludingMissed(quoteIntervals, true);
 
                 this.clearQuoteWhenIsLastInterval(quoteKey, stockInterval);
             } catch (err) {

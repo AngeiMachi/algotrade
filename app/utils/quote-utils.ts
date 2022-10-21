@@ -19,6 +19,16 @@ import {
 } from '../models/quote-data.model';
 import { TimeFrame } from '../models/enums';
 
+let  _marketHours = {} as IMarketHours;
+
+export const getMarketHours=() => {
+        return _marketHours;
+}
+export const setMarketHours=(marketHours:IMarketHours) => {
+    _marketHours=marketHours;
+}
+
+
 export function getCurrentTradingDate() {
     let mockDataDate: string;
     if (globalConfig.Mock.IsMock && globalConfig.Mock.MockDataDate) {
@@ -214,7 +224,7 @@ export function composeMetadata(
 
         fullYearDailyHistory: historicalData.quoteFullYearDailyHistory.candles,
         fullYearWeeklyHistory: historicalData.quoteFullYearWeeklyHistory.candles,
-        hourlyHistory:convertUtils.convertTDAmeritradeDailyIntervals(historicalData.quoteHourlyHistory.candles),
+        hourlyHistory:convertUtils.convertTDAmeritradeDailyIntervals(hourlyIntervals),
         dailyHistoricalData: convertUtils.convertTDAmeritradeDailyIntervals(getPartialHistory(dailyIntervals, tradingDate, 10)),
     };
     quoteMetadata.SMA5.didOpenOboveSMA = isAboveMovingAverage(firstInterval, quoteMetadata.SMA5.today);
@@ -254,6 +264,7 @@ export function getRecentFirstIntervalData(intervals: IQuoteIntervals, markethou
 
 export function getPreMarketIntervalData(intervals: IQuoteIntervals, markethours: IMarketHours) {
     const preMarketIntervals: IQuoteIntervals = {};
+    const premarketCloseIntervals: IQuoteFullIntervalData[] = [];
     let maxInterval= {} as IQuoteFullIntervalData;
     let maxHigh = 0;
 
@@ -269,11 +280,16 @@ export function getPreMarketIntervalData(intervals: IQuoteIntervals, markethours
             maxInterval = intervals[key];
             maxHigh = intervals[key].high;
         }
+
+        if (key.includes(':55:00')) {
+            premarketCloseIntervals.push(intervals[key]);
+        }
     }
 
     return {
         preMarketIntervals: preMarketIntervals,
         preMarketHOD: maxInterval,
+        premarketCloseIntervals
     };
 }
 
@@ -346,3 +362,4 @@ function get52WeekHighAndLow(quoteFullYearWeeklyHistory: ITDAmeritradePriceHisto
     });
     return { week52high, week52low };
 }
+
