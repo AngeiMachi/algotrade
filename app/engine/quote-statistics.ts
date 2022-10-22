@@ -95,7 +95,7 @@ export class QuoteStatistics {
         }
         const preMarket = quoteUtils.isMarketOpenByInterval(quoteInterval) ? 'Premarket :':'';
         logger.debug(`${preMarket}${JSON.stringify(stats)}`);
-        console.debug('══════════ ');
+        console.debug('════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════');
     }
 
     public addNewInterval(quoteInterval: IQuoteFullIntervalData, isLive: boolean = false) {
