@@ -32,8 +32,7 @@ export class QuoteMonoRunner {
 
         quoteState.addNewQuote(this.quoteStats);
 
-        quoteIntervals = quoteUtils.cleanPreMarketIntervals(quoteIntervals, marketHours);
-        //this.quoteStats.initializeStockIntervalsSoFar(quoteIntervals);
+        //quoteIntervals = quoteUtils.cleanPreMarketIntervals(quoteIntervals, marketHours);
 
         this.bullishHODSignal = new BullishHODSignal(this.quoteStats);
         this.bullishLevelBreakSignal = new BullishLevelBreakSignal(this.quoteStats);
@@ -50,8 +49,11 @@ export class QuoteMonoRunner {
 
     //this method is tipically running for one interval unless there is connection/power outage
     public recordQuoteIntervalsIncludingMissed(quoteIntervals: IQuoteIntervals, isLive: boolean = false) {
+        let timeDiff = 5;
         const quoteInterval: IQuoteFullIntervalData = quoteUtils.getRecentIntervalData(quoteIntervals);
-        const timeDiff =generalUtils.minuteDifference(quoteInterval.timeNewYork,this.quoteStats.lastInterval.timeNewYork);
+        if(this.quoteStats.lastInterval.timeNewYork) {
+            timeDiff =generalUtils.minuteDifference(quoteInterval.timeNewYork,this.quoteStats.lastInterval.timeNewYork);
+        }
         for (let i=(timeDiff/5);i>0;i--) {
             const interval = quoteIntervals[Object.keys(quoteIntervals)[Object.keys(quoteIntervals).length-i]];
             this.recordNewStockInterval(interval,isLive);

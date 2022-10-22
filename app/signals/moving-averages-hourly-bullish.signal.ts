@@ -67,20 +67,21 @@ export class MovingAveragesHourlyBullish extends Signals {
                 }
             } 
            
-        }
-        if (this.quoteStats.lastInterval.high>this.lastPotentialHOD && this.quoteStats.lastInterval.high>this.quoteStats.hourlyMA20Last){
-            this.lastPotentialHOD = this.quoteStats.lastInterval.high;
-            if (!this.isDirty) {
-                this.lastValidHOD = this.quoteStats.lastInterval.high;
+        } else if (this.quoteStats.intervalCount>0) {
+            if (this.quoteStats.lastInterval.high>this.lastPotentialHOD && this.quoteStats.lastInterval.high>this.quoteStats.hourlyMA20Last){
+                this.lastPotentialHOD = this.quoteStats.lastInterval.high;
+                if (!this.isDirty) {
+                    this.lastValidHOD = this.quoteStats.lastInterval.high;
+                }
             }
-        }
-        if(this.quoteStats.lastInterval.timeNewYork.toString().includes(':55:00')) {
-            const percentange = generalUtils.getPercentageDifference(this.quoteStats.hourlyMA20Last,this.quoteStats.lastInterval.close);
-            if (this.quoteStats.lastInterval.close>this.quoteStats.hourlyMA20Last && percentange>1) {
-                this.lastValidHOD=this.lastPotentialHOD;
-            } else {
-                this.lastPotentialHOD =0;
-                this.lastValidHOD = 0;
+            if(this.quoteStats.lastInterval.timeNewYork.toString().includes(':55:00')) {
+                const percentange = generalUtils.getPercentageDifference(this.quoteStats.hourlyMA20Last,this.quoteStats.lastInterval.close);
+                if (this.quoteStats.lastInterval.close>this.quoteStats.hourlyMA20Last && percentange>1) {
+                    this.lastValidHOD=this.lastPotentialHOD;
+                } else {
+                    this.lastPotentialHOD =0;
+                    this.lastValidHOD = 0;
+                }
             }
         }
     }

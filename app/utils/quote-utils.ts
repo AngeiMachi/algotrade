@@ -28,7 +28,9 @@ export const setMarketHours=(marketHours:IMarketHours) => {
     _marketHours=marketHours;
 }
 
-
+export const isMarketOpenByInterval= (quoteInterval: IQuoteFullIntervalData)=>{
+ return new Date(getMarketHours().sessionHours.regularMarket.start) > new Date(quoteInterval.timeNewYork);
+}
 export function getCurrentTradingDate() {
     let mockDataDate: string;
     if (globalConfig.Mock.IsMock && globalConfig.Mock.MockDataDate) {
@@ -177,6 +179,7 @@ export function composeMetadata(
     markethours: IMarketHours
 ): IQuoteMetadata {
     const firstInterval: IQuoteFullIntervalData = getRecentFirstIntervalData(quoteIntervals, markethours);
+    const recentInterval: IQuoteFullIntervalData = getRecentFirstIntervalData(quoteIntervals, markethours,true);
 
     const dailyIntervals = historicalData?.quoteFullYearDailyHistory.candles;
     const weeklyIntervals = historicalData?.quoteFullYearWeeklyHistory.candles;
@@ -194,27 +197,27 @@ export function composeMetadata(
         previousDay: convertUtils.convertTDAmeritradeDailyIntervals([getPreviousCandle(dailyIntervals, tradingDate) as ITDAmeritradeIntervalData])[0],
         previousWeek: convertUtils.convertTDAmeritradeDailyIntervals([getPreviousCandle(weeklyIntervals, tradingDate, TimeFrame.Weekly) as ITDAmeritradeIntervalData])[0],
         SMA5: {
-            today: calculateMovingAverage(dailyIntervals, tradingDate, 5, firstInterval),
+            today: calculateMovingAverage(dailyIntervals, tradingDate, 5, firstInterval || recentInterval),
             previousDay: calculateMovingAverage(dailyIntervals, tradingDate, 5),
         },
         SMA10: {
-            today: calculateMovingAverage(dailyIntervals, tradingDate, 10, firstInterval),
+            today: calculateMovingAverage(dailyIntervals, tradingDate, 10, firstInterval || recentInterval),
             previousDay: calculateMovingAverage(dailyIntervals, tradingDate, 10),
         },
         SMA20: {
-            today: calculateMovingAverage(dailyIntervals, tradingDate, 20, firstInterval),
+            today: calculateMovingAverage(dailyIntervals, tradingDate, 20, firstInterval || recentInterval),
             previousDay: calculateMovingAverage(dailyIntervals, tradingDate, 20),
         },
         SMA50: {
-            today: calculateMovingAverage(dailyIntervals, tradingDate, 50, firstInterval),
+            today: calculateMovingAverage(dailyIntervals, tradingDate, 50, firstInterval || recentInterval),
             previousDay: calculateMovingAverage(dailyIntervals, tradingDate, 50),
         },
         SMA100: {
-            today: calculateMovingAverage(dailyIntervals, tradingDate, 100, firstInterval),
+            today: calculateMovingAverage(dailyIntervals, tradingDate, 100, firstInterval || recentInterval),
             previousDay: calculateMovingAverage(dailyIntervals, tradingDate, 100),
         },
         SMA200: {
-            today: calculateMovingAverage(dailyIntervals, tradingDate, 200, firstInterval),
+            today: calculateMovingAverage(dailyIntervals, tradingDate, 200, firstInterval || recentInterval),
             previousDay: calculateMovingAverage(dailyIntervals, tradingDate, 200),
         },
 
@@ -227,12 +230,16 @@ export function composeMetadata(
         hourlyHistory:convertUtils.convertTDAmeritradeDailyIntervals(hourlyIntervals),
         dailyHistoricalData: convertUtils.convertTDAmeritradeDailyIntervals(getPartialHistory(dailyIntervals, tradingDate, 10)),
     };
-    quoteMetadata.SMA5.didOpenOboveSMA = isAboveMovingAverage(firstInterval, quoteMetadata.SMA5.today);
-    quoteMetadata.SMA10.didOpenOboveSMA = isAboveMovingAverage(firstInterval, quoteMetadata.SMA10.today);
-    quoteMetadata.SMA20.didOpenOboveSMA = isAboveMovingAverage(firstInterval, quoteMetadata.SMA20.today);
-    quoteMetadata.SMA50.didOpenOboveSMA = isAboveMovingAverage(firstInterval, quoteMetadata.SMA50.today);
-    quoteMetadata.SMA100.didOpenOboveSMA = isAboveMovingAverage(firstInterval, quoteMetadata.SMA100.today);
-    quoteMetadata.SMA200.didOpenOboveSMA = isAboveMovingAverage(firstInterval, quoteMetadata.SMA200.today);
+
+    if (firstInterval) {
+        quoteMetadata.SMA5.didOpenOboveSMA = isAboveMovingAverage(firstInterval, quoteMetadata.SMA5.today);
+        quoteMetadata.SMA10.didOpenOboveSMA = isAboveMovingAverage(firstInterval, quoteMetadata.SMA10.today);
+        quoteMetadata.SMA20.didOpenOboveSMA = isAboveMovingAverage(firstInterval, quoteMetadata.SMA20.today);
+        quoteMetadata.SMA50.didOpenOboveSMA = isAboveMovingAverage(firstInterval, quoteMetadata.SMA50.today);
+        quoteMetadata.SMA100.didOpenOboveSMA = isAboveMovingAverage(firstInterval, quoteMetadata.SMA100.today);
+        quoteMetadata.SMA200.didOpenOboveSMA = isAboveMovingAverage(firstInterval, quoteMetadata.SMA200.today);
+    }
+
 
     return quoteMetadata;
 }
@@ -246,9 +253,9 @@ export function getRecentIntervalData(intervals: IQuoteIntervals) {
     return intervals[Object.keys(intervals)[Object.keys(intervals).length - 1]];
 }
 
-export function getRecentFirstIntervalData(intervals: IQuoteIntervals, markethours: IMarketHours, preMarket: boolean = false) {
-    if (preMarket) {
-        return intervals[Object.keys(intervals)[0]];
+export function getRecentFirstIntervalData(intervals: IQuoteIntervals, markethours: IMarketHours, IncludingpreMarket: boolean = false) {
+    if (IncludingpreMarket) {
+        return intervals[Object.keys(intervals)[Object.keys(intervals).length-1]];
     } else {
         let i = 0;
         for (let key of Object.keys(intervals)) {

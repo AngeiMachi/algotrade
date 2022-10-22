@@ -93,20 +93,27 @@ export class QuoteStatistics {
     if (isLive) {
             stats = { isLive: moment(new Date()).format('HH:mm:ss'), ...stats };
         }
-        logger.debug(JSON.stringify(stats));
+        const preMarket = quoteUtils.isMarketOpenByInterval(quoteInterval) ? 'Premarket :':'';
+        logger.debug(`${preMarket}${JSON.stringify(stats)}`);
+        console.debug('══════════ ');
     }
 
     public addNewInterval(quoteInterval: IQuoteFullIntervalData, isLive: boolean = false) {
-        if (this._intervalCount===-1) {
-            this.hourlyHistoryIndexStart =this.findIndexOfFirstHorly();
+        if (quoteUtils.isMarketOpenByInterval(quoteInterval)){
+
+        } else {
+            if (this._intervalCount===-1) {
+                this.hourlyHistoryIndexStart =this.findIndexOfFirstHorly();
+            }
+            this.quoteIntervals.push(quoteInterval);
+            this._lastInterval = quoteInterval;
+            this._intervalCount++;
+            this._lastInterval.MA20 = this.calculateFiveMinuteMA(MovingAverageType.SMA20);
+            this._lastInterval.MA50 = this.calculateFiveMinuteMA(MovingAverageType.SMA50);
+            this.processHourlyStatistics();
         }
-        this.quoteIntervals.push(quoteInterval);
-        this._lastInterval = quoteInterval;
-        this._intervalCount++;
-        this._lastInterval.MA20 = this.calculateFiveMinuteMA(MovingAverageType.SMA20);
-        this._lastInterval.MA50 = this.calculateFiveMinuteMA(MovingAverageType.SMA50);
-        this.processHourlyStatistics();
     }
+        
 
     private calculateFiveMinuteMA(MA:MovingAverageType) {
         let sum=0;
