@@ -102,12 +102,12 @@ export async function prepareMockDataTDAmeritrade(quote: string, _marketHours: I
             (mockQuote.mockDataResponse as any)[mockQuote.mockDataResponseKeys[mockQuote.currentInterval]] = mockQuote.mockDataResponseValues[mockQuote.currentInterval];
             mockQuote.currentInterval++;
 
-            if (mockQuote.currentInterval > 200) {
+            if (mockQuote.currentInterval > 400) {
                 logger.error('prepareMockDataTDAmeritrade ' + quote + '- mock data corrupted');
             }
         } 
         while ((mockQuote.mockDataResponseKeys[mockQuote.currentInterval] !== marketHours.sessionHours.regularMarket.start && globalConfig.Mock.startAtOpen) || 
-        (!mockQuote.mockDataResponseKeys[mockQuote.currentInterval].includes(globalConfig.Mock.MockDataLiveSimulationTime) && !globalConfig.Mock.startAtOpen));
+        (!mockQuote.mockDataResponseKeys[mockQuote.currentInterval].includes(marketHours.date+' '+globalConfig.Mock.MockDataLiveSimulationTime) && !globalConfig.Mock.startAtOpen));
 
         mockQuote.isMockLoaded = true;
         mockQuotes[quote] = mockQuote;

@@ -31,6 +31,16 @@ export const setMarketHours=(marketHours:IMarketHours) => {
 export const isPremarketTimeByInterval= (quoteInterval: IQuoteFullIntervalData)=>{
  return new Date(getMarketHours().sessionHours.regularMarket.start) > new Date(quoteInterval.timeNewYork);
 }
+
+export const isIntervalOfCurrentTradingDate = (quoteInterval: IQuoteFullIntervalData | string) => {
+    if (typeof quoteInterval==="string") {
+        return quoteInterval.includes(getCurrentTradingDate());
+    } else {
+        const propertyName =moment(quoteInterval.timeNewYork).format('YYYY-MM-DD HH:mm:ss').toString();
+        return propertyName.includes(getCurrentTradingDate())
+    }
+   
+}
 export function getCurrentTradingDate() {
     let mockDataDate: string;
     if (globalConfig.Mock.IsMock && globalConfig.Mock.MockDataDate) {

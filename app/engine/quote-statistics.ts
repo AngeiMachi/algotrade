@@ -1,10 +1,10 @@
+import * as _ from 'lodash';
 import moment from 'moment-timezone';
 import { logger } from '../config/winston.config';
 import * as quoteUtils from '../utils/quote-utils';
 import { IQuoteFullIntervalData, IQuoteIntervals } from '../models/quote-data.model';
 import { IQuoteMetadata } from '../models/quote-data.model';
 import { MovingAverageType } from '../models/enums';
-import _, { includes } from 'lodash';
 import * as globalConfig from '../config/globals.config';
 
 export class QuoteStatistics {
@@ -87,25 +87,28 @@ export class QuoteStatistics {
     }
 
     public composeAndPrintCurrentIntervalStats(quoteInterval: IQuoteFullIntervalData, isLive: boolean) {
-        let stats = {
-            quote: this.quoteName,
-            interval: moment(quoteInterval.timeIsrael).format('HH:mm:ss'),
-            ...quoteInterval,
-            intervalNumber: this._intervalCount,
-        } as any;
-
-    if (isLive) {
-            stats = { isLive: moment(new Date()).format('HH:mm:ss'), ...stats };
+        if (quoteUtils.isIntervalOfCurrentTradingDate(quoteInterval)) {
+            let stats = {
+                quote: this.quoteName,
+                interval: moment(quoteInterval.timeIsrael).format('HH:mm:ss'),
+                ...quoteInterval,
+                intervalNumber: this._intervalCount,
+            } as any;
+    
+            if (isLive) {
+                stats = { isLive: moment(new Date()).format('HH:mm:ss'), ...stats };
+            }
+            const preMarket = quoteUtils.isPremarketTimeByInterval(quoteInterval) ? 'Premarket :':'';
+            console.debug('════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════');
+            logger.debug(`${preMarket}${JSON.stringify(stats)}`);
         }
-        const preMarket = quoteUtils.isPremarketTimeByInterval(quoteInterval) ? 'Premarket :':'';
-        console.debug('════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════');
-        logger.debug(`${preMarket}${JSON.stringify(stats)}`);
     }
 
     public addNewInterval(quoteInterval: IQuoteFullIntervalData, isLive: boolean = false) {
         if (quoteUtils.isPremarketTimeByInterval(quoteInterval)){
             this.addPremarketMetadata(quoteInterval)
         } else {
+
             this._intervalCount++;
             this.quoteIntervals.push(quoteInterval);
             this._lastInterval = quoteInterval;
@@ -220,12 +223,14 @@ export class QuoteStatistics {
         
         this.metadata.preMarketMetadata.preMarketIntervals[propertyName]=quoteInterval;
         
-        if (quoteInterval.high > maxHigh) {
-            this.metadata.preMarketMetadata.preMarketHOD = quoteInterval;
-        }
-
-        if (propertyName.includes(':55:00')) {
-            this.metadata.preMarketMetadata.premarketCloseIntervals.push(quoteInterval);
+        if (quoteUtils.isIntervalOfCurrentTradingDate(propertyName)) {
+            if (quoteInterval.high > maxHigh) {
+                this.metadata.preMarketMetadata.preMarketHOD = quoteInterval;
+            }
+    
+            if (propertyName.includes(':55:00')) {
+                this.metadata.preMarketMetadata.premarketCloseIntervals.push(quoteInterval);
+            }
         }
     }
 }

@@ -3,7 +3,7 @@ import * as _ from 'lodash';
 import * as quoteUtils from '../utils/quote-utils';
 import * as generalUtils from '../utils/general'
 import * as quoteState from './state';
-import { IMarketHours, IQuoteFullIntervalData, IQuoteIntervals, IQuoteMetadata } from '../models/quote-data.model';
+import {  IQuoteFullIntervalData, IQuoteIntervals, IQuoteMetadata } from '../models/quote-data.model';
 import { logger } from '../config/winston.config';
 import { BullishHODSignal, BullishLevelBreakSignal, BullishVolumeSignal, MovingAverageDailyTwentySignal,MovingAverageDailyFiftySignal, MovingAveragesSignal,MovingAveragesHourlyBullish } from '../signals';
 import { QuoteStatistics } from './quote-statistics';

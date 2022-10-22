@@ -8,14 +8,13 @@ import { logger } from '../config/winston.config';
 import * as  proxyService  from '../proxy/proxy-service';
 import { QuoteMonoRunner } from './quote-mono-reader';
 
-import { IQuotes, IQuoteFullIntervalData, IQuoteMetadata, IMarketHours } from '../models/quote-data.model';
+import { IQuotes, IQuoteFullIntervalData } from '../models/quote-data.model';
 
 const INTERVAL_TIME = globalConfig.Mock.IsMock? globalConfig.Mock.intervalLapTime : 300000; // 300000 = 5 mins;
 
 export class QuotesIterator {
     private quotes: IQuotes = {};
     private quoteIndex: {[key:string]:number}={};
-    private marketHours = {} as IMarketHours;
     private initializationTime!:Date
 
     constructor(quotes: string[] = []) {
@@ -36,7 +35,7 @@ export class QuotesIterator {
                     continue;
                 }
                 const quoteMetadata = await proxyService.getMetaDataPerDay(quoteKey, quoteUtils.getCurrentTradingDate());
-                
+
                 if (!quoteMetadata) {
                     delete this.quotes[quoteKey];
                     logger.error('error at Stock-Reader.initializeQuotesData - quote=' + quoteKey + ' could not load metadata and being deprecated');
