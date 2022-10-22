@@ -27,7 +27,7 @@ export class QuoteMonoRunner {
         this.quoteStats = new QuoteStatistics(quote, todayDate);
     }
 
-    public initializeStockData(quoteIntervals: IQuoteIntervals, quoteMetadata: IQuoteMetadata, marketHours: IMarketHours) {
+    public initializeStockData(quoteIntervals: IQuoteIntervals, quoteMetadata: IQuoteMetadata) {
         this.quoteStats.registerMetadata(quoteMetadata);
 
         quoteState.addNewQuote(this.quoteStats);

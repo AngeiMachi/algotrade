@@ -132,7 +132,7 @@ export const getHistoricalData= async (quote: string, specificTradeDates: string
     }
 }
 
-export const getMetaDataPerDay= async (quote: string, tradeDay: string, quoteIntervals: IQuoteIntervals, markethours: IMarketHours): Promise<IQuoteMetadata | null> =>{
+export const getMetaDataPerDay = async (quote: string, tradeDay: string): Promise<IQuoteMetadata | null> =>{
         try {
             
             let quoteFullYearDailyHistory = QuotesCache.getQuoteFromCache(quote,TimeFrame.Daily);
@@ -162,7 +162,7 @@ export const getMetaDataPerDay= async (quote: string, tradeDay: string, quoteInt
                     return null
                 }
                 
-            const metadata: IQuoteMetadata = quoteUtils.composeMetadata(tradeDay, quotesHistoricalData, quoteIntervals, markethours);
+            const metadata: IQuoteMetadata = quoteUtils.composeMetadata(tradeDay, quotesHistoricalData);
             return metadata;
         } catch (err) {
             throw err;

@@ -42,6 +42,10 @@ export class QuoteStatistics {
         return this._metadata;
     }
 
+    private get isFirstInterval() {
+        return this._intervalCount===0;
+    }
+
     private hourlyHistoryIndexStart=-1;
     private hourlyClose:number[]=[];
     public hourlyMA20:number[]=[];
@@ -93,21 +97,24 @@ export class QuoteStatistics {
     if (isLive) {
             stats = { isLive: moment(new Date()).format('HH:mm:ss'), ...stats };
         }
-        const preMarket = quoteUtils.isMarketOpenByInterval(quoteInterval) ? 'Premarket :':'';
-        logger.debug(`${preMarket}${JSON.stringify(stats)}`);
+        const preMarket = quoteUtils.isPremarketTimeByInterval(quoteInterval) ? 'Premarket :':'';
         console.debug('════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════');
+        logger.debug(`${preMarket}${JSON.stringify(stats)}`);
     }
 
     public addNewInterval(quoteInterval: IQuoteFullIntervalData, isLive: boolean = false) {
-        if (quoteUtils.isMarketOpenByInterval(quoteInterval)){
-
+        if (quoteUtils.isPremarketTimeByInterval(quoteInterval)){
+            this.addPremarketMetadata(quoteInterval)
         } else {
-            if (this._intervalCount===-1) {
-                this.hourlyHistoryIndexStart =this.findIndexOfFirstHorly();
-            }
+            this._intervalCount++;
             this.quoteIntervals.push(quoteInterval);
             this._lastInterval = quoteInterval;
-            this._intervalCount++;
+
+            if (this.isFirstInterval) {
+                this.hourlyHistoryIndexStart =this.findIndexOfFirstHorly();
+                this.composeMetadata();
+            }
+            
             this._lastInterval.MA20 = this.calculateFiveMinuteMA(MovingAverageType.SMA20);
             this._lastInterval.MA50 = this.calculateFiveMinuteMA(MovingAverageType.SMA50);
             this.processHourlyStatistics();
@@ -172,7 +179,6 @@ export class QuoteStatistics {
             this.hourlyMA50.push(this.calculate60MinutesMA(MovingAverageType.SMA50));
         }   
     }
-
     private findIndexOfFirstHorly() {
         if (globalConfig.Mock.IsMock) {
             let time = quoteUtils.getMarketHours().sessionHours.postMarket.end;
@@ -189,5 +195,37 @@ export class QuoteStatistics {
 
         return this._metadata.hourlyHistory.length-1;
         
+    }
+    private composeMetadata() {
+        const dailyHistoricalData = this.metadata.fullYearDailyHistory;
+        this.metadata.SMA5.today = quoteUtils.calculateMovingAverage(dailyHistoricalData, this.statsDay, 5, this.lastInterval);
+        this.metadata.SMA10.today = quoteUtils.calculateMovingAverage(dailyHistoricalData, this.statsDay, 10, this.lastInterval);
+        this.metadata.SMA20.today = quoteUtils.calculateMovingAverage(dailyHistoricalData, this.statsDay, 20, this.lastInterval);
+        this.metadata.SMA50.today = quoteUtils.calculateMovingAverage(dailyHistoricalData, this.statsDay, 50, this.lastInterval);
+        this.metadata.SMA100.today = quoteUtils.calculateMovingAverage(dailyHistoricalData, this.statsDay, 100, this.lastInterval);
+        this.metadata.SMA200.today = quoteUtils.calculateMovingAverage(dailyHistoricalData, this.statsDay, 200, this.lastInterval);
+        
+        this.metadata.SMA5.didOpenOboveSMA = quoteUtils.isAboveMovingAverage(this.lastInterval, this.metadata.SMA5.today);
+        this.metadata.SMA10.didOpenOboveSMA = quoteUtils.isAboveMovingAverage(this.lastInterval, this.metadata.SMA10.today);
+        this.metadata.SMA20.didOpenOboveSMA = quoteUtils.isAboveMovingAverage(this.lastInterval, this.metadata.SMA20.today);
+        this.metadata.SMA50.didOpenOboveSMA = quoteUtils.isAboveMovingAverage(this.lastInterval, this.metadata.SMA50.today);
+        this.metadata.SMA100.didOpenOboveSMA = quoteUtils.isAboveMovingAverage(this.lastInterval, this.metadata.SMA100.today);
+        this.metadata.SMA200.didOpenOboveSMA = quoteUtils.isAboveMovingAverage(this.lastInterval, this.metadata.SMA200.today);
+    }
+
+    private addPremarketMetadata(quoteInterval: IQuoteFullIntervalData) {
+        let maxHigh = this.metadata.preMarketMetadata.preMarketHOD.high || 0;
+
+        const propertyName =moment(quoteInterval.timeNewYork).format('YYYY-MM-DD HH:mm:ss').toString();
+        
+        this.metadata.preMarketMetadata.preMarketIntervals[propertyName]=quoteInterval;
+        
+        if (quoteInterval.high > maxHigh) {
+            this.metadata.preMarketMetadata.preMarketHOD = quoteInterval;
+        }
+
+        if (propertyName.includes(':55:00')) {
+            this.metadata.preMarketMetadata.premarketCloseIntervals.push(quoteInterval);
+        }
     }
 }

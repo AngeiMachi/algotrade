@@ -40,7 +40,7 @@ interface IQuotePriceFormat {
 
 export interface IQuoteMetadata {
     
-    preMarketMetadata?: {
+    preMarketMetadata: {
         preMarketIntervals: IQuoteIntervals;
         preMarketHOD: IQuoteFullIntervalData;
         premarketCloseIntervals:IQuoteFullIntervalData[];
@@ -59,32 +59,32 @@ export interface IQuoteMetadata {
     previousWeek: IQuoteFullIntervalData;
     
     SMA5: {
-        today: number;
+        today?: number;
         previousDay: number;
         didOpenOboveSMA?: boolean;
     };
     SMA10: {
-        today: number;
+        today?: number;
         previousDay: number;
         didOpenOboveSMA?: boolean;
     };
     SMA20: {
-        today: number;
+        today?: number;
         previousDay: number;
         didOpenOboveSMA?: boolean;
     };
     SMA50: {
-        today: number;
+        today?: number;
         previousDay: number;
         didOpenOboveSMA?: boolean;
     };
     SMA100: {
-        today: number;
+        today?: number;
         previousDay: number;
         didOpenOboveSMA?: boolean;
     };
     SMA200: {
-        today: number;
+        today?: number;
         previousDay: number;
         didOpenOboveSMA?: boolean;
     };

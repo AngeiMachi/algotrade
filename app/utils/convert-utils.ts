@@ -137,3 +137,4 @@ export function converTDAmeritradeMarketHours(marketHoursTD: any): IMarketHours 
 export function convertDateToTDMillisecondInterval(date: string): number {
     return moment(date).unix() * 1000;
 }
+

@@ -28,7 +28,7 @@ export const setMarketHours=(marketHours:IMarketHours) => {
     _marketHours=marketHours;
 }
 
-export const isMarketOpenByInterval= (quoteInterval: IQuoteFullIntervalData)=>{
+export const isPremarketTimeByInterval= (quoteInterval: IQuoteFullIntervalData)=>{
  return new Date(getMarketHours().sessionHours.regularMarket.start) > new Date(quoteInterval.timeNewYork);
 }
 export function getCurrentTradingDate() {
@@ -172,15 +172,10 @@ function getLastTradingWeekIndex(intervals: ITDAmeritradeIntervalData[], trading
     return lastTradingDateIndex;
 }
 export function composeMetadata(
-    this: any,
     tradingDate: string,
     historicalData: IQuotesHistoricalData,
-    quoteIntervals: IQuoteIntervals,
-    markethours: IMarketHours
 ): IQuoteMetadata {
-    const firstInterval: IQuoteFullIntervalData = getRecentFirstIntervalData(quoteIntervals, markethours);
-    const recentInterval: IQuoteFullIntervalData = getRecentFirstIntervalData(quoteIntervals, markethours,true);
-
+    
     const dailyIntervals = historicalData?.quoteFullYearDailyHistory.candles;
     const weeklyIntervals = historicalData?.quoteFullYearWeeklyHistory.candles;
     const hourlyIntervals = historicalData?.quoteHourlyHistory.candles;
@@ -188,7 +183,12 @@ export function composeMetadata(
     const { week52high, week52low } = get52WeekHighAndLow(historicalData.quoteFullYearWeeklyHistory);
 
     const quoteMetadata: IQuoteMetadata = {
-        preMarketMetadata: getPreMarketIntervalData(quoteIntervals, markethours),
+        //getPreMarketIntervalData(quoteIntervals, markethours),
+        preMarketMetadata: {
+            preMarketIntervals:{},
+            preMarketHOD: {} as IQuoteFullIntervalData,
+            premarketCloseIntervals:[]
+        },
         averageDailyVolume10Day: calculateAverage(dailyIntervals, tradingDate, 10),
         averageDailyVolume3Month: calculateAverage(dailyIntervals, tradingDate, 90),
         get average5Minute3Month() {
@@ -197,31 +197,24 @@ export function composeMetadata(
         previousDay: convertUtils.convertTDAmeritradeDailyIntervals([getPreviousCandle(dailyIntervals, tradingDate) as ITDAmeritradeIntervalData])[0],
         previousWeek: convertUtils.convertTDAmeritradeDailyIntervals([getPreviousCandle(weeklyIntervals, tradingDate, TimeFrame.Weekly) as ITDAmeritradeIntervalData])[0],
         SMA5: {
-            today: calculateMovingAverage(dailyIntervals, tradingDate, 5, firstInterval || recentInterval),
             previousDay: calculateMovingAverage(dailyIntervals, tradingDate, 5),
         },
         SMA10: {
-            today: calculateMovingAverage(dailyIntervals, tradingDate, 10, firstInterval || recentInterval),
             previousDay: calculateMovingAverage(dailyIntervals, tradingDate, 10),
         },
         SMA20: {
-            today: calculateMovingAverage(dailyIntervals, tradingDate, 20, firstInterval || recentInterval),
             previousDay: calculateMovingAverage(dailyIntervals, tradingDate, 20),
         },
         SMA50: {
-            today: calculateMovingAverage(dailyIntervals, tradingDate, 50, firstInterval || recentInterval),
             previousDay: calculateMovingAverage(dailyIntervals, tradingDate, 50),
         },
         SMA100: {
-            today: calculateMovingAverage(dailyIntervals, tradingDate, 100, firstInterval || recentInterval),
             previousDay: calculateMovingAverage(dailyIntervals, tradingDate, 100),
         },
         SMA200: {
-            today: calculateMovingAverage(dailyIntervals, tradingDate, 200, firstInterval || recentInterval),
             previousDay: calculateMovingAverage(dailyIntervals, tradingDate, 200),
         },
 
-        // TODO :  put true values
         fiftyTwoWeekLow: week52low,
         fiftyTwoWeekHigh: week52high,
 
@@ -230,16 +223,6 @@ export function composeMetadata(
         hourlyHistory:convertUtils.convertTDAmeritradeDailyIntervals(hourlyIntervals),
         dailyHistoricalData: convertUtils.convertTDAmeritradeDailyIntervals(getPartialHistory(dailyIntervals, tradingDate, 10)),
     };
-
-    if (firstInterval) {
-        quoteMetadata.SMA5.didOpenOboveSMA = isAboveMovingAverage(firstInterval, quoteMetadata.SMA5.today);
-        quoteMetadata.SMA10.didOpenOboveSMA = isAboveMovingAverage(firstInterval, quoteMetadata.SMA10.today);
-        quoteMetadata.SMA20.didOpenOboveSMA = isAboveMovingAverage(firstInterval, quoteMetadata.SMA20.today);
-        quoteMetadata.SMA50.didOpenOboveSMA = isAboveMovingAverage(firstInterval, quoteMetadata.SMA50.today);
-        quoteMetadata.SMA100.didOpenOboveSMA = isAboveMovingAverage(firstInterval, quoteMetadata.SMA100.today);
-        quoteMetadata.SMA200.didOpenOboveSMA = isAboveMovingAverage(firstInterval, quoteMetadata.SMA200.today);
-    }
-
 
     return quoteMetadata;
 }
