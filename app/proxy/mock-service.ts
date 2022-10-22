@@ -1,10 +1,7 @@
 import { logger } from '../config/winston.config';
 import * as globalConfig from '../config/globals.config';
-
 import * as quoteUtils from '../utils/quote-utils';
-
 import * as AlphaVantage from './alpha-vantage-api';
-
 import * as TDAmeritrade from './td-ameritrade-api';
 
 import {
@@ -101,20 +98,16 @@ export async function prepareMockDataTDAmeritrade(quote: string, _marketHours: I
         mockQuote.mockDataResponseKeys = Object.keys(mockData);
 
         let i = 0;
-        while (mockQuote.mockDataResponseKeys[mockQuote.currentInterval] !== marketHours.sessionHours.regularMarket.start) {
+        do {
             (mockQuote.mockDataResponse as any)[mockQuote.mockDataResponseKeys[mockQuote.currentInterval]] = mockQuote.mockDataResponseValues[mockQuote.currentInterval];
             mockQuote.currentInterval++;
 
             if (mockQuote.currentInterval > 200) {
                 logger.error('prepareMockDataTDAmeritrade ' + quote + '- mock data corrupted');
             }
-        }
-
-        for (let i = 0; i < globalConfig.Mock.StartLiveSimulationAtInterval; i++) {
-            (mockQuote.mockDataResponse as any)[mockQuote.mockDataResponseKeys[mockQuote.currentInterval]] = mockQuote.mockDataResponseValues[mockQuote.currentInterval];
-            mockQuote.currentInterval++;
-        }
-        mockQuote.currentInterval--;
+        } 
+        while ((mockQuote.mockDataResponseKeys[mockQuote.currentInterval] !== marketHours.sessionHours.regularMarket.start && globalConfig.Mock.startAtOpen) || 
+        (!mockQuote.mockDataResponseKeys[mockQuote.currentInterval].includes(globalConfig.Mock.MockDataLiveSimulationTime) && !globalConfig.Mock.startAtOpen));
 
         mockQuote.isMockLoaded = true;
         mockQuotes[quote] = mockQuote;

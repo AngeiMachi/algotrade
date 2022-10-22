@@ -8,13 +8,13 @@ import { QuotesIterator } from './quotes-iterator';
 import * as quoteCache from './quotes-cache';
 //const tdaclient = require('tda-api-client');
 
-const quotes = ["IBM"];
+const quotes = ["SPY"];
 
 export default async function startApp() {
     try { 
 
-        const quotesTofollow =environmentConfig.quotes.LEADERS;
-        //const quotesTofollow =quotes;
+        //const quotesTofollow =environmentConfig.quotes.LEADERS;
+        const quotesTofollow =quotes;
         await quoteCache.cacheQuoteListFromTDAmeritradeAPI(quotesTofollow);
         const sr = new QuotesIterator(quotesTofollow);
 

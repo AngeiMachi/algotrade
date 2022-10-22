@@ -26,10 +26,10 @@
         "bearer_token1": "",
         "manual": "https://www.reddit.com/r/algotrading/comments/914q22/successful_access_to_td_ameritrade_api/",
         "URL": {
-            "get_historical_5_minutes": "https://api.tdameritrade.com/v1/marketdata/{{quote}}/pricehistory?apikey=I7OY7LY6YGRHGXOB3300QLI4VC70SR6J&frequencyType=minute&frequency=5&startDate=1530792613000&needExtendedHoursData=false",
-            "get_historical_daily_full_year": "https://api.tdameritrade.com/v1/marketdata/{{quote}}/pricehistory?apikey=I7OY7LY6YGRHGXOB3300QLI4VC70SR6J&periodType=year&frequencyType=daily",
-            "get_historical_weekly_full_year":"https://api.tdameritrade.com/v1/marketdata/{{quote}}/pricehistory?apikey=I7OY7LY6YGRHGXOB3300QLI4VC70SR6J&periodType=year&frequencyType=weekly",
-            "get_historical_hourly":"https://api.tdameritrade.com/v1/marketdata/{{quote}}/pricehistory?apikey=I7OY7LY6YGRHGXOB3300QLI4VC70SR6J&periodType=day&period=10&frequencyType=minute&frequency=60&needExtendedHoursData=true"
+            "get_historical_5_minutes": "https://api.tdameritrade.com/v1/marketdata/{{quote}}/pricehistory?apikey=RXCFLDT6GUNORQSZSJJOW0VPMOVZFG2C&frequencyType=minute&frequency=5&startDate=1530792613000&needExtendedHoursData=false",
+            "get_historical_daily_full_year": "https://api.tdameritrade.com/v1/marketdata/{{quote}}/pricehistory?apikey=RXCFLDT6GUNORQSZSJJOW0VPMOVZFG2C&periodType=year&frequencyType=daily",
+            "get_historical_weekly_full_year":"https://api.tdameritrade.com/v1/marketdata/{{quote}}/pricehistory?apikey=RXCFLDT6GUNORQSZSJJOW0VPMOVZFG2C&periodType=year&frequencyType=weekly",
+            "get_historical_hourly":"https://api.tdameritrade.com/v1/marketdata/{{quote}}/pricehistory?apikey=RXCFLDT6GUNORQSZSJJOW0VPMOVZFG2C&periodType=day&period=10&frequencyType=minute&frequency=60&needExtendedHoursData=true"
         
         }
     },

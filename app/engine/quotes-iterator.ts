@@ -2,13 +2,15 @@ const schedule = require('node-schedule');
 import moment from 'moment-timezone';
 
 import * as quoteUtils from '../utils/quote-utils';
-import { INTERVAL_TIME } from '../config/globals.config';
+import * as globalConfig from '../config/globals.config';
 import { logger } from '../config/winston.config';
 
 import * as  proxyService  from '../proxy/proxy-service';
 import { QuoteMonoRunner } from './quote-mono-reader';
 
 import { IQuotes, IQuoteFullIntervalData, IQuoteMetadata, IMarketHours } from '../models/quote-data.model';
+
+const INTERVAL_TIME = globalConfig.Mock.IsMock? globalConfig.Mock.intervalLapTime : 300000; // 300000 = 5 mins;
 
 export class QuotesIterator {
     private quotes: IQuotes = {};
