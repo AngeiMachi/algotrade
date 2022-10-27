@@ -56,7 +56,10 @@ export class QuoteMonoRunner {
         }
         for (let i=(timeDiff/5);i>0;i--) {
             const interval = quoteIntervals[Object.keys(quoteIntervals)[Object.keys(quoteIntervals).length-i]];
-            this.recordNewStockInterval(interval,isLive);
+            if (interval) {
+                this.recordNewStockInterval(interval,isLive);
+            }
+            
         }
     }
     

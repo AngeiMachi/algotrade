@@ -72,9 +72,14 @@ export const getQuote5MinuteIntraday = async (quote: string, tradeDate: string, 
 
         const getPriceHistoryResult = (await limiter.schedule(() => tdaclient.pricehistory.getPriceHistory(priceHistoryConfig))) as any;
 
+        if  (getPriceHistoryResult.length===1 && getPriceHistoryResult.candle[0].volume==0) {
+            quotesPulledFirstPremarket[quote] =false;
+        } else {
+            quotesPulledFirstPremarket[quote] =true;
+        }
+            
         const quote5MinutIntraday = convertUtils.convertTDAmeritrade5MinuteIntervals(getPriceHistoryResult.candles as any);
-
-        quotesPulledFirstPremarket[quote] =true;
+        
         
         return quote5MinutIntraday;
     } catch (err) {

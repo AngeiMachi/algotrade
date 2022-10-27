@@ -94,7 +94,7 @@ export class QuotesIterator {
 
             const quoteStockStats: QuoteMonoRunner = this.quotes[quoteName];
 
-            const quoteIntervals = await proxyService.getTDAmeritradeIntraday(quoteName, false);
+            const quoteIntervals = await proxyService.getTDAmeritradeIntraday(quoteName, true);
 
             const stockInterval: IQuoteFullIntervalData = quoteUtils.getRecentIntervalData(quoteIntervals);
             quoteStockStats.recordQuoteIntervalsIncludingMissed(quoteIntervals, true);

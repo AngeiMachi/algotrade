@@ -16,7 +16,10 @@ export const addNewQuoteToCache = (quoteName: string) => {
 
 export const cacheQuote = ((quoteName:string,pricehistory:ITDAmeritradePriceHistory,timeFrame:TimeFrame) => {
     if (cacheState[quoteName]) {
-        if (timeFrame===TimeFrame.Weekly){
+        if (!pricehistory) {
+            logger.error(`cacheQuote error = PriceHistory Is empty quoteName=${quoteName} timeFrame=${timeFrame}`);
+        }
+        else if (timeFrame===TimeFrame.Weekly){
             cacheState[quoteName].quoteFullYearWeeklyHistory = pricehistory;
         }
         else if (timeFrame===TimeFrame.Daily){

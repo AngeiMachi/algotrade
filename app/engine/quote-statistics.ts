@@ -92,6 +92,8 @@ export class QuoteStatistics {
                 quote: this.quoteName,
                 interval: moment(quoteInterval.timeIsrael).format('HH:mm:ss'),
                 ...quoteInterval,
+                timeNewYork: quoteInterval.timeNewYork.toString(),
+                timeIsrael: quoteInterval.timeIsrael.toString(),
                 intervalNumber: this._intervalCount,
             } as any;
     
@@ -108,7 +110,6 @@ export class QuoteStatistics {
         if (quoteUtils.isPremarketTimeByInterval(quoteInterval)){
             this.addPremarketMetadata(quoteInterval)
         } else {
-
             this._intervalCount++;
             this.quoteIntervals.push(quoteInterval);
             this._lastInterval = quoteInterval;

@@ -7,7 +7,7 @@
         "quote2": ["AMD", "ROKU", "TSLA", "DIS", "AAPL", "XLNX", "NVDA", "LULU", "WDC", "RH",
             "WYNN", "PYPL", "AVGO", "EA", "CRM", "PANW", "HD", "UNH", "AMZN"],
         "quote3": ["NIO"],
-        "LEADERS":["SPY","QQQ","SQQQ","SPXU","TQQQ","IWM","AAPL","AMZN","GOOGL","AMD","NVDA","TSLA","NFLX","META","MSFT","SAVA","TWTR","HD","CAT","IBM"]
+        "LEADERS":["SPY","IWM","QQQ","SQQQ","SPXU","TQQQ","IWM","AAPL","AMZN","GOOGL","AMD","NVDA","TSLA","NFLX","META","MSFT","SAVA","TWTR","HD","CAT","IBM","XLE","XLF","XOM","OXY","CVX"]
  
     },
     "AlphaVantage": {
@@ -26,10 +26,10 @@
         "bearer_token1": "",
         "manual": "https://www.reddit.com/r/algotrading/comments/914q22/successful_access_to_td_ameritrade_api/",
         "URL": {
-            "get_historical_5_minutes": "https://api.tdameritrade.com/v1/marketdata/{{quote}}/pricehistory?apikey=RXCFLDT6GUNORQSZSJJOW0VPMOVZFG2C&frequencyType=minute&frequency=5&startDate=1530792613000&needExtendedHoursData=false",
-            "get_historical_daily_full_year": "https://api.tdameritrade.com/v1/marketdata/{{quote}}/pricehistory?apikey=RXCFLDT6GUNORQSZSJJOW0VPMOVZFG2C&periodType=year&frequencyType=daily",
-            "get_historical_weekly_full_year":"https://api.tdameritrade.com/v1/marketdata/{{quote}}/pricehistory?apikey=RXCFLDT6GUNORQSZSJJOW0VPMOVZFG2C&periodType=year&frequencyType=weekly",
-            "get_historical_hourly":"https://api.tdameritrade.com/v1/marketdata/{{quote}}/pricehistory?apikey=RXCFLDT6GUNORQSZSJJOW0VPMOVZFG2C&periodType=day&period=10&frequencyType=minute&frequency=60&needExtendedHoursData=true"
+            "get_historical_5_minutes": "https://api.tdameritrade.com/v1/marketdata/{{quote}}/pricehistory?apikey=WMGTIAPOMSTARDX5TLFRPUGRWSK3Q5AH&frequencyType=minute&frequency=5&startDate=1530792613000&needExtendedHoursData=false",
+            "get_historical_daily_full_year": "https://api.tdameritrade.com/v1/marketdata/{{quote}}/pricehistory?apikey=WMGTIAPOMSTARDX5TLFRPUGRWSK3Q5AH&periodType=year&frequencyType=daily",
+            "get_historical_weekly_full_year":"https://api.tdameritrade.com/v1/marketdata/{{quote}}/pricehistory?apikey=WMGTIAPOMSTARDX5TLFRPUGRWSK3Q5AH&periodType=year&frequencyType=weekly",
+            "get_historical_hourly":"https://api.tdameritrade.com/v1/marketdata/{{quote}}/pricehistory?apikey=WMGTIAPOMSTARDX5TLFRPUGRWSK3Q5AH&periodType=day&period=10&frequencyType=minute&frequency=60&needExtendedHoursData=true"
         
         }
     },

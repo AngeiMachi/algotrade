@@ -16,7 +16,7 @@ export class MovingAverageDailyFiftySignal extends Signals {
         let signals: SignalModel[] = [];
 
         const MA50= this.quoteStats.lastInterval.MA50 || 0;
-        if (MA50!==0) {
+        if (MA50!==0 && this.quoteStats.intervalCount>0 ) {
             if (this.quoteStats.lastInterval.open<MA50 && this.quoteStats.lastInterval.close>MA50) {
                 signals = this.createSignal();
             }

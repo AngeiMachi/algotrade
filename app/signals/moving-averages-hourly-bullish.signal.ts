@@ -47,7 +47,7 @@ export class MovingAveragesHourlyBullish extends Signals {
         const MA20 =this.quoteStats.hourlyMA20Last;
         if (!this.isValidFor20MA) {
             const percentange = generalUtils.getPercentageDifference(MA20,this.lastValidHOD);
-            if (percentange>1.5 && MA20<this.lastValidHOD) {
+            if ((percentange>1.5 || (percentange>1.1 && this.quoteStats.intervalCount<7)) && MA20<this.lastValidHOD) {
                 this.isValidFor20MA = true;
             }
         }

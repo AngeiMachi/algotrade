@@ -8,7 +8,7 @@ import { QuotesIterator } from './quotes-iterator';
 import * as quoteCache from './quotes-cache';
 //const tdaclient = require('tda-api-client');
 
-const quotes = ["SQQQ"];
+const quotes = ["IWM"];
 
 export default async function startApp() {
     try { 
@@ -55,7 +55,7 @@ const calculateInitializationTime = ():Date=> {
             minutesToAdd--;
         }
     }
-   //let date = moment(now).add(0, 'm').add(10,'s').toDate();
-   let date = moment(now).add(minutesToAdd, 'm').add(secondsToAdd+5,'s').toDate();
+   let date = moment(now).add(0, 'm').add(10,'s').toDate();
+   //let date = moment(now).add(minutesToAdd, 'm').add(secondsToAdd+5,'s').toDate();
    return date;
 }

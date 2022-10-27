@@ -141,7 +141,7 @@ function getIntervalIndex(intervals: ITDAmeritradeIntervalData[], tradingDate: s
         // date is 00:00 . TDAmeritrade daily interval is at 08:00 = 28800000 or 07:00 = 25200000
         const currentTimeInMilliseconds = convertDateToTDMillisecondInterval(tradingDate);
 
-        if (currentTimeInMilliseconds < intervals[0].datetime || currentTimeInMilliseconds > intervals[intervals.length - 1].datetime) {
+        if (currentTimeInMilliseconds < intervals[0].datetime ) {
             logger.error('Quote-Utils.getIntervalIndex interval out of bounds');
             throw 'interval out of bounds';
         }
