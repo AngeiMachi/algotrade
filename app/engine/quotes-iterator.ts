@@ -70,7 +70,6 @@ export class QuotesIterator {
         const nextRunTime = moment(this.initializationTime).add(INTERVAL_TIME+this.quoteIndex[quoteName], 'ms').toDate();
 
         schedule.scheduleJob(nextRunTime, async () => {
-
             const quoteSetInteval = setInterval(async () => {
                 if (!this.quotes.hasOwnProperty(quoteName)) {
                     clearInterval(quoteSetInteval);
@@ -101,7 +100,7 @@ export class QuotesIterator {
 
             this.clearQuoteWhenIsLastInterval(quoteName, stockInterval);
         } catch (err) {
-            logger.error('error at Stock-Reader.iterateStocks - quote=' + quoteName + ' + ' + 'err=' + err);
+            logger.error('error at quotes-Iterator.iterateQuote - quote=' + quoteName + ' + ' + 'err=' + err);
         }
     }
     private async iterateQuotes() {
@@ -118,7 +117,7 @@ export class QuotesIterator {
 
                 this.clearQuoteWhenIsLastInterval(quoteKey, stockInterval);
             } catch (err) {
-                logger.error('error at Stock-Reader.iterateStocks - quote=' + quoteKey + ',index=' + i + 'err=' + err);
+                logger.error('error at quotes-iterator.iterateQuotes - quote=' + quoteKey + ',index=' + i + 'err=' + err);
             }
         }
     }
