@@ -1,4 +1,5 @@
 import { SentimentDirectionEnum, SignalGroupType, SignalType, SignalVerificationReasonEnum } from './enums';
+import { IQuoteFullIntervalData } from './quote-data.model';
 
 export interface SignalModel {
     signalGroupType: SignalGroupType;
@@ -6,4 +7,5 @@ export interface SignalModel {
     signalDescription: string;
     signalSentiment?: SentimentDirectionEnum;
     payload?: any;
+    interval?:IQuoteFullIntervalData;
 }
