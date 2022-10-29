@@ -5,9 +5,18 @@ import * as generalUtils from '../utils/general'
 import * as quoteState from './state';
 import {  IQuoteFullIntervalData, IQuoteIntervals, IQuoteMetadata } from '../models/quote-data.model';
 import { logger } from '../config/winston.config';
-import { BullishHODSignal, BullishLevelBreakSignal, BullishVolumeSignal, MovingAverageDailyTwentySignal,MovingAverageDailyFiftySignal, MovingAveragesSignal,MovingAveragesHourlyBullish } from '../signals';
+import { BullishHODSignal, 
+         BullishLevelBreakSignal,
+         BullishVolumeSignal,
+         MovingAverageDailyTwentySignal,
+         MovingAverageDailyFiftySignal, 
+         MovingAveragesSignal,
+         MovingAveragesHourlyBullish, 
+         MovingAveragesFiftyHourlyBullish } 
+         from '../signals';
 import { QuoteStatistics } from './quote-statistics';
 import { SignalModel } from '../models/signal.model';
+
 export class QuoteMonoRunner {
     private quoteStats: QuoteStatistics;
 
@@ -22,6 +31,7 @@ export class QuoteMonoRunner {
     private movingAverageDailyTwentySignal!: MovingAverageDailyTwentySignal;
     private movingAverageDailyFiftySignal!:MovingAverageDailyFiftySignal;
     private movingAveragesHourlyBullish!:MovingAveragesHourlyBullish;
+    private movingAveragesFiftyHourlyBullish!:MovingAveragesFiftyHourlyBullish;
 
     constructor(quote: string, todayDate: string = '') {
         this.quoteStats = new QuoteStatistics(quote, todayDate);
@@ -41,6 +51,7 @@ export class QuoteMonoRunner {
         this.movingAverageDailyTwentySignal =  new MovingAverageDailyTwentySignal(this.quoteStats);
         this.movingAverageDailyFiftySignal =new MovingAverageDailyFiftySignal(this.quoteStats);
         this.movingAveragesHourlyBullish = new MovingAveragesHourlyBullish(this.quoteStats);
+        this.movingAveragesFiftyHourlyBullish = new MovingAveragesFiftyHourlyBullish(this.quoteStats)
 
         Object.keys(quoteIntervals).forEach((key) => {
             this.recordNewStockInterval(quoteIntervals[key]);
@@ -57,6 +68,7 @@ export class QuoteMonoRunner {
         for (let i=(timeDiff/5);i>0;i--) {
             const interval = quoteIntervals[Object.keys(quoteIntervals)[Object.keys(quoteIntervals).length-i]];
             if (interval) {
+                logger.info("API-Interval:"+this.quoteStats.quoteName+JSON.stringify(interval));
                 this.recordNewStockInterval(interval,isLive);
             }
             
@@ -71,10 +83,11 @@ export class QuoteMonoRunner {
             ...this.bullishHODSignal.monitor(),
             ...this.bullishLevelBreakSignal.monitor(),
             ...this.bullishVolumeSignal.monitor(),
-            ...this.movingAveragesSignal.monitor(),
+            // ...this.movingAveragesSignal.monitor(),
             ...this.movingAverageDailyTwentySignal.monitor(),
             ...this.movingAverageDailyFiftySignal.monitor(),
-            ...this.movingAveragesHourlyBullish.monitor()
+            ...this.movingAveragesHourlyBullish.monitor(),
+            ...this.movingAveragesFiftyHourlyBullish.monitor()
         ];
 
         if (this.signals.length > 0) {

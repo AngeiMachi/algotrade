@@ -4,8 +4,6 @@ import { Signals } from "./signals";
 import { SignalGroupType,SignalType,SignalVerificationReasonEnum } from '../models/enums';
 
 export class MovingAveragesHourlyBullish extends Signals {
-
-
     private lastPotentialHOD:number=0;
     private lastValidHOD:number=0;
     private isValidFor20MA:boolean=false
@@ -14,10 +12,11 @@ export class MovingAveragesHourlyBullish extends Signals {
         this.recordNewHOD();
         this.validateFor20MA();
         if(this.is20MATouched()){
+            const movingAvgData = this.composeMovingAverages();
             return [{
-                signalGroupType: SignalGroupType.HOURLY_MOVING_HAVEERAGE,
+                signalGroupType: SignalGroupType.HOURLY_MOVING_AVERAGE,
                 signalType: SignalType.HOURLY_MOVING_AVERAGE_TOUCH_FROM_ABOVE,
-                signalDescription: SignalVerificationReasonEnum.TWENTY_HOURLY_MOVING_AVERAGE_TOUCH_FROM_ABOVE ,
+                signalDescription: SignalVerificationReasonEnum.TWENTY_HOURLY_MOVING_AVERAGE_TOUCH_FROM_ABOVE+movingAvgData,
             }];
         }
         
@@ -84,6 +83,30 @@ export class MovingAveragesHourlyBullish extends Signals {
                 }
             }
         }
+    }
+
+    private composeMovingAverages():string {
+        let movingAVgsData = '';
+        if(this.quoteStats.intervalCount<7) {
+            if (this.quoteStats.lastInterval.close>(this.quoteStats?.lastInterval?.MA20 || 10000)) {
+                movingAVgsData+='20m,' 
+            }
+            if (this.quoteStats.lastInterval.close>(this.quoteStats?.lastInterval?.MA50 || 10000)) {
+                movingAVgsData+='50m' 
+            }
+            if (this.quoteStats.lastInterval.close>(this.quoteStats?.metadata.SMA20.today || 10000)) {
+                if (movingAVgsData) {
+                    movingAVgsData+=' | '
+                }
+                movingAVgsData+='20D' 
+            }
+        }
+        
+        
+        if (movingAVgsData) {
+            return (' 🔥-'+ movingAVgsData);
+        }
+        return movingAVgsData;
     }
 
     

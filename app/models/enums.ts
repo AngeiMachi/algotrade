@@ -29,6 +29,7 @@ export enum SignalVerificationReasonEnum {
     MOVING_AVERAGE_INTRADAY_FIFTY_BREAK_ABOVE = "Azure break UP",
     TWENTY_HOURLY_MOVING_AVERAGE_TOUCH_FROM_BELOW="",
     TWENTY_HOURLY_MOVING_AVERAGE_TOUCH_FROM_ABOVE="Yellow(H) Touched ➚",
+    FIFTY_HOURLY_MOVING_AVERAGE_TOUCH_FROM_ABOVE="Azure(H) Touched ➚",
 }
 
 export enum SignalGroupType {
@@ -37,7 +38,7 @@ export enum SignalGroupType {
     BULLISH_VOLUME,
     MOVING_AVERAGES,
     INTRADAY_MOVING_AVERAGE,
-    HOURLY_MOVING_HAVEERAGE,
+    HOURLY_MOVING_AVERAGE,
 }
 
 export enum SignalType {

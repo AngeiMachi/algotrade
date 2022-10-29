@@ -3,7 +3,7 @@ export const Mock = {
     IsMock: false,
     startAtOpen:false,
     StartLiveSimulationAtInterval: 100,
-    MockDataDate: '2022-10-25',
+    MockDataDate: '2022-10-26',
     MockDataLiveSimulationTime:"14:00:00" ,
     intervalLapTime:3000
     

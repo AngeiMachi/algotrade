@@ -238,7 +238,16 @@ export function composeMetadata(
 }
 
 export function removoLastIntervalData(intervals: IQuoteIntervals): IQuoteIntervals {
-    delete intervals[Object.keys(intervals)[Object.keys(intervals).length - 1]];
+    const ObjectKeys= Object.keys(intervals);
+    if (ObjectKeys.length>0) {
+        //@ts-ignore
+        const lastInterval =intervals[Object.keys(intervals)[Object.keys(intervals).length - 1]].timeIsrael;
+        const intervalTime = moment(new Date(lastInterval)).add(5,'m').toDate(); 
+        if (intervalTime>new Date()) {
+            logger.info(new Date()+': removing Interval:'+JSON.stringify(intervals[Object.keys(intervals)[Object.keys(intervals).length - 1]]))
+             delete intervals[Object.keys(intervals)[Object.keys(intervals).length - 1]];
+        }
+    }
     return intervals;
 }
 
