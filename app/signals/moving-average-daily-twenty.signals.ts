@@ -25,7 +25,8 @@ export class MovingAverageDailyTwentySignal extends Signals {
                             signalGroupType: SignalGroupType.INTRADAY_MOVING_AVERAGE,
                             signalType: SignalType.MOVING_AVERAGE_INTRADAY_TWENTY_BREAK_ABOVE,
                             signalDescription: SignalVerificationReasonEnum.MOVING_AVERAGE_INTRADAY_TWENTY_BREAK_ABOVE +"("
-                            +this.twentyMovingAvgBreakTimesCount+")"
+                            +this.twentyMovingAvgBreakTimesCount+")",
+                            interval:this.quoteStats.lastInterval
                         });
                 }
                 else {
@@ -35,7 +36,7 @@ export class MovingAverageDailyTwentySignal extends Signals {
             }
             else if (this.quoteStats.lastInterval.open>MA20 && this.quoteStats.lastInterval.close<MA20) {
                 if (this.intervalCount>MINIMUM_ONE_SIDE_INTERVALS && this.isAboveDailyTwentyMovingAverage) {
-                        //Signal Broke dowm
+                        //Signal Broke down
                 } else {
                     this.isAboveDailyTwentyMovingAverage = false;
                 }

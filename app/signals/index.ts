@@ -6,3 +6,4 @@ export * from './moving-average-daily-twenty.signals';
 export * from './moving-average-daily-fifty.signals';
 export * from './moving-averages-hourly-bullish.signal';
 export * from './moving-averages-fifty-hourly-bullish.signal';
+export * from './bullish-building-above-twenty-moving-average.signal';

@@ -57,7 +57,7 @@ export class MovingAveragesFiftyHourlyBullish extends Signals {
     private recordNewHOD(){
         if (this.quoteStats.intervalCount === 0) {
             const premarketHigh=this.quoteStats.metadata.preMarketMetadata?.preMarketHOD.high || 0;
-            if (this.quoteStats.lastInterval.open>this.quoteStats.hourlyMA50Last) {
+            if (this.quoteStats.lastInterval.close>this.quoteStats.hourlyMA50Last) {
                 this.isDirty=false;
                 if (premarketHigh>this.quoteStats.hourlyMA50Last) {
                     this.lastPotentialHOD =  premarketHigh;
@@ -66,8 +66,7 @@ export class MovingAveragesFiftyHourlyBullish extends Signals {
                     this.lastPotentialHOD=0;
                     this.lastValidHOD =0;
                 }
-            } 
-           
+            }                
         } else if (this.quoteStats.intervalCount>0) {
             if (this.quoteStats.lastInterval.high>this.lastPotentialHOD && this.quoteStats.lastInterval.high>this.quoteStats.hourlyMA50Last){
                 this.lastPotentialHOD = this.quoteStats.lastInterval.high;
@@ -89,24 +88,48 @@ export class MovingAveragesFiftyHourlyBullish extends Signals {
 
     private composeMovingAverages():string {
         let movingAVgsData = '';
+        let count=0;
+        const MA20 =this.quoteStats.hourlyMA20[this.quoteStats.hourlyMA20.length-1];
+        const previousMA = this.quoteStats.hourlyMA20[this.quoteStats.hourlyMA20.length-2];
+        const MAprecentage = generalUtils.getPercentageDifference(previousMA,MA20);
+        if (MAprecentage>0.8) {
+            movingAVgsData = '🟢';
+        }
+        else if (MAprecentage>0.6) {
+            movingAVgsData = '🟡';
+        }
+        else if (MAprecentage>0.4) {
+            movingAVgsData = '🟠';
+        }
+        else {
+            movingAVgsData = '🔴';
+        }
+        movingAVgsData+=' ';
         if(this.quoteStats.intervalCount<7) {
             if (this.quoteStats.lastInterval.close>(this.quoteStats?.lastInterval?.MA20 || 10000)) {
-                movingAVgsData+='20m,' 
+                if (generalUtils.getPercentageDifference(this.quoteStats.lastInterval.close,this.quoteStats?.lastInterval?.MA20 || 10000)>0.2) {
+                    movingAVgsData+='20m,';
+                    count++;
+                }
             }
             if (this.quoteStats.lastInterval.close>(this.quoteStats?.lastInterval?.MA50 || 10000)) {
-                movingAVgsData+='50m' 
+                if (generalUtils.getPercentageDifference(this.quoteStats.lastInterval.close,this.quoteStats?.lastInterval?.MA50 || 10000)>0.3) {
+                    movingAVgsData+='50m,';
+                    count++;
+                }
             }
             if (this.quoteStats.lastInterval.close>(this.quoteStats?.metadata.SMA20.today || 10000)) {
                 if (movingAVgsData) {
-                    movingAVgsData+=' | '
+                    movingAVgsData+=' | ';
                 }
-                movingAVgsData+='20D' 
+                movingAVgsData+='20D';
+                count++;
             }
         }
         
         
-        if (movingAVgsData) {
-            return (' 🔥-'+ movingAVgsData);
+        if (movingAVgsData && count===3) {
+            return (' 🤑-'+ movingAVgsData);
         }
         return movingAVgsData;
     }

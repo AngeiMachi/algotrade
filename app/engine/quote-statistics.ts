@@ -111,8 +111,10 @@ export class QuoteStatistics {
             this.addPremarketMetadata(quoteInterval)
         } else {
             this._intervalCount++;
+            quoteInterval.intervalNumber=this._intervalCount;
             this.quoteIntervals.push(quoteInterval);
             this._lastInterval = quoteInterval;
+            
 
             if (this.isFirstInterval) {
                 this.hourlyHistoryIndexStart =this.findIndexOfFirstHorly();

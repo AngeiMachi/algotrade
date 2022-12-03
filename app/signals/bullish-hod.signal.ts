@@ -32,7 +32,7 @@ export class BullishHODSignal extends Signals {
             this.lastHODInterval = this.quoteStats.lastInterval;
             this.lastHODIntervalCount = 0;
         } else if (this.quoteStats.lastInterval.close > this.lastHODInterval.high) {
-            if (this.quoteStats.intervalCount - this.lastHODIntervalCount >= 2 && this.didMakeHigherLow) {
+            if (this.quoteStats.intervalCount - this.lastHODIntervalCount >= 2 && this.didMakeHigherLow && this.HODSignalCount==1) {
                 signals.push({
                     signalGroupType: SignalGroupType.BULLISH_HOD,
                     signalType: SignalType.BULLISH_HIGH_OF_DAY,

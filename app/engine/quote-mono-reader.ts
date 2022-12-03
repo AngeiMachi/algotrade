@@ -12,7 +12,8 @@ import { BullishHODSignal,
          MovingAverageDailyFiftySignal, 
          MovingAveragesSignal,
          MovingAveragesHourlyBullish, 
-         MovingAveragesFiftyHourlyBullish } 
+         MovingAveragesFiftyHourlyBullish,
+         BullishBuildingAboveTwentyMA } 
          from '../signals';
 import { QuoteStatistics } from './quote-statistics';
 import { SignalModel } from '../models/signal.model';
@@ -32,6 +33,7 @@ export class QuoteMonoRunner {
     private movingAverageDailyFiftySignal!:MovingAverageDailyFiftySignal;
     private movingAveragesHourlyBullish!:MovingAveragesHourlyBullish;
     private movingAveragesFiftyHourlyBullish!:MovingAveragesFiftyHourlyBullish;
+    private bullishBuildingAboveTwentyMA!:BullishBuildingAboveTwentyMA;
 
     constructor(quote: string, todayDate: string = '') {
         this.quoteStats = new QuoteStatistics(quote, todayDate);
@@ -51,7 +53,8 @@ export class QuoteMonoRunner {
         this.movingAverageDailyTwentySignal =  new MovingAverageDailyTwentySignal(this.quoteStats);
         this.movingAverageDailyFiftySignal =new MovingAverageDailyFiftySignal(this.quoteStats);
         this.movingAveragesHourlyBullish = new MovingAveragesHourlyBullish(this.quoteStats);
-        this.movingAveragesFiftyHourlyBullish = new MovingAveragesFiftyHourlyBullish(this.quoteStats)
+        this.movingAveragesFiftyHourlyBullish = new MovingAveragesFiftyHourlyBullish(this.quoteStats);
+        this.bullishBuildingAboveTwentyMA = new BullishBuildingAboveTwentyMA(this.quoteStats);
 
         Object.keys(quoteIntervals).forEach((key) => {
             this.recordNewStockInterval(quoteIntervals[key]);
@@ -87,7 +90,8 @@ export class QuoteMonoRunner {
             ...this.movingAverageDailyTwentySignal.monitor(),
             ...this.movingAverageDailyFiftySignal.monitor(),
             ...this.movingAveragesHourlyBullish.monitor(),
-            ...this.movingAveragesFiftyHourlyBullish.monitor()
+            ...this.movingAveragesFiftyHourlyBullish.monitor(),
+            ...this.bullishBuildingAboveTwentyMA.monitor(),
         ];
 
         if (this.signals.length > 0) {
