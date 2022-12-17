@@ -4,7 +4,7 @@ import { logger } from '../config/winston.config';
 import * as environmentConfig from '../config/environment.Config.json';
 import * as globalConfig from '../config/globals.config';
 
-import { QuotesIterator } from './quotes-iterator';
+import * as quotesIterator from './quotes-iterator';
 import * as quoteCache from './quotes-cache';
 //const tdaclient = require('tda-api-client');
 
@@ -16,12 +16,12 @@ export default async function startApp() {
         const quotesTofollow =environmentConfig.quotes.LEADERS;
         //const quotesTofollow =quotes;
         await quoteCache.cacheQuoteListFromTDAmeritradeAPI(quotesTofollow);
-        const sr = new QuotesIterator(quotesTofollow);
 
         const initTime = calculateInitializationTime();
         logger.info(`Quote initialization is set to start at ${initTime}...`);
-        const job = schedule.scheduleJob(initTime , ()=>{
-            sr.initializeQuotesData(initTime);
+        const job = schedule.scheduleJob(initTime ,async ()=>{
+            await quotesIterator.initializeQuotesData(quotesTofollow);
+            quotesIterator.initiateQuotesWatch();
         });
         
     } catch (error) {
@@ -55,7 +55,6 @@ const calculateInitializationTime = ():Date=> {
             minutesToAdd--;
         }
     }
-   //let date = moment(now).add(0, 'm').add(10,'s').toDate();
    let date = moment(now).add(minutesToAdd, 'm').add(secondsToAdd+9,'s').toDate();
    return date;
 }

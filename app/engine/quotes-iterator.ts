@@ -10,120 +10,113 @@ import { QuoteMonoRunner } from './quote-mono-reader';
 
 import { IQuotes, IQuoteFullIntervalData } from '../models/quote-data.model';
 
-export class QuotesIterator {
-    private quotes: IQuotes = {};
-    private quoteIndex: {[key:string]:number}={};
-    private initializationTime!:Date
 
-    constructor(quotes: string[] = []) {
-        this.initializeQuotes(quotes);
-    }
+let quotes: IQuotes = {};
+let quoteIndex: {[key:string]:number}={};
 
-    public async initializeQuotesData(initTime:Date): Promise<any> {
-        this.initializationTime=initTime;
-        let quoteKey:string='';
-        try {
-            
-            for (let i = 0; i < Object.keys(this.quotes).length; i++) {
-                quoteKey = Object.keys(this.quotes)[i];
-                const quoteIntervals = await proxyService.getTDAmeritradeIntraday(quoteKey);
-                if (Object.keys(quoteIntervals).length==0) {
-                    delete this.quotes[quoteKey];
-                    logger.error('error at Stock-Reader.initializeQuotesData - quote=' + quoteKey + ' does not Exist and being deprecated');
-                    continue;
-                }
-                const quoteMetadata = await proxyService.getMetaDataPerDay(quoteKey, quoteUtils.getCurrentTradingDate());
+   
+export const initializeQuotesData = async (quoteNames: string[] ):Promise<any> => {
 
-                if (!quoteMetadata) {
-                    delete this.quotes[quoteKey];
-                    logger.error('error at Stock-Reader.initializeQuotesData - quote=' + quoteKey + ' could not load metadata and being deprecated');
-                    continue;
-                }
-                this.quotes[quoteKey].initializeStockData(quoteIntervals, quoteMetadata);
-                this.quoteIndex[quoteKey] =i;
-                this.initiateQuoteWatch(quoteKey);
-                
+    initializeQuotes(quoteNames);
+
+    let quoteKey:string='';
+    try {
+        for (let i = 0; i < Object.keys(quotes).length; i++) {
+            quoteKey = Object.keys(quotes)[i];
+
+            const quoteIntervals = await proxyService.getTDAmeritradeIntraday(quoteKey);
+            if (Object.keys(quoteIntervals).length==0) {
+                delete quotes[quoteKey];
+                logger.error('error at Stock-Reader.initializeQuotesData - quote=' + quoteKey + ' does not Exist and being deprecated');
+                continue;
             }
-            return Promise.resolve();
-        } catch (err) {
-            Promise.reject(err);
+            const quoteMetadata = await proxyService.getMetaDataPerDay(quoteKey, quoteUtils.getCurrentTradingDate());
+
+            if (!quoteMetadata) {
+                delete quotes[quoteKey];
+                logger.error('error at Stock-Reader.initializeQuotesData - quote=' + quoteKey + ' could not load metadata and being deprecated');
+                continue;
+            }
+            quotes[quoteKey].initializeStockData(quoteIntervals, quoteMetadata);
+            quoteIndex[quoteKey] =i;
+            //initiateQuoteWatch(quoteKey);
         }
+        return Promise.resolve();
+    } catch (err) {
+        Promise.reject(err);
     }
+}
 
-    public async initiateQuotesWatch() {
-        // let i = 0;
-        // if (Object.keys(this.quotes).length > 0) {
-        //     const iterateStockInterval = setInterval(async () => {
-        //         await this.iterateQuotes();
-        //         if (Object.keys(this.quotes).length === 0) {
-        //             clearInterval(iterateStockInterval);
-        //         }
-        //     }, INTERVAL_TIME + i++ * 100);
-        // } else {
-        //     throw Error('No Stocks were initialized');
-        // }
+export const initiateQuotesWatch = ()=> {
+    let runCron="5 0,5,10,15,20,25,30,35,40,45,50,55  * * * *";
+    if (globalConfig.Mock.IsMock && globalConfig.Mock?.intervalLapTime) {
+        runCron = globalConfig.Mock?.intervalLapTime;
+    } 
+    
+    schedule.scheduleJob(runCron, async () => {
+        await iterateQuotes();
+    });
+}
+
+export const initiateQuoteWatch=(quoteName: string)=> {
+    //const nextRunTime = moment(this.initializationTime).add(INTERVAL_TIME+this.quoteIndex[quoteName], 'ms').toDate();
+    let runCron="5 0,5,10,15,20,25,30,35,40,45,50,55  * * * *";
+    if (globalConfig.Mock.IsMock && globalConfig.Mock?.intervalLapTime) {
+        runCron = globalConfig.Mock?.intervalLapTime;
+    } 
+    
+    schedule.scheduleJob(runCron, async () => {
+        await iterateQuote(quoteName);
+    });
+}
+
+const initializeQuotes=(quotesName: string[])=> {
+    quotesName.forEach((quoteName) => {
+        quotes[quoteName] = new QuoteMonoRunner(quoteName);
+    });
+}
+
+const iterateQuote =  async (quoteName: string) =>{
+    try {
+
+        const quoteStockStats: QuoteMonoRunner = quotes[quoteName];
+
+        const quoteIntervals = await proxyService.getTDAmeritradeIntraday(quoteName, true);
+
+        const stockInterval: IQuoteFullIntervalData = quoteUtils.getRecentIntervalData(quoteIntervals);
+        quoteStockStats.recordQuoteIntervalsIncludingMissed(quoteIntervals, true);
+
+        clearQuoteWhenIsLastInterval(quoteName, stockInterval);
+    } catch (err) {
+        logger.error('error at quotes-Iterator.iterateQuote - quote=' + quoteName + ' + ' + 'err=' + err);
     }
-
-    initiateQuoteWatch(quoteName: string) {
-        //const nextRunTime = moment(this.initializationTime).add(INTERVAL_TIME+this.quoteIndex[quoteName], 'ms').toDate();
-        let runCron="5 0,5,10,15,20,25,30,35,40,45,50,55  * * * *";
-        if (globalConfig.Mock.IsMock && globalConfig.Mock?.intervalLapTime) {
-            runCron = globalConfig.Mock?.intervalLapTime;
-        } 
-        
-        schedule.scheduleJob(runCron, async () => {
-            await this.iterateQuote(quoteName);
-        });
-    }
-
-    private initializeQuotes(quotes: string[]) {
-        quotes.forEach((quote) => {
-            this.quotes[quote] = new QuoteMonoRunner(quote);
-        });
-    }
-
-    private async iterateQuote(quoteName: string) {
+}
+const iterateQuotes= async () => {
+    for (let i = 0; i < Object.keys(quotes).length; i++) {
+        const quoteKey = Object.keys(quotes)[i];
         try {
+            const quoteStockStats: QuoteMonoRunner = quotes[quoteKey];
 
-            const quoteStockStats: QuoteMonoRunner = this.quotes[quoteName];
-
-            const quoteIntervals = await proxyService.getTDAmeritradeIntraday(quoteName, true);
+            const quoteIntervals = await proxyService.getTDAmeritradeIntraday(quoteKey, false);
 
             const stockInterval: IQuoteFullIntervalData = quoteUtils.getRecentIntervalData(quoteIntervals);
+
             quoteStockStats.recordQuoteIntervalsIncludingMissed(quoteIntervals, true);
 
-            this.clearQuoteWhenIsLastInterval(quoteName, stockInterval);
+            clearQuoteWhenIsLastInterval(quoteKey, stockInterval);
         } catch (err) {
-            logger.error('error at quotes-Iterator.iterateQuote - quote=' + quoteName + ' + ' + 'err=' + err);
+            logger.error('error at quotes-iterator.iterateQuotes - quote=' + quoteKey + ',index=' + i + 'err=' + err);
         }
     }
-    private async iterateQuotes() {
-        for (let i = 0; i < Object.keys(this.quotes).length; i++) {
-            const quoteKey = Object.keys(this.quotes)[i];
-            try {
-                const quoteStockStats: QuoteMonoRunner = this.quotes[quoteKey];
+}
 
-                const quoteIntervals = await proxyService.getTDAmeritradeIntraday(quoteKey, false);
-
-                const stockInterval: IQuoteFullIntervalData = quoteUtils.getRecentIntervalData(quoteIntervals);
-
-                quoteStockStats.recordQuoteIntervalsIncludingMissed(quoteIntervals, true);
-
-                this.clearQuoteWhenIsLastInterval(quoteKey, stockInterval);
-            } catch (err) {
-                logger.error('error at quotes-iterator.iterateQuotes - quote=' + quoteKey + ',index=' + i + 'err=' + err);
-            }
-        }
+const clearQuoteWhenIsLastInterval= (quoteKey: string, interval: IQuoteFullIntervalData) =>{
+    if (isLastInterval(interval)) {
+        delete quotes[quoteKey];
+        logger.debug('Terminating quote ' + quoteKey);
     }
+}
 
-    private clearQuoteWhenIsLastInterval(quoteKey: string, interval: IQuoteFullIntervalData) {
-        if (this.isLastInterval(interval)) {
-            delete this.quotes[quoteKey];
-            logger.debug('Terminating quote ' + quoteKey);
-        }
-    }
-
-    private isLastInterval(interval: any): boolean {
-        return interval.timeNewYork.getHours() === 15 && interval.timeNewYork.getMinutes()===50;
-    }
+const isLastInterval=(interval: any): boolean => {
+    return interval.timeNewYork.getHours() === 15 && interval.timeNewYork.getMinutes()===50;
 }

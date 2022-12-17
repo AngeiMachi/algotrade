@@ -85,14 +85,13 @@ export class QuoteMonoRunner {
             ...this.bullishHODSignal.monitor(),
             ...this.bullishLevelBreakSignal.monitor(),
             ...this.bullishVolumeSignal.monitor(),
-            // ...this.movingAveragesSignal.monitor(),
+            // // ...this.movingAveragesSignal.monitor(),
             ...this.movingAverageDailyTwentySignal.monitor(),
             ...this.movingAverageDailyFiftySignal.monitor(),
             ...this.movingAveragesHourlyBullish.monitor(),
             ...this.movingAveragesFiftyHourlyBullish.monitor(),
-            ...this.bullishBuildingAboveTwentyMA.monitor(),
+            //...this.bullishBuildingAboveTwentyMA.monitor(),
         ];
-
         if (this.signals.length > 0) {
             quoteState.updateSignals(this.quoteStats.quoteName, this.signals,isLive);
             this.signals.forEach((signal) => {
