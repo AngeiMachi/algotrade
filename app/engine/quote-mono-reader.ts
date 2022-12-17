@@ -71,7 +71,6 @@ export class QuoteMonoRunner {
         for (let i=(timeDiff/5);i>0;i--) {
             const interval = quoteIntervals[Object.keys(quoteIntervals)[Object.keys(quoteIntervals).length-i]];
             if (interval) {
-                logger.info("API-Interval:"+this.quoteStats.quoteName+JSON.stringify(interval));
                 this.recordNewStockInterval(interval,isLive);
             }
             

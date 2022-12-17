@@ -8,7 +8,7 @@ import { QuotesIterator } from './quotes-iterator';
 import * as quoteCache from './quotes-cache';
 //const tdaclient = require('tda-api-client');
 
-const quotes = ["BABA"];
+const quotes = ["NFLX","SPY","SQQQ"];
 
 export default async function startApp() {
     try { 

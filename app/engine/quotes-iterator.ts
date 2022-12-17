@@ -10,8 +10,6 @@ import { QuoteMonoRunner } from './quote-mono-reader';
 
 import { IQuotes, IQuoteFullIntervalData } from '../models/quote-data.model';
 
-const INTERVAL_TIME = globalConfig.Mock.IsMock? globalConfig.Mock.intervalLapTime : 300000; // 300000 = 5 mins;
-
 export class QuotesIterator {
     private quotes: IQuotes = {};
     private quoteIndex: {[key:string]:number}={};
@@ -53,33 +51,29 @@ export class QuotesIterator {
     }
 
     public async initiateQuotesWatch() {
-        let i = 0;
-        if (Object.keys(this.quotes).length > 0) {
-            const iterateStockInterval = setInterval(async () => {
-                await this.iterateQuotes();
-                if (Object.keys(this.quotes).length === 0) {
-                    clearInterval(iterateStockInterval);
-                }
-            }, INTERVAL_TIME + i++ * 100);
-        } else {
-            throw Error('No Stocks were initialized');
-        }
+        // let i = 0;
+        // if (Object.keys(this.quotes).length > 0) {
+        //     const iterateStockInterval = setInterval(async () => {
+        //         await this.iterateQuotes();
+        //         if (Object.keys(this.quotes).length === 0) {
+        //             clearInterval(iterateStockInterval);
+        //         }
+        //     }, INTERVAL_TIME + i++ * 100);
+        // } else {
+        //     throw Error('No Stocks were initialized');
+        // }
     }
 
     initiateQuoteWatch(quoteName: string) {
-        const nextRunTime = moment(this.initializationTime).add(INTERVAL_TIME+this.quoteIndex[quoteName], 'ms').toDate();
-
-        schedule.scheduleJob(nextRunTime, async () => {
-            const quoteSetInteval = setInterval(async () => {
-                if (!this.quotes.hasOwnProperty(quoteName)) {
-                    clearInterval(quoteSetInteval);
-                }
-                await this.iterateQuote(quoteName);
-            }, INTERVAL_TIME);
-
+        //const nextRunTime = moment(this.initializationTime).add(INTERVAL_TIME+this.quoteIndex[quoteName], 'ms').toDate();
+        let runCron="5 0,5,10,15,20,25,30,35,40,45,50,55  * * * *";
+        if (globalConfig.Mock.IsMock && globalConfig.Mock?.intervalLapTime) {
+            runCron = globalConfig.Mock?.intervalLapTime;
+        } 
+        
+        schedule.scheduleJob(runCron, async () => {
             await this.iterateQuote(quoteName);
         });
-        
     }
 
     private initializeQuotes(quotes: string[]) {
