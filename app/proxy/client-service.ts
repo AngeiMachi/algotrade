@@ -3,14 +3,17 @@ import { v4 as uuidv4 } from 'uuid';
 import { QuoteState, QuoteStateSignals } from '../models/state.model';
 import { getState } from '../engine/state';
 import express from 'express';
+
 import * as OneSignal from 'onesignal-node';
 import { ShouldUsePushNotifications } from '../config/globals.config';
 import * as environmentConfig from '../config/environment.Config.json';
-
+import * as quotesIterator from '../engine/quotes-iterator';
 const app = express();
 
 const oneSignalclient = new OneSignal.Client('6caf4483-266e-4b54-a9f8-c3e53671ebf6', 'MjZjMDNkODctMGE3Ny00ODZjLTk2MjItMjA1NTAxMzU4ZGQw');
 const server = require('http').Server(app);
+const bodyParser = require('body-parser')
+const jsonParser = bodyParser.json()
 
 const io = require('socket.io')(server, {
     cors: {
@@ -18,7 +21,7 @@ const io = require('socket.io')(server, {
     },
 });
 
-//app.use(cors());
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(function (req, res, next) {
     // Website you wish to allow to connect
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -37,8 +40,14 @@ app.use(function (req, res, next) {
     next();
 });
 
-app.get('/getAllQuotes', function (req, res) {
+app.get('/getAllQuotes', (req, res) => {
     res.json(getState());
+});
+
+app.post('/addNewQuote',jsonParser,async (req, res) => {
+    const data = req.body;
+    await quotesIterator.addNewQuote(data.quote);
+    res.sendStatus(200);
 });
 
 const PORT = 11111;

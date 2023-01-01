@@ -12,6 +12,7 @@
     "alphavantage": "^1.2.5",
     "app-root-path": "^2.2.1",
     "async-revolver": "^1.0.2",
+    "body-parser": "^1.20.1",
     "bottleneck": "^2.19.5",
     "express": "^4.17.1",
     "lodash": ">=4.17.21",

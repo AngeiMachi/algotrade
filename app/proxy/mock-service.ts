@@ -98,17 +98,31 @@ export async function prepareMockDataTDAmeritrade(quote: string, _marketHours: I
         mockQuote.mockDataResponseKeys = Object.keys(mockData);
 
         let i = 0;
-        do {
-            (mockQuote.mockDataResponse as any)[mockQuote.mockDataResponseKeys[mockQuote.currentInterval]] = mockQuote.mockDataResponseValues[mockQuote.currentInterval];
-            mockQuote.currentInterval++;
+        
+        
+        if  (mockQuotes["SPY"]?.isMockLoaded ) {
+            while (new Date(mockQuote.mockDataResponseKeys[mockQuote.currentInterval])<new Date(mockQuotes["SPY"].mockDataResponseKeys[mockQuotes["SPY"].currentInterval-1])) {
+                (mockQuote.mockDataResponse as any)[mockQuote.mockDataResponseKeys[mockQuote.currentInterval]] = mockQuote.mockDataResponseValues[mockQuote.currentInterval];
+                mockQuote.currentInterval++;
+    
+                if (mockQuote.currentInterval > 400) {
+                    logger.error('prepareMockDataTDAmeritrade ' + quote + '- mock data corrupted');
+                }
+            } 
 
-            if (mockQuote.currentInterval > 400) {
-                logger.error('prepareMockDataTDAmeritrade ' + quote + '- mock data corrupted');
-            }
-        } 
-        while ((mockQuote.mockDataResponseKeys[mockQuote.currentInterval] !== marketHours.sessionHours.regularMarket.start && globalConfig.Mock.startAtOpen) || 
-        (!mockQuote.mockDataResponseKeys[mockQuote.currentInterval].includes(marketHours.date+' '+globalConfig.Mock.MockDataLiveSimulationTime) && !globalConfig.Mock.startAtOpen));
-
+        }  else {
+            do {
+                (mockQuote.mockDataResponse as any)[mockQuote.mockDataResponseKeys[mockQuote.currentInterval]] = mockQuote.mockDataResponseValues[mockQuote.currentInterval];
+                mockQuote.currentInterval++;
+    
+                if (mockQuote.currentInterval > 400) {
+                    logger.error('prepareMockDataTDAmeritrade ' + quote + '- mock data corrupted');
+                }
+            } 
+            while ((mockQuote.mockDataResponseKeys[mockQuote.currentInterval] !== marketHours.sessionHours.regularMarket.start && globalConfig.Mock.startAtOpen) || 
+            (!mockQuote.mockDataResponseKeys[mockQuote.currentInterval].includes(marketHours.date+' '+globalConfig.Mock.MockDataLiveSimulationTime) && !globalConfig.Mock.startAtOpen));
+        }
+        
         mockQuote.isMockLoaded = true;
         mockQuotes[quote] = mockQuote;
 
@@ -122,7 +136,15 @@ export async function serveMockDataTDAmeritrade(quote: string): Promise<any> {
     const mockQuote = mockQuotes[quote];
     return new Promise((resolve, reject) => {
         try {
-            if (mockQuote.mockDataResponseKeys[mockQuote.currentInterval]) {
+            if (mockQuotes['SPY'].isMockLoaded && mockQuote.quote!=='SPY') {
+                if(new Date(mockQuote.mockDataResponseKeys[mockQuote.currentInterval])<=new Date(mockQuotes["SPY"].mockDataResponseKeys[mockQuotes["SPY"].currentInterval-1])) {
+                    (mockQuote.mockDataResponse as any)[mockQuote.mockDataResponseKeys[mockQuote.currentInterval]] =
+                    mockQuote.mockDataResponseValues[mockQuote.currentInterval];
+                    mockQuote.currentInterval++;
+                }
+            }
+            
+            else if (mockQuote.mockDataResponseKeys[mockQuote.currentInterval]) {
                 (mockQuote.mockDataResponse as any)[mockQuote.mockDataResponseKeys[mockQuote.currentInterval]] =
                     mockQuote.mockDataResponseValues[mockQuote.currentInterval];
                 mockQuote.currentInterval++;

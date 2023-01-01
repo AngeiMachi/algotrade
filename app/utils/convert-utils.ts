@@ -94,16 +94,19 @@ export function convertTDAmeritradeDailyIntervals(intervals: ITDAmeritradeInterv
     const convertedQuoteIntervalsData: IQuoteFullIntervalData[] = [];
 
     intervals.forEach((item, index) => {
-        const interval: IQuoteFullIntervalData = {
-            open: item.open,
-            high: item.high,
-            low: item.low,
-            close: item.close,
-            volume: item.volume,
-            timeIsrael: new Date(moment(item.datetime).tz('Asia/Jerusalem').format('YYYY-MM-DD HH:mm:ss')),
-            timeNewYork: new Date(moment(item.datetime).tz('America/New_York').format('YYYY-MM-DD HH:mm:ss')),
-        };
-        convertedQuoteIntervalsData.push(interval);
+        if(item){
+            const interval: IQuoteFullIntervalData = {
+                open: item.open,
+                high: item.high,
+                low: item.low,
+                close: item.close,
+                volume: item.volume,
+                timeIsrael: new Date(moment(item.datetime).tz('Asia/Jerusalem').format('YYYY-MM-DD HH:mm:ss')),
+                timeNewYork: new Date(moment(item.datetime).tz('America/New_York').format('YYYY-MM-DD HH:mm:ss')),
+            };
+            convertedQuoteIntervalsData.push(interval);
+        }
+
     });
     return convertedQuoteIntervalsData;
 }

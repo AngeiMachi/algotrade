@@ -103,12 +103,17 @@ export function calculateMovingAverage(
 }
 
 export function getPreviousCandle(intervals: ITDAmeritradeIntervalData[], tradingDate: string, timeFrame: TimeFrame = TimeFrame.Daily): ITDAmeritradeIntervalData | null {
-    let previousDay: string;
+    let previousDay: string=tradingDate;
     let index: number = -1;
+    let retryCount = 10;
 
     if (timeFrame == TimeFrame.Daily) {
-        previousDay = getPreviousTradingDate(tradingDate) as string;
-        index = getLastTradingDateIndex(intervals, previousDay);
+        while (index===-1 || intervals.length===0 || retryCount<=0){
+
+            previousDay = getPreviousTradingDate(previousDay) as string;
+            index = getLastTradingDateIndex(intervals, previousDay);
+            retryCount--;
+        }
     } else if (timeFrame == TimeFrame.Weekly) {
         index = getLastTradingWeekIndex(intervals, tradingDate);
     }

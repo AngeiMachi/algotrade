@@ -7,7 +7,7 @@
         "quote2": ["AMD", "ROKU", "TSLA", "DIS", "AAPL", "XLNX", "NVDA", "LULU", "WDC", "RH",
             "WYNN", "PYPL", "AVGO", "EA", "CRM", "PANW", "HD", "UNH", "AMZN"],
         "quote3": ["NIO"],
-        "LEADERS":["SPY","IWM","QQQ","SQQQ","SPXU","TQQQ","IWM","XBI","ARKK","LABD","FXI","AAPL","AMZN","GOOGL","AMD","NVDA","TSLA","NFLX","META","MSFT","IBM","XLE","ORCL"]
+        "LEADERS":["SPY","IWM","QQQ","SQQQ","SPXU","TQQQ","IWM","XBI","ARKK","LABD","FXI","AAPL","AMZN","GOOGL","AMD","NVDA","TSLA","NFLX","META","MSFT","IBM","XLE","ORCL","CAT"]
  
     },
     "AlphaVantage": {

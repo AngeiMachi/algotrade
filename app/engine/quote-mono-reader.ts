@@ -48,7 +48,7 @@ export class QuoteMonoRunner {
 
         this.bullishHODSignal = new BullishHODSignal(this.quoteStats);
         this.bullishLevelBreakSignal = new BullishLevelBreakSignal(this.quoteStats);
-        this.bullishVolumeSignal = new BullishVolumeSignal(this.quoteStats);
+        //this.bullishVolumeSignal = new BullishVolumeSignal(this.quoteStats);
         this.movingAveragesSignal = new MovingAveragesSignal(this.quoteStats);
         this.movingAverageDailyTwentySignal =  new MovingAverageDailyTwentySignal(this.quoteStats);
         this.movingAverageDailyFiftySignal =new MovingAverageDailyFiftySignal(this.quoteStats);
@@ -70,7 +70,7 @@ export class QuoteMonoRunner {
         }
         for (let i=(timeDiff/5);i>0;i--) {
             const interval = quoteIntervals[Object.keys(quoteIntervals)[Object.keys(quoteIntervals).length-i]];
-            if (interval) {
+            if (interval && new Date(interval.timeNewYork)>new Date(this.quoteStats.lastInterval.timeNewYork)) {
                 this.recordNewStockInterval(interval,isLive);
             }
             
@@ -84,7 +84,7 @@ export class QuoteMonoRunner {
         this.signals = [
             ...this.bullishHODSignal.monitor(),
             ...this.bullishLevelBreakSignal.monitor(),
-            ...this.bullishVolumeSignal.monitor(),
+            // ...this.bullishVolumeSignal.monitor(),
             // // ...this.movingAveragesSignal.monitor(),
             ...this.movingAverageDailyTwentySignal.monitor(),
             ...this.movingAverageDailyFiftySignal.monitor(),

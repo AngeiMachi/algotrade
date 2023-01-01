@@ -109,6 +109,7 @@ export class QuoteStatistics {
     public addNewInterval(quoteInterval: IQuoteFullIntervalData, isLive: boolean = false) {
         if (quoteUtils.isPremarketTimeByInterval(quoteInterval)){
             this.addPremarketMetadata(quoteInterval)
+            this._lastInterval= quoteInterval;
         } else {
             this._intervalCount++;
             quoteInterval.intervalNumber=this._intervalCount;
