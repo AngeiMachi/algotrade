@@ -86,6 +86,7 @@ export const updateQuote = (quote: QuoteState,shouldSendPush:boolean) => {
 
 const sendPush = async (quote: QuoteState) => {
     let message = quote.quoteName + ': ';
+    let signalsWithNotificationsCount=0
 
     if (!isInPushPolicy(quote)) {
         return;
@@ -93,7 +94,10 @@ const sendPush = async (quote: QuoteState) => {
 
     const signals = _.filter(quote.signalsHistory, { interval: quote.quoteStatistics.intervalCount }) as QuoteStateSignals[];
     signals.forEach((signal) => {
-        message += signal.signalDetails.signalDescription + '\r\n';
+        if (signal.signalDetails.withNotification) {
+            message += signal.signalDetails.signalDescription + '\r\n';
+            signalsWithNotificationsCount++;
+        }
     });
     if (message.length > 59) {
         message = quote.quoteName + ': ' + signals.length + ' Simultanious Signals - Open to view details!';
@@ -108,8 +112,10 @@ const sendPush = async (quote: QuoteState) => {
 
     // using async/await
     try {
-        const response = await oneSignalclient.createNotification(notification);
-        console.log(response.body.id);
+        if (signalsWithNotificationsCount>0){
+            const response = await oneSignalclient.createNotification(notification);
+            console.log(response.body.id);
+        }
     } catch (e) {
         if (e instanceof OneSignal.HTTPError) {
             // When status code of HTTP response is not 2xx, HTTPError is thrown.

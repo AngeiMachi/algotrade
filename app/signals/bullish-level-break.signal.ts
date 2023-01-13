@@ -28,6 +28,7 @@ export class BullishLevelBreakSignal extends Signals {
                     signalGroupType: SignalGroupType.BULLISH_LEVEL_BREAK,
                     signalType: SignalType.BULLISH_BREAK_PREVIOUS_DAY,
                     signalDescription: SignalVerificationReasonEnum.BULLISH_BREAK_PREVIOUS_DAY,
+                    withNotification:true,
                 });
             }
             if (this.didOpenBelowPreviousWeek && this.quoteStats.lastInterval.close > this.quoteStats.metadata.previousWeek.high && !this.didBreakPreviousWeekHigh) {
@@ -36,6 +37,7 @@ export class BullishLevelBreakSignal extends Signals {
                     signalGroupType: SignalGroupType.BULLISH_LEVEL_BREAK,
                     signalType: SignalType.BULLISH_BREAK_PREVIOUS_WEEK,
                     signalDescription: SignalVerificationReasonEnum.BULLISH_BREAK_PREVIOUS_WEEK,
+                    withNotification:true,
                 });
             }
             if (this.didOpenBelowFiftyTwoWeekHigh && this.quoteStats.lastInterval.close > this.quoteStats.metadata.fiftyTwoWeekHigh && !this.didBreakFiftyTwoWeekHig) {
@@ -44,6 +46,7 @@ export class BullishLevelBreakSignal extends Signals {
                     signalGroupType: SignalGroupType.BULLISH_LEVEL_BREAK,
                     signalType: SignalType.BULLISH_BREAK_52_WEEK_HIGH,
                     signalDescription: SignalVerificationReasonEnum.BULLISH_BREAK_52_WEEK_HIGH,
+                    withNotification:true,
                 });
             }
         }

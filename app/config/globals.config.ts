@@ -2,9 +2,9 @@ export const Mock = {
     IsMock: true,
     startAtOpen:false,
     StartLiveSimulationAtInterval: 100,
-    MockDataDate: '2022-12-30',
-    MockDataLiveSimulationTime:"09:00:00" ,
-    intervalLapTime:"*/12 * * * * *"// "/30 * * * * *" = every 30 seconds;
+    MockDataDate: '2023-01-12',
+    MockDataLiveSimulationTime:"13:00:00" ,
+    intervalLapTime:"*/3 * * * * *"// "/30 * * * * *" = every 30 seconds;
     
 };
 export const ShouldUsePushNotifications = true;

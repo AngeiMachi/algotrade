@@ -8,4 +8,5 @@ export interface SignalModel {
     signalSentiment?: SentimentDirectionEnum;
     payload?: any;
     interval?:IQuoteFullIntervalData;
+    withNotification?:boolean;
 }

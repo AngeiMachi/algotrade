@@ -8,13 +8,13 @@ import * as quotesIterator from './quotes-iterator';
 import * as quoteCache from './quotes-cache';
 //const tdaclient = require('tda-api-client');
 
-const quotes = ["SPY","MBIO"];
+const quotes = ["SPY","NFLX"];
 
 export default async function startApp() {
     try {
 
-        //const quotesTofollow = environmentConfig.quotes.LEADERS;
-        const quotesTofollow =quotes;
+        const quotesTofollow = environmentConfig.quotes.LEADERS;
+        //const quotesTofollow =quotes;
         await quoteCache.cacheQuoteListFromTDAmeritradeAPI(quotesTofollow);
 
         const initTime = calculateInitializationTime();
@@ -55,6 +55,6 @@ const calculateInitializationTime = ():Date=> {
             minutesToAdd--;
         }
     }
-   let date = moment(now).add(minutesToAdd, 'm').add(secondsToAdd+9,'s').toDate();
+   let date = moment(now).add(0, 'm').add(0+9,'s').toDate();
    return date;
 }

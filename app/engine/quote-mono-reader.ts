@@ -17,6 +17,8 @@ import { BullishHODSignal,
          from '../signals';
 import { QuoteStatistics } from './quote-statistics';
 import { SignalModel } from '../models/signal.model';
+import { BreakoutFiveMinuteTwentyMaComboSignal,
+        BreakoutFiveMinuteFiftyMaAfterTwentyMaComboSignal } from '../signals-combo';
 
 export class QuoteMonoRunner {
     private quoteStats: QuoteStatistics;
@@ -34,6 +36,9 @@ export class QuoteMonoRunner {
     private movingAveragesHourlyBullish!:MovingAveragesHourlyBullish;
     private movingAveragesFiftyHourlyBullish!:MovingAveragesFiftyHourlyBullish;
     private bullishBuildingAboveTwentyMA!:BullishBuildingAboveTwentyMA;
+
+    private breakoutFiveMinuteTwentyMaComboSignal!:BreakoutFiveMinuteTwentyMaComboSignal;
+    private breakoutFiveMinuteFiftyMaAfterTwentyMaComboSignal!:BreakoutFiveMinuteFiftyMaAfterTwentyMaComboSignal;
 
     constructor(quote: string, todayDate: string = '') {
         this.quoteStats = new QuoteStatistics(quote, todayDate);
@@ -55,6 +60,9 @@ export class QuoteMonoRunner {
         this.movingAveragesHourlyBullish = new MovingAveragesHourlyBullish(this.quoteStats);
         this.movingAveragesFiftyHourlyBullish = new MovingAveragesFiftyHourlyBullish(this.quoteStats);
         this.bullishBuildingAboveTwentyMA = new BullishBuildingAboveTwentyMA(this.quoteStats);
+        
+        this.breakoutFiveMinuteTwentyMaComboSignal = new BreakoutFiveMinuteTwentyMaComboSignal(this.quoteStats);
+        this.breakoutFiveMinuteFiftyMaAfterTwentyMaComboSignal = new BreakoutFiveMinuteFiftyMaAfterTwentyMaComboSignal(this.quoteStats);
 
         Object.keys(quoteIntervals).forEach((key) => {
             this.recordNewStockInterval(quoteIntervals[key]);
@@ -91,7 +99,12 @@ export class QuoteMonoRunner {
             ...this.movingAveragesHourlyBullish.monitor(),
             ...this.movingAveragesFiftyHourlyBullish.monitor(),
             //...this.bullishBuildingAboveTwentyMA.monitor(),
+
         ];
+
+        this.signals=this.breakoutFiveMinuteTwentyMaComboSignal.monitor(this.signals);
+        this.signals=this.breakoutFiveMinuteFiftyMaAfterTwentyMaComboSignal.monitor(this.signals)
+
         if (this.signals.length > 0) {
             quoteState.updateSignals(this.quoteStats.quoteName, this.signals,isLive);
             this.signals.forEach((signal) => {

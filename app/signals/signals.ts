@@ -13,9 +13,7 @@ export abstract class Signals {
         this.quoteState = quoteState.getQuoteStateByName(_quoteStats.quoteName);
     }
 
-    public abstract monitor(): SignalModel[];
+    public abstract monitor(_signals?:SignalModel[]): SignalModel[];
 
-    protected saveSignals() {
-
-    }
+   
 }

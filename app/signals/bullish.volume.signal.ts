@@ -24,6 +24,7 @@ export class BullishVolumeSignal extends Signals {
                     signalGroupType: SignalGroupType.BULLISH_VOLUME,
                     signalType: SignalType.VOLUME_AVERAGE_SPIKE,
                     signalDescription: SignalVerificationReasonEnum.VOLUME_AVERAGE_SPIKE,
+                    withNotification:true,
                 });
             }
             if (this.isSuperExtremeVolumeInterval()) {
@@ -31,6 +32,7 @@ export class BullishVolumeSignal extends Signals {
                     signalGroupType: SignalGroupType.BULLISH_VOLUME,
                     signalType: SignalType.SUPER_VOLUME_INTERVAL,
                     signalDescription: SignalVerificationReasonEnum.SUPER_VOLUME_INTERVAL,
+                    withNotification:true,
                 });
             }
             if (this.isAsFirstVolume()) {
@@ -38,6 +40,7 @@ export class BullishVolumeSignal extends Signals {
                     signalGroupType: SignalGroupType.BULLISH_VOLUME,
                     signalType: SignalType.AS_FIRST_VOLUME_INTERVAL,
                     signalDescription: SignalVerificationReasonEnum.AS_FIRST_VOLUME_INTERVAL,
+                    withNotification:true,
                 });
             }
         }
