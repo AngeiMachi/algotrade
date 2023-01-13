@@ -55,6 +55,6 @@ const calculateInitializationTime = ():Date=> {
             minutesToAdd--;
         }
     }
-   let date = moment(now).add(0, 'm').add(0+9,'s').toDate();
+   let date = moment(now).add(minutesToAdd, 'm').add(secondsToAdd+5,'s').toDate();
    return date;
 }
