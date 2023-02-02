@@ -8,7 +8,7 @@
             "WYNN", "PYPL", "AVGO", "EA", "CRM", "PANW", "HD", "UNH", "AMZN"],
         "quote3": ["NIO"],
         "LEADERS":["SPY","IWM","QQQ","SQQQ","SPXU","TQQQ","IWM","XBI","ARKK","LABD","FXI","AAPL","AMZN","GOOGL","AMD","NVDA","TSLA","NFLX","META","MSFT","IBM","XLE","ORCL","CAT","SQ",
-                    "UNH","TDOC","GME","CVNA","BBBY"]
+                    "BZFD","IQ","RBLX","TEAMS","GME","CVNA","BBBY","FUBO","ETSY","JD","UPST","TDD","ROKU","RIVN","AFRM","APPS","PLTR","MCD","SI","U","XPEV","MS","LI","SNOW"]
  
     },
     "AlphaVantage": {

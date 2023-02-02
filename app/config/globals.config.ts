@@ -1,5 +1,5 @@
 export const Mock = {
-    IsMock: true,
+    IsMock: false,
     startAtOpen:false,
     StartLiveSimulationAtInterval: 100,
     MockDataDate: '2023-01-12',
@@ -10,25 +10,23 @@ export const Mock = {
 export const ShouldUsePushNotifications = true;
 
 export const Quotes = {
-    groups:[
-
-    ],
-    names:{
-
-    },
     indexes:{
+        behaviors:[],
         signals:[],
-        names:[],
+        names:["SPY","QQQ","IWM","SQQQ","TQQQ","XLE","XLF","JETS","ARKK","SMH","TZA"],
     },
     leaders:{
+        behaviors:[],
         signals:[],
-        names:[],
+        names:["AAPL","AMZN","TSLA","MSFT","META","BA","GOOGL","AMD","NVDA","AMZN","CAT"],
     },
     trending:{
+        behaviors:[],
         signals:[],
         names:[],
     },
     smallcap:{
+        behaviors:[],
         signals:[],
         names:[],
     },
