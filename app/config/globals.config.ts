@@ -1,8 +1,86 @@
-export const MAX_QUOTES = 5;
-export const VOLUME_THRESHOLD_ALARM = 1.7;
-export const PERCENTAGE_CHANGE_THRESHOLD = 0.3;
-export const INTERVAL_TIME = 300000; // 300000 = 5 mins;
-export const MINIMUM_INTERVALS_TO_CALCULATE_AVERAGE_VOLUME = 9;
-export const INTERVAL_PROPERTY_NAME = "Time Series (5min)";
-export const METADATA_PROPERTY_NAME = "Meta Data";
-export const LAST_REFRESHED_PROPERTY_NAME = "3. Last Refreshed";
+import { BehaviorTypes } from '../models/enums';
+
+export const Mock = {
+    IsMock: false,
+    startAtOpen:false,
+    StartLiveSimulationAtInterval: 100,
+    MockDataDate: '2023-05-31',
+    MockDataLiveSimulationTime:"10:00:00" ,
+    intervalLapTime:"*/120 * * * * *"// "/30 * * * * *" = every 30 seconds;
+    
+};
+export const ShouldUsePushNotifications = true;
+
+export const QuotesConfig = {
+    producion: {
+        indexes:{
+            behaviors:[],
+            signals:[],
+            names:["SPY","QQQ","IWM","SQQQ","TQQQ","XLE","XLF","JETS","ARKK","SMH","TZA"],
+        },
+        leaders:{
+            behaviors:[],
+            signals:[],
+            names:["AAPL","AMZN","TSLA","MSFT","META","BA","GOOGL","AMD","NVDA","CAT","ORCL","GE"],
+        },
+        trending:{
+            behaviors:[],
+            signals:[],
+            names:[],
+        },
+        smallcap:{
+            behaviors:[
+                BehaviorTypes.DeprecateIfNotAboveMovingAverages
+            ],
+            signals:[
+    
+            ],
+            names:[
+                "NCLH","PATH","SHOP","ADBE","CRM","AMAT","ZM","GETY","SBUX","PINS","CVNA","XOM","GME","MTCH","AI",
+                "TWLO","APLK","UPST","AFRM","ROKU","INTC","LUV","AAL","MRVL","MARA","COIN","RIOT",
+                "DKNG","SAVA","BYND","SNOW","SPOT","FUBO","TEAM","CVX","GCT",
+                "ABNB","TTD","DOCU","NOVA","UBER","V","MA","IBM","TGT",
+                "UPS","U","RBLX","CMG","UNH","RH","ETSY","SSYS","DASH","PLTR","WDC","IONQ",
+                "FVRR","AXSM","VERU","BBIB","SQ","PYPL","CRWD","PANW","FDX","ZIM","MCD",
+                "HD","KO","WMT","DIS","T","CSCO","APPS"
+            ],
+        },
+    },
+    testing : {
+        indexes:{
+            behaviors:[],
+            signals:[],
+            names:["SPY","QQQ","IWM","SQQQ","TQQQ","XLE","XLF","JETS","ARKK","SMH","TZA"],
+        },
+        leaders:{
+            behaviors:[],
+            signals:[],
+            names:[
+                 "AAPL","AMZN","TSLA","MSFT","META","BA","GOOGL","AMD","NVDA","CAT","ORCL","GE"
+            ],
+        },
+        trending:{
+            behaviors:[],
+            signals:[],
+            names:[],
+        },
+        smallcap:{
+            behaviors:[
+                BehaviorTypes.DeprecateIfNotAboveMovingAverages
+            ],
+            signals:[
+    
+            ],
+            names:[
+                "PATH","SHOP","ADBE","CRM","AMAT","ZM","GETY","SBUX","PINS","CVNA","XOM","GME","MTCH","AI",
+                "TWLO","APLK","UPST","AFRM","ROKU","INTC","LUV","AAL","MRVL",
+                "DKNG","SAVA","BYND","SNOW","SPOT","FUBO","TEAM","CVX","GCT",
+                "ABNB","TTD","DOCU","NOVA","UBER","V","MA","IBM","TGT",
+                "UPS","U","RBLX","CMG","UNH","RH","ETSY","SSYS","DASH","PLTR","WDC",
+                "FVRR","AXSM","VERU","BBIB","SQ","PYPL","CRWD","PANW","FDX","ZIM","MCD",
+                "HD","KO","WMT","DIS","T","CSCO","APPS"
+            ],
+        },
+    }
+    
+}

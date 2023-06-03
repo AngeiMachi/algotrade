@@ -11,7 +11,8 @@
         "max-line-length": [
             true,
             140
-        ]
+        ],
+        "no-string-literal": false
     },
     "rulesDirectory": []
 }

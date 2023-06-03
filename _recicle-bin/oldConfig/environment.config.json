@@ -1,0 +1,64 @@
+{
+    "AlphaVantageAPIKeys":[
+        {   "quotes":["TSLA","AMZN","AAPL","GOOGL", "BA","NFLX","FB","TLRY","ROKU","DIS","CAT"
+            ,"QCOM","BABA","CGC","JD","AMD","MSFT","XLNX","NVDA","LULU","BAC","GS","WYNN",
+            "MU","PYPL","AVGO","EA","CRM","PANW","COST","YELP","JPM","CMG","WDC","RH",
+            "SQ","TWTR","BIDU","HD","CVX","UNH","FDX","V","MOMO","BBY"],
+            "key":"S5AMKCFQEKG7S7DW" 
+        },
+        {
+            "quotes":["ROKU","AMZN","AAPL","GOOGL","QCOM"],
+            "key": "SDNN0HEHB06GNTFB"
+        },
+        {
+            "quotes":["ROKU", "SLS", "S", "TWTR", "SNAP", "FDC", "F", "BAC", "AMD", "CCO", "CHK", "NOK", "INTC", "T", "SWN", "ECA", "GE",
+                      "FB", "COG", "FISV", "WFC", "ABEV", "SMSI", "ZNGA", "SBUX", "QQQ", "TEVA", "BMY", "WMB", "PFE", "MU", "SIRI",
+                      "PBR", "ITUB", "MSFT", "FCEL", "NAKD", "SINT", "AAPL", "CMCSA", "AUY", "KMI", "BYND", "TVIX", "DNR", "NIO",
+                      "RRC", "BABA", "CSCO", "CPE", "FLEX", "YNDX", "MAT", "FCX", "TQQQ", "LEXEA", "BBD", "RIG", "GT", "JPM", "ACHN",
+                      "MGM", "WSG", "TMUS", "VZ", "SCHW", "ABBV", "AVP", "VALE", "SQQQ", "KO", "GOLD", "JCP", "VER", "TRNX", "NFLX",
+                      "AR", "C", "VOD", "CZR", "NBR", "NEM", "ARRY", "NLY", "TSLA", "BP", "HBAN", "KR", "TRQ", "EXPE", "OAS", "TAL",
+                      "RF", "UPS", "EBAY", "VGR", "MS", "SAN", "QCOM", "ACB", "DIS","AM", "PYPL", "AAL", "WPX", "XOM", "KEY", "UBER",
+                      "MRVL", "QEP", "MO", "MRK", "CARB", "MTG", "X", "XEL", "MRO", "CVX", "AGN", "HPE", "ROKU", "NVDA", "CX", "SLB",
+                      "COP", "KGC", "WP", "ET", "EQT", "HAL", "BBBY", "CY", "GGB", "USB", "VEON", "APC", "FIS", "MMSI", "GFI", "TYPE",
+                      "CTL", "TLT", "CLNY", "IBN", "GOOGL", "ORCL", "HL", "CLF", "AMRN", "GLW", "ATVI", "LUV", "XLNX", "VIV", "CSX", "SLM",
+                      "ZBH", "MPW", "AMAT", "FE", "GM", "SQ", "NWL", "JD", "KOS", "PG", "LPI", "EXC", "GPOR", "OXY", "CNX", "IVZ", "JNPR",
+                      "TGT", "IGT", "TXN", "VSTM", "DPW", "APHA", "GHDX", "FTV", "CRZO", "M", "CLDR", "HMY", "DOW", "HPQ", "V", "MCD", "LK", 
+                      "WLL", "CRM", "FITB", "AGNC", "WY", "BSX", "AMZN", "VICI", "JNJ", "DISH", "AKS","EMB", "DVN", "GOOG", "GILD", "BK", "LOW",
+                      "CDE", "HBIO", "HST", "CVS", "WMT", "GLUU", "GPS", "ESV", "ETRN", "NOV", "PEP", "IAG", "DB", "EIX", "ON", "CCJ", "MPLX",
+                      "APA", "BA", "TEAM", "MHK", "TSM", "QRTEA", "AFL", "CVE", "WORK", "BX", "SYMC", "FCAU", "REKR", "CAT", "AXP", "INFY", "AZN",
+                      "CHMA", "WU", "LVS", "ABT", "RLGY", "NBL", "CFG", "XOG", "CTRP", "CL", "BSMX", "PDD", "MMM", "ABB", "DBD", "ERIC", "NOG", "PCG",
+                      "GPRO", "OSTK", "INVH", "MET", "BHGE", "EPD", "CNC", "DAL", "FHN", "ENLC", "PSTG", "ATUS", "SAVE", "KHC", "UAA", "NKE", "MDLZ",
+                      "OBLN", "AES", "IP", "AG", "LKQ", "MAS", "MYL", "HBI", "GNC", "PPL", "SU", "CELG", "UBS", "ENDP", "SLDB", "MDT", "CAG", "TBLT",
+                      "LLY", "NYMT", "BTG", "KIM", "NYCB", "MPC", "SE","BRFS", "SRCI", "ACST", "VIPS", "ALXN", "BBT", "DHI", "ZIOP", "EHTH", "JBLU",
+                      "PBCT", "QD", "UNH", "ENB", "PM", "VIVE", "SM", "CCL", "PTEN", "SID", "COF", "NLSN", "GME", "FIT", "MTDR", "MDR", "SENS", "AMCR",
+                      "NAVI", "ZION", "TWLO", "WEN", "FTI", "ENPH", "BB", "D", "VCRA", "ODP", "AMGN", "PES", "SNBR", "PE", "CTXS", "ZM", "CUZ", "EOG",
+                      "WBA", "IEF", "LEN", "OHI", "JWN", "KSS", "WPG", "NGD", "TECK", "GPK", "UHS", "ALGN", "MA", "NXPI", "HOME", "SYF", "BWA", "IBM",
+                      "AIG", "MLCO", "COTY", "PAYS", "TJX", "JCI", "WDC", "ITW", "NTNX", "SVMK", "STM", "FAST", "GLPI", "DOCU", "DISCA", "THC", "GIS",
+                      "K", "CDEV", "RES", "BRX", "CYH", "FET", "GSK", "LYG", "PINS", "AMRS", "CGC", "NE", "VLO", "DFS", "HTZ", "TPR"],
+            "key": "M2ADSGO7ANB9QO3O"
+        }
+    ],
+    "TDAmeritradeAPI": {
+        "api_key":"ANGELMALCA",
+        "refresh_token":"KCODlzMldxY1r+07JIDxPxqwTjL9id+hDPagCJFkCZv2VzBIE9BK1xCHxRz/obyUu/riYv3TwY0MkXpZQvtYQ0ucdM43dEEhi9CiMKd5Upo69FJJkcn07WfZFmYJ0XZid1MqP/ETK5zcHlWufX1n2EbD5L18axYX2JO7abHQeP+/sbcDSMP+Kdx+hKthuh1G3A2zHesuCUjSQOIpX07kpf4MSs//RWx4nezvYLi4Yhrr3fbHs7zZyxdsqGS5hOt9Ep9nD93Nj4KWbuuo2NF0MHLkMK3G6p2I6h6obtIUb83HgoSupLZqVMqnSmLnpSRgBv7D/O6Tno7ghfeN71KPjNcO8RiMdjxs+8QWgolQSMvQbPcgJf7qIumJzCqUvkxUvTQ/6/HJ2woacfdVcc8Tzg+bHBDg7kVj+moq3cRUsiMpjo+FQLPFSAnr/Rt100MQuG4LYrgoVi/JHHvlNMuPho7T/9/OZZqCMM51w6j2HuElRmGC8hGR1aPzKaRXWcWJgK5pN1ZzqR7lCvf96y4I9IXT1yjV7oD35xdlXJbqy91QuqGTltbHRPmKrAZeOMDAboYltt5eeKvHlvU1SZA0XW08FNkuFxY3BOLTpyMdUP3UB6P0cRPe53mX1kTVg20lUzSk8j4nCuo34P4t0oaJ/wfu42319L/E03QchYTDn1cGU+NoXAAhbWwIm1OBMW1lU7oJDZG+w2Lizy/HNMcwGSyCgEI0HbTcVie42fFiEIyJ3DYLj3YTIdVTubPsvqC6WcE6wvzn0qqUbQIb/YvbDtq1v3529Yly/w9qhVrimM5cXDUHAPIgTRy5X81ovBnIvfH+x6hdeP31VNZ+CQiDohATo7mQmeuMPnIA2NGHtmMwB6TFBXsIZcTL4OpDOrfq/1kW+FhT75Q=212FD3x19z9sWBHDJACbC00B75E",
+        "manual":"https://www.reddit.com/r/algotrading/comments/914q22/successful_access_to_td_ameritrade_api/",
+        "bearer_token":"VdSJJn2afaVDdukOHxQtCJHzRsTpwpaAb499ADdxA7owDlrG9EHBOmFYdnln6cq9tW0X56mwG2Ec8FaN7FSFUgGemfYKPN5ZA/bvWofeUmhVaDW/vcCGUyPj+xCXDTdsR790S3d+xYBYv6Zb+ekw+DL0wrwKo1I7kWECKWBF0Mdx/ZoqSOh0QVTPaiQTKEP8wqvtXBDIZfKw+AjLqpW1es2I42nRok3DrdadIgcQXz6mczlZiS2TpHeQmOVFoIpAam4RErS/i3Y10IQy3NyLxxpv684l62DhgO+cxKRInDvKJO9oVJ54bF5w3yAYI9QfRDLZMJyPchXwx0IyumTD1Q39YOKUqCLko8kWt7KcSav1RSw0VbWSxvw25Lem5NXFpseG8MC1iMo0fFGlSWht6qJUX32Adso8IumaAIGqgMPXgt8MglUbHMXIea/xLeppFpqWKZp83ZwMDV/eZwkcczC0F13sahH+Yhe2QrQeIGU4jLqhxEOafG8RR3K/iKyYeSQFOeCjIkACaTD4O100MQuG4LYrgoVi/JHHvlqT9vw9nHAeBqkgH/HkPzI8mV8qFMeInLfJrhm74S/T85sAq7xsOeZ2yNuHoYCVGoeG31HoX5eQO1oVtqV53s4W5Z/wQqVOQWhEKiDnOVEDH2AW/tyhaqghzFC1/GWLOXbMSVdIy9I63Lakhq1QkjK97LClxp5YtJw0BA9IpQ0rUhYo90ZTLwmXpHwHxwEAOFzZ47aDAwE9Cy52b6tQYkRcmujpidJ9SQ8SKkBkNhoqBPWspglnnHA9ngbXkkZ1PP426kB3A4awEoOxUw4VElPP9VYp78OCTEFGQcbdhCjm8hHuh4kC8PMgJgQvw0PXJcs9WgGyp5352RQC5bgC+CgCbhqRJ3/DFwTvHWO2J+m6RtSkUQLl4YNnOd80SLN4I0Arowo9h8D3KPGrrb6OeZZ3IE/Wc6uw0/WXnKvfjfLIgbUUCdGLzC5847vjhkToY+e57gfRYTcfmSCRZtFtgCRPJL4k1vFQX036LYSx2g3JGmWLGcMaEs7X66Ak+7d9r5492+hPaZvPNzG6DA==212FD3x19z9sWBHDJACbC00B75E",
+        
+        "URL": {
+            "get_historical_5_minutes":"https://api.tdameritrade.com/v1/marketdata/{{quote}}/pricehistory?apikey=ANGELMALCA&frequencyType=minute&frequency=5&startDate=1530792613000&needExtendedHoursData=false",
+            "get_historical_daily_full_Year":"https://api.tdameritrade.com/v1/marketdata/{{quote}}/pricehistory?apikey=ANGELMALCA&periodType=year&frequencyType=daily"
+        }
+    },
+    "PushedNotifications" : {
+        "appKey": "6MHfu13fe8x87a8xhhU6",
+        "appSecret": "FgEq6GBXyaN5ItNuEDxYGzeYWwHj5hAMjGsp5jI4dfXFnCFeSYmPjVhLhCsMdllb",
+        "targetType": "app"
+    },
+    "Mock": {
+        "IsMock":false,
+        "StartLiveSimulationAtInterval":9,
+        "MockDataDate": "" 
+    },
+    "ShouldUsePushNotifications": false
+
+}
