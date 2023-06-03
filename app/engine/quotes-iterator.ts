@@ -6,7 +6,7 @@ import { logger } from '../config/winston.config';
 
 import * as  proxyService  from '../proxy/proxy-service';
 import { QuoteMonoRunner } from './quote-mono-reader';
-
+import * as behaviorManager from './behavior-manager';
 import { IQuotes, IQuoteFullIntervalData } from '../models/quote-data.model';
 
 
@@ -45,14 +45,19 @@ export const addNewQuote = async (quoteName: string)=> {
         logger.error('error at Stock-Reader.initializeQuotesData - quote=' + quoteName + ' does not Exist and being deprecated');
         return;
     }
-    const quoteMetadata = await proxyService.getMetaDataPerDay(quoteName, quoteUtils.getCurrentTradingDate());
 
+    const quoteMetadata = await proxyService.getMetaDataPerDay(quoteName, quoteUtils.getCurrentTradingDate());
     if (!quoteMetadata) {
         delete quotes[quoteName];
         logger.error('error at Stock-Reader.initializeQuotesData - quote=' + quoteName + ' could not load metadata and being deprecated');
         return;
     }
-    quotes[quoteName].initializeStockData(quoteIntervals, quoteMetadata);
+
+    behaviorManager.manangeAfterMetadata(quoteName,quoteMetadata,quotes);
+    if (quotes[quoteName]) {
+        quotes[quoteName].initializeStockData(quoteIntervals, quoteMetadata);
+    }
+
 }
 export const initiateQuoteWatch=(quoteName: string)=> {
     let runCron="5 0,5,10,15,20,25,30,35,40,45,50,55  * * * *";
@@ -94,9 +99,10 @@ const iterateQuotes= () => {
 
             proxyService.getTDAmeritradeIntraday(quoteKey, false).then(quoteIntervals=>{
                 const stockInterval: IQuoteFullIntervalData = quoteUtils.getRecentIntervalData(quoteIntervals);
-
-                quoteStockStats.recordQuoteIntervalsIncludingMissed(quoteIntervals, true);
-    
+                
+                if (quoteIntervals) {
+                    quoteStockStats.recordQuoteIntervalsIncludingMissed(quoteIntervals, true);
+                }
                 clearQuoteWhenIsLastInterval(quoteKey, stockInterval);
             });
 

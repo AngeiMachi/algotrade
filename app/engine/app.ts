@@ -1,20 +1,19 @@
 const schedule = require('node-schedule');
 import moment from 'moment-timezone';
 import { logger } from '../config/winston.config';
-import * as environmentConfig from '../config/environment.Config.json';
 import * as globalConfig from '../config/globals.config';
 
 import * as quotesIterator from './quotes-iterator';
 import * as quoteCache from './quotes-cache';
-//const tdaclient = require('tda-api-client');
+import * as behaviorManager from './behavior-manager';
 
 const quotes = ["SPY","AMZN"];
 
 export default async function startApp() {
     try {
 
-        const quotesTofollow = environmentConfig.quotes.LEADERS;
-        //const quotesTofollow =quotes;
+        const quotesTofollow = behaviorManager.getQuotes();
+        
         await quoteCache.cacheQuoteListFromTDAmeritradeAPI(quotesTofollow);
 
         const initTime = calculateInitializationTime();

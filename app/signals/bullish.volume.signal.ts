@@ -71,7 +71,8 @@ export class BullishVolumeSignal extends Signals {
     }
 
     private isSuperExtremeVolumeInterval(): boolean {
-        if (this.quoteStats.metadata.averageDailyVolume10Day <= this.quoteStats.lastInterval.volume) {
+        if (this.quoteStats.metadata.averageDailyVolume10Day as number <= this.quoteStats.lastInterval.volume &&
+            this.quoteStats.metadata.averageDailyVolume10Day as number>0) {
             return true;
         }
         return false;

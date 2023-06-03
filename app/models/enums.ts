@@ -20,6 +20,7 @@ export enum SignalVerificationReasonEnum {
     BULLISH_HIGH_OF_DAY_WITH_PRIOR_DAY_BREAKOUT = 'Bull HOD With Day Break',
     BULLISH_HIGH_OF_DAY = 'Bull HOD',
     BULLISH_HIGH_OF_DAY_WITH_PREMARKET_BREAKOUT = 'Bull HOD-Pre mrkt Break',
+    BULLISH_SEQUENCE_MOVE = 'Bull sequence starting',
     BULLISH_BREAK_PREVIOUS_DAY = 'Bull Break Prev Day',
     BULLISH_BREAK_PREVIOUS_WEEK = 'Bull Break Prev Week',
     BULLISH_BREAK_52_WEEK_HIGH = 'Bull Break 52 week High',
@@ -55,6 +56,7 @@ export enum SignalType {
     BULLISH_HIGH_OF_DAY_WITH_PRIOR_DAY_BREAKOUT,
     BULLISH_HIGH_OF_DAY,
     BULLISH_HIGH_OF_DAY_WITH_PREMARKET_BREAKOUT,
+    BULLISH_SEQUENCE_MOVE,
     BULLISH_BREAK_PREVIOUS_DAY,
     BULLISH_BREAK_PREVIOUS_WEEK,
     BULLISH_BREAK_52_WEEK_HIGH,
@@ -87,4 +89,8 @@ export enum MovingAverageType {
     SMA50 = 50,
     SMA100 = 100,
     SMA200 = 200,
+}
+
+export enum BehaviorTypes {
+    DeprecateIfNotAboveMovingAverages
 }

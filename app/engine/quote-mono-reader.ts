@@ -13,7 +13,8 @@ import { BullishHODSignal,
          MovingAveragesSignal,
          MovingAveragesHourlyBullish, 
          MovingAveragesFiftyHourlyBullish,
-         BullishBuildingAboveTwentyMA } 
+         BullishBuildingAboveTwentyMA,
+         BullishMoveSequenceSignal } 
          from '../signals';
 import { QuoteStatistics } from './quote-statistics';
 import { SignalModel } from '../models/signal.model';
@@ -36,6 +37,7 @@ export class QuoteMonoRunner {
     private movingAveragesHourlyBullish!:MovingAveragesHourlyBullish;
     private movingAveragesFiftyHourlyBullish!:MovingAveragesFiftyHourlyBullish;
     private bullishBuildingAboveTwentyMA!:BullishBuildingAboveTwentyMA;
+    private bullishMoveSequenceSignal!:BullishMoveSequenceSignal
 
     private breakoutFiveMinuteTwentyMaComboSignal!:BreakoutFiveMinuteTwentyMaComboSignal;
     private breakoutFiveMinuteFiftyMaAfterTwentyMaComboSignal!:BreakoutFiveMinuteFiftyMaAfterTwentyMaComboSignal;
@@ -50,7 +52,7 @@ export class QuoteMonoRunner {
         quoteState.addNewQuote(this.quoteStats);
 
         //quoteIntervals = quoteUtils.cleanPreMarketIntervals(quoteIntervals, marketHours);
-
+        this.bullishMoveSequenceSignal = new BullishMoveSequenceSignal(this.quoteStats);
         this.bullishHODSignal = new BullishHODSignal(this.quoteStats);
         this.bullishLevelBreakSignal = new BullishLevelBreakSignal(this.quoteStats);
         this.bullishVolumeSignal = new BullishVolumeSignal(this.quoteStats);
@@ -60,6 +62,7 @@ export class QuoteMonoRunner {
         this.movingAveragesHourlyBullish = new MovingAveragesHourlyBullish(this.quoteStats);
         this.movingAveragesFiftyHourlyBullish = new MovingAveragesFiftyHourlyBullish(this.quoteStats);
         this.bullishBuildingAboveTwentyMA = new BullishBuildingAboveTwentyMA(this.quoteStats);
+        
         
         this.breakoutFiveMinuteTwentyMaComboSignal = new BreakoutFiveMinuteTwentyMaComboSignal(this.quoteStats);
         this.breakoutFiveMinuteFiftyMaAfterTwentyMaComboSignal = new BreakoutFiveMinuteFiftyMaAfterTwentyMaComboSignal(this.quoteStats);
@@ -73,7 +76,7 @@ export class QuoteMonoRunner {
     public recordQuoteIntervalsIncludingMissed(quoteIntervals: IQuoteIntervals, isLive: boolean = false) {
         let timeDiff = 5;
         const quoteInterval: IQuoteFullIntervalData = quoteUtils.getRecentIntervalData(quoteIntervals);
-        if(this.quoteStats.lastInterval.timeNewYork) {
+        if(this.quoteStats?.lastInterval?.timeNewYork && quoteInterval?.timeNewYork ) {
             timeDiff =generalUtils.minuteDifference(quoteInterval.timeNewYork,this.quoteStats.lastInterval.timeNewYork);
         }
         for (let i=(timeDiff/5);i>0;i--) {
@@ -90,14 +93,16 @@ export class QuoteMonoRunner {
         this.quoteStats.composeAndPrintCurrentIntervalStats(quoteInterval, isLive);
 
         this.signals = [
+            ...this.bullishMoveSequenceSignal.monitor(),
             ...this.bullishHODSignal.monitor(),
             ...this.bullishLevelBreakSignal.monitor(),
             ...this.bullishVolumeSignal.monitor(),
-            // // ...this.movingAveragesSignal.monitor(),
             ...this.movingAverageDailyTwentySignal.monitor(),
             ...this.movingAverageDailyFiftySignal.monitor(),
             ...this.movingAveragesHourlyBullish.monitor(),
             ...this.movingAveragesFiftyHourlyBullish.monitor(),
+            
+            // // ...this.movingAveragesSignal.monitor(),
             //...this.bullishBuildingAboveTwentyMA.monitor(),
 
         ];

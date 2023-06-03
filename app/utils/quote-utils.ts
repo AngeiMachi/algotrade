@@ -85,14 +85,25 @@ export function calculateMovingAverage(
 ): number {
     const firstIntradayIntervalCopy = { ...firstIntradayInterval } as IQuoteFullIntervalData;
     if (firstIntradayInterval) {
-        const index = getIntervalIndex(intervals, getPreviousTradingDate(tradingDate) as string);
+        let index = 0
+        if (globalConfig.Mock.IsMock) {
+            index = getIntervalIndex(intervals, getPreviousTradingDate(tradingDate) as string);
+        } else {
+            index = intervals.length-1;
+        }
         if (index > -1) {
             const intervalsForAverage = _.slice(intervals, index - intervalsToAverageBack + 1, index + 1);
             const average = _.meanBy([...intervalsForAverage, firstIntradayIntervalCopy], type);
             return average;
         }
     } else {
-        const index = getIntervalIndex(intervals, getPreviousTradingDate(tradingDate) as string);
+        let index = 0
+        if (globalConfig.Mock.IsMock) {
+            index = getIntervalIndex(intervals, getPreviousTradingDate(tradingDate) as string);
+        } else {
+            index = intervals.length-1;
+        }
+        
         if (index > -1) {
             const intervalsForAverage = _.slice(intervals, index - intervalsToAverageBack + 1, index + 1);
             const average = _.meanBy(intervalsForAverage, type);

@@ -3,9 +3,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { QuoteState, QuoteStateSignals } from '../models/state.model';
 import { getState } from '../engine/state';
 import express from 'express';
-
+import * as PushAPI from './pushed-api';
 import * as OneSignal from 'onesignal-node';
-import { ShouldUsePushNotifications } from '../config/globals.config';
 import * as environmentConfig from '../config/environment.Config.json';
 import * as quotesIterator from '../engine/quotes-iterator';
 const app = express();
@@ -77,7 +76,7 @@ server.listen(PORT, () => {
 
 export const updateQuote = (quote: QuoteState,shouldSendPush:boolean) => {
     const quoteToUpdate = _.omit(quote, ['quoteStatistics']);
-    if (ShouldUsePushNotifications && shouldSendPush) {
+    if (shouldSendPush) {
         sendPush(quote);
     }
 
@@ -102,36 +101,16 @@ const sendPush = async (quote: QuoteState) => {
     if (message.length > 59) {
         message = quote.quoteName + ': ' + signals.length + ' Simultanious Signals - Open to view details!';
     }
-    const notification = {
-        contents: {
-            en: message,
-        },
-        web_push_topic: '' + uuidv4(),
-        included_segments: ['Subscribed Users'],
-    };
-
-    // using async/await
-    try {
-        if (signalsWithNotificationsCount>0){
-            const response = await oneSignalclient.createNotification(notification);
-            console.log(response.body.id);
-        }
-    } catch (e) {
-        if (e instanceof OneSignal.HTTPError) {
-            // When status code of HTTP response is not 2xx, HTTPError is thrown.
-            console.log(e.statusCode);
-            console.log(e.body);
-        }
+    
+   
+    if (signalsWithNotificationsCount>0){
+        const response = await PushAPI.sendPushMessage(message);
     }
 };
 
 const isInPushPolicy = (quote: QuoteState) => {
-    const leaders = environmentConfig.quotes.LEADERS;
     const signals = _.filter(quote.signalsHistory, { interval: quote.quoteStatistics.intervalCount }) as QuoteStateSignals[];
-    if (_.includes(leaders,quote.quoteName)) {
-        return true;
-    }
-    else if (signals.length>1) {
+    if (signals.length>=1) {
         return true;
     }
     else {
