@@ -4,9 +4,9 @@ export const Mock = {
     IsMock: false,
     startAtOpen:false,
     StartLiveSimulationAtInterval: 100,
-    MockDataDate: '2023-05-31',
-    MockDataLiveSimulationTime:"10:00:00" ,
-    intervalLapTime:"*/120 * * * * *"// "/30 * * * * *" = every 30 seconds;
+    MockDataDate: '2023-06-01',
+    MockDataLiveSimulationTime:"20:00:00" ,
+    intervalLapTime:"*/60 * * * * *"// "/30 * * * * *" = every 30 seconds;
     
 };
 export const ShouldUsePushNotifications = true;
@@ -36,13 +36,13 @@ export const QuotesConfig = {
     
             ],
             names:[
-                "NCLH","PATH","SHOP","ADBE","CRM","AMAT","ZM","GETY","SBUX","PINS","CVNA","XOM","GME","MTCH","AI",
+                "FTNT","LULU","UCAR","PTGX","LI","NCLH","PATH","SHOP","ADBE","CRM","AMAT","ZM","GETY","SBUX","PINS","CVNA","XOM","GME","MTCH","AI",
                 "TWLO","APLK","UPST","AFRM","ROKU","INTC","LUV","AAL","MRVL","MARA","COIN","RIOT",
                 "DKNG","SAVA","BYND","SNOW","SPOT","FUBO","TEAM","CVX","GCT",
                 "ABNB","TTD","DOCU","NOVA","UBER","V","MA","IBM","TGT",
                 "UPS","U","RBLX","CMG","UNH","RH","ETSY","SSYS","DASH","PLTR","WDC","IONQ",
                 "FVRR","AXSM","VERU","BBIB","SQ","PYPL","CRWD","PANW","FDX","ZIM","MCD",
-                "HD","KO","WMT","DIS","T","CSCO","APPS"
+                "HD","KO","WMT","DIS","T","CSCO","APPS",
             ],
         },
     },
@@ -50,13 +50,13 @@ export const QuotesConfig = {
         indexes:{
             behaviors:[],
             signals:[],
-            names:["SPY","QQQ","IWM","SQQQ","TQQQ","XLE","XLF","JETS","ARKK","SMH","TZA"],
+            names:["SPY","QQQ"],
         },
         leaders:{
             behaviors:[],
             signals:[],
             names:[
-                 "AAPL","AMZN","TSLA","MSFT","META","BA","GOOGL","AMD","NVDA","CAT","ORCL","GE"
+                //  "AAPL","AMZN","TSLA","MSFT","META","BA","GOOGL","AMD","NVDA","CAT","ORCL","GE"
             ],
         },
         trending:{
@@ -72,13 +72,14 @@ export const QuotesConfig = {
     
             ],
             names:[
-                "PATH","SHOP","ADBE","CRM","AMAT","ZM","GETY","SBUX","PINS","CVNA","XOM","GME","MTCH","AI",
-                "TWLO","APLK","UPST","AFRM","ROKU","INTC","LUV","AAL","MRVL",
-                "DKNG","SAVA","BYND","SNOW","SPOT","FUBO","TEAM","CVX","GCT",
-                "ABNB","TTD","DOCU","NOVA","UBER","V","MA","IBM","TGT",
-                "UPS","U","RBLX","CMG","UNH","RH","ETSY","SSYS","DASH","PLTR","WDC",
-                "FVRR","AXSM","VERU","BBIB","SQ","PYPL","CRWD","PANW","FDX","ZIM","MCD",
-                "HD","KO","WMT","DIS","T","CSCO","APPS"
+                "UPST"
+                // "LI","NCLH","PATH","SHOP","ADBE","CRM","AMAT","ZM","GETY","SBUX","PINS","CVNA","XOM","GME","MTCH","AI",
+                // "TWLO","APLK","UPST","AFRM","ROKU","INTC","LUV","AAL","MRVL","MARA","COIN","RIOT",
+                // "DKNG","SAVA","BYND","SNOW","SPOT","FUBO","TEAM","CVX","GCT",
+                // "ABNB","TTD","DOCU","NOVA","UBER","V","MA","IBM","TGT",
+                // "UPS","U","RBLX","CMG","UNH","RH","ETSY","SSYS","DASH","PLTR","WDC","IONQ",
+                // "FVRR","AXSM","VERU","BBIB","SQ","PYPL","CRWD","PANW","FDX","ZIM","MCD",
+                // "HD","KO","WMT","DIS","T","CSCO","APPS"
             ],
         },
     }
