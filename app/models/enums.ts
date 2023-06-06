@@ -20,7 +20,7 @@ export enum SignalVerificationReasonEnum {
     BULLISH_HIGH_OF_DAY_WITH_PRIOR_DAY_BREAKOUT = 'Bull HOD With Day Break',
     BULLISH_HIGH_OF_DAY = 'Bull HOD',
     BULLISH_HIGH_OF_DAY_WITH_PREMARKET_BREAKOUT = 'Bull HOD-Pre mrkt Break',
-    BULLISH_SEQUENCE_MOVE = 'Bull sequence starting',
+    BULLISH_SEQUENCE_MOVE = '🎉| Bull sequence starting',
     BULLISH_BREAK_PREVIOUS_DAY = 'Bull Break Prev Day',
     BULLISH_BREAK_PREVIOUS_WEEK = 'Bull Break Prev Week',
     BULLISH_BREAK_52_WEEK_HIGH = 'Bull Break 52 week High',
@@ -35,6 +35,7 @@ export enum SignalVerificationReasonEnum {
     BULLISH_NEW_HIGH_BREAKOUT_AFTER_5_MINUTES_TWENTY_MA_CROSSING = "🎉| 20(5m)->HOD",
     BULLISH_FIFTY_5_MINUTES_MA_AFTER_TWO_TWENTY= "🎉| 20(5m)✖️2->50(5m)",
     BULLISH_FIFTY_5_MINUTES_MA_AFTER_TWENTY_HOD= "🎉| 20(5m)->HOD->50(5m)",
+    BULLUSH_HOD_WITH_PREMARKET_BREAKOUT_AFTER_TOUCH_MA = "🎉| touch ma(daily)->breakout",
 }
 
 export enum SignalGroupType {
@@ -70,6 +71,7 @@ export enum SignalType {
     BULLISH_NEW_HIGH_BREAKOUT_AFTER_5_MINUTES_TWENTY_MA_CROSSING,
     BULLISH_FIFTY_5_MINUTES_MA_AFTER_TWO_TWENTY,
     BULLISH_FIFTY_5_MINUTES_MA_AFTER_TWENTY_HOD,
+    BULLUSH_HOD_WITH_PREMARKET_BREAKOUT_AFTER_TOUCH_MA,
 }
 
 export enum SignalCode {}

@@ -5,9 +5,8 @@ import { QuoteStatistics } from '../engine/quote-statistics';
 import { SignalGroupType, SignalType , SignalVerificationReasonEnum} from '../models/enums';
 import { SignalModel } from '../models/signal.model';
 import { Signals } from '../signals/signals';
-
 import { IQuoteFullIntervalData } from '../models/quote-data.model';
-
+import * as generalUtils from '../utils/general';
 
 export class BreakoutFiveMinuteFiftyMaAfterTwentyMaComboSignal extends Signals {
     
@@ -29,25 +28,33 @@ export class BreakoutFiveMinuteFiftyMaAfterTwentyMaComboSignal extends Signals {
     
             }
             const intervalFiveMinutFiftyMASignal = _signals.filter(signal=>signal.signalType===SignalType.MOVING_AVERAGE_INTRADAY_FIFTY_BREAK_ABOVE)[0];
+                    
             const intervalComboSignal = _signals.filter(signal=>signal.signalType===SignalType.BULLISH_NEW_HIGH_BREAKOUT_AFTER_5_MINUTES_TWENTY_MA_CROSSING)[0];
-            if (intervalFiveMinutFiftyMASignal) {
-                if (this.twentyMaCount>=2) {
+            
+            if (intervalFiveMinutFiftyMASignal ) {
+                const percentageintervalFiveMinutFiftyMAS = generalUtils.getPercentageDifference (intervalFiveMinutFiftyMASignal.interval?.low || 0,intervalFiveMinutFiftyMASignal.interval?.high || 0);
+             if (this.twentyMaCount>=2 && percentageintervalFiveMinutFiftyMAS>0.5) {
                     outputSignals.push({
                         signalGroupType: SignalGroupType.BULLISH_COMBO,
                         signalType: SignalType.BULLISH_FIFTY_5_MINUTES_MA_AFTER_TWO_TWENTY,
                         signalDescription: SignalVerificationReasonEnum.BULLISH_FIFTY_5_MINUTES_MA_AFTER_TWO_TWENTY,
+                        interval:this.quoteStats.lastInterval,
                         withNotification:true,
                     })
                     this.didSignalTriger = true;
                 } else if (intervalComboSignal) {
-                    _signals =_signals.filter(signal=>signal.signalType!==SignalType.BULLISH_NEW_HIGH_BREAKOUT_AFTER_5_MINUTES_TWENTY_MA_CROSSING);
-                    outputSignals.push({
-                        signalGroupType: SignalGroupType.BULLISH_COMBO,
-                        signalType: SignalType.BULLISH_FIFTY_5_MINUTES_MA_AFTER_TWENTY_HOD,
-                        signalDescription: SignalVerificationReasonEnum.BULLISH_FIFTY_5_MINUTES_MA_AFTER_TWENTY_HOD,
-                        withNotification:true,
-                    })
-                    this.didSignalTriger = true;
+                    const percentageCombo = generalUtils.getPercentageDifference (intervalComboSignal.interval?.low || 0,intervalComboSignal.interval?.high || 0);
+                    if (percentageCombo>0.5) {
+                        _signals =_signals.filter(signal=>signal.signalType!==SignalType.BULLISH_NEW_HIGH_BREAKOUT_AFTER_5_MINUTES_TWENTY_MA_CROSSING);
+                        outputSignals.push({
+                            signalGroupType: SignalGroupType.BULLISH_COMBO,
+                            signalType: SignalType.BULLISH_FIFTY_5_MINUTES_MA_AFTER_TWENTY_HOD,
+                            signalDescription: SignalVerificationReasonEnum.BULLISH_FIFTY_5_MINUTES_MA_AFTER_TWENTY_HOD,
+                            interval:this.quoteStats.lastInterval,
+                            withNotification:true,
+                        })
+                        this.didSignalTriger = true;
+                    }
                 }
             } 
         }

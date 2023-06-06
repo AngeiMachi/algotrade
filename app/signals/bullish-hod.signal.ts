@@ -7,9 +7,10 @@ import { QuoteStatistics } from '../engine/quote-statistics';
 import { SignalGroupType, SignalType, SignalVerificationReasonEnum } from '../models/enums';
 import { IQuoteFullIntervalData } from '../models/quote-data.model';
 import { Signals } from './signals';
+import * as generalUtils from '../utils/general'; 
 
 export class BullishHODSignal extends Signals {
-    private preHOD: number;
+    private preHOD: number=100000;
     private didBreakOutPreHOD: boolean = false;
     private didMakeHigherLow: boolean = false;
 
@@ -23,7 +24,6 @@ export class BullishHODSignal extends Signals {
 
     constructor(_quoteStats: QuoteStatistics,_initialInterval?:IQuoteFullIntervalData) {
         super(_quoteStats);
-        this.preHOD = this.quoteStats.metadata.preMarketMetadata?.preMarketHOD.high || 100000;
         if (_initialInterval) {
             this.initialInterval = _initialInterval;
         }
@@ -36,6 +36,7 @@ export class BullishHODSignal extends Signals {
     private monitorHOD(): SignalModel[] {
         const signals: SignalModel[] = [];
         if (this.quoteStats.intervalCount === 0) {
+            this.preHOD = this.quoteStats.metadata.preMarketMetadata?.preMarketHOD.high || 100000;
             this.lastHODInterval = this.quoteStats.lastInterval;
             this.lastHODIntervalCount = 0;
         } else if(this.initialInterval?.intervalNumber==this.quoteStats.intervalCount) {
@@ -47,6 +48,7 @@ export class BullishHODSignal extends Signals {
                     signalGroupType: SignalGroupType.BULLISH_HOD,
                     signalType: SignalType.BULLISH_HIGH_OF_DAY,
                     signalDescription: SignalVerificationReasonEnum.BULLISH_HIGH_OF_DAY + ' (' + this.getDurationText() + ') - #' + this.HODSignalCount++,
+                    interval:this.quoteStats.lastInterval,
                     withNotification:true,
                 });
                 this.didMakeHigherLow = false;
@@ -71,6 +73,7 @@ export class BullishHODSignal extends Signals {
                 signalGroupType: SignalGroupType.BULLISH_HOD,
                 signalType: SignalType.BULLISH_HIGH_OF_DAY_WITH_PREMARKET_BREAKOUT,
                 signalDescription: SignalVerificationReasonEnum.BULLISH_HIGH_OF_DAY_WITH_PREMARKET_BREAKOUT,
+                interval:this.quoteStats.lastInterval,
                 withNotification:true,
             });
         }

@@ -18,6 +18,7 @@ export class BullishBuildingAboveTwentyMA extends Signals {
                 signalGroupType: SignalGroupType.HOURLY_MOVING_AVERAGE,
                 signalType: SignalType.BUILDING_ABOVE_TWENTY_MOVING_AVERAGE,
                 signalDescription: '🤑 ' + SignalVerificationReasonEnum.BUILDING_ABOVE_TWENTY_MOVING_AVERAGE,
+                interval:this.quoteStats.lastInterval
             }];
         }
         

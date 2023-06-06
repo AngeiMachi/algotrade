@@ -5,8 +5,8 @@ import { QuoteStatistics } from '../engine/quote-statistics';
 import { SignalGroupType, SignalType , SignalVerificationReasonEnum} from '../models/enums';
 import { SignalModel } from '../models/signal.model';
 import { Signals } from '../signals/signals';
-
 import { IQuoteFullIntervalData } from '../models/quote-data.model';
+import * as generalUtils from '../utils/general';
 
 
 export class BreakoutFiveMinuteTwentyMaComboSignal extends Signals {
@@ -28,6 +28,7 @@ export class BreakoutFiveMinuteTwentyMaComboSignal extends Signals {
             this.intervalFiveMinuteTwentyMA = intervalFiveMinuteTwentyMASignal.interval as IQuoteFullIntervalData;
             this.bullishHODSignal = new BullishHODSignal(this.quoteStats,this.intervalFiveMinuteTwentyMA);
         }
+
         if (this.bullishHODSignal) {
             const signals = this.bullishHODSignal.monitor();
             if (this.isNewHODFromFiveMinutesBreak(signals)) {
@@ -37,7 +38,7 @@ export class BreakoutFiveMinuteTwentyMaComboSignal extends Signals {
                     signalDescription: SignalVerificationReasonEnum.BULLISH_NEW_HIGH_BREAKOUT_AFTER_5_MINUTES_TWENTY_MA_CROSSING,
                     withNotification:true,
                 })
-                this.bullishHODSignal = null;
+                
             }
         }
     
@@ -45,8 +46,16 @@ export class BreakoutFiveMinuteTwentyMaComboSignal extends Signals {
     }
 
     private isNewHODFromFiveMinutesBreak(signals:SignalModel[]):boolean {
-        return (signals.filter(signal=>(signal.signalGroupType===SignalGroupType.BULLISH_HOD && 
-            signal.signalType===SignalType.BULLISH_HIGH_OF_DAY))?.length>0)
+        const newHODFromFiveMinutesBreak = signals.filter(signal=>(signal.signalGroupType===SignalGroupType.BULLISH_HOD && 
+            signal.signalType===SignalType.BULLISH_HIGH_OF_DAY));
+        if (newHODFromFiveMinutesBreak.length>0) {
+            const percentageintervalFiveMinuteTwentyMAS = generalUtils.getPercentageDifference (newHODFromFiveMinutesBreak[0].interval?.low || 0,newHODFromFiveMinutesBreak[0].interval?.high || 0);
+            this.bullishHODSignal = null;
+            if (percentageintervalFiveMinuteTwentyMAS>0.3){
+                return true;
+            }
+        }
+        return false;
     }
     
     

@@ -13,7 +13,7 @@ export class MovingAveragesSignal extends Signals {
 
     public monitor(): SignalModel[] {
         if (this.quoteStats.intervalCount === 0) {
-            const movingAveragesObj = _.pick(this.quoteStats.metadata, ['SMA20', 'SMA50', 'SMA100', 'SMA200']);
+            const movingAveragesObj = _.pick(this.quoteStats.metadata, ['SMA10','SMA20', 'SMA50', 'SMA100', 'SMA200']);
             this.movingAverages = Object.entries(movingAveragesObj);
         }
         return this.monitorTouchMA();
@@ -22,11 +22,12 @@ export class MovingAveragesSignal extends Signals {
         let signals: SignalModel[] = [];
         for (let movingAverage of this.movingAverages) {
             if (movingAverage[1].didOpenOboveSMA) {
-                if (this.quoteStats.lastInterval.open > movingAverage[1].today && this.quoteStats.lastInterval.low <= movingAverage[1].today && !movingAverage[2]) {
+                if (this.quoteStats.lastInterval.open > movingAverage[1].today && this.quoteStats.lastInterval.low <= (movingAverage[1].today+movingAverage[1].today*0.01) && !movingAverage[2]) {
                     signals.push({
                         signalGroupType: SignalGroupType.MOVING_AVERAGES,
                         signalType: SignalType.MOVING_AVERAGE_TOUCH_FROM_BELOW,
                         signalDescription: SignalVerificationReasonEnum.MOVING_AVERAGE_TOUCH_FROM_BELOW + '(' + movingAverage[0] + ')',
+                        withNotification:false,
                         payload: { type: movingAverage[0] },
                     });
                     movingAverage[2] = true;
@@ -37,6 +38,7 @@ export class MovingAveragesSignal extends Signals {
                         signalGroupType: SignalGroupType.MOVING_AVERAGES,
                         signalType: SignalType.MOVING_AVERAGE_TOUCH_FROM_ABOVE,
                         signalDescription: SignalVerificationReasonEnum.MOVING_AVERAGE_TOUCH_FROM_ABOVE + '(' + movingAverage[0] + ')',
+                        withNotification:false,
                         payload: { type: movingAverage[0] },
                     });
                     movingAverage[2] = true;

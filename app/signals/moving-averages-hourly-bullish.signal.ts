@@ -6,21 +6,26 @@ import { SignalGroupType,SignalType,SignalVerificationReasonEnum } from '../mode
 export class MovingAveragesHourlyBullish extends Signals {
     private lastPotentialHOD:number=0;
     private lastValidHOD:number=0;
-    private isValidFor20MA:boolean=false
+    private isValidFor20MA:boolean=false;
     private isDirty=true;
+    private didOpenAboveYesterdayHigh=false;
+
     public monitor(): SignalModel[] {
         this.recordNewHOD();
         this.validateFor20MA();
-        if(this.is20MATouched()){
+        if(this.didOpenAboveYesterdayHigh && this.is20MATouched()){
             const movingAvgData = this.composeMovingAverages();
-            return [{
-                signalGroupType: SignalGroupType.HOURLY_MOVING_AVERAGE,
-                signalType: SignalType.HOURLY_MOVING_AVERAGE_TOUCH_FROM_ABOVE,
-                signalDescription: SignalVerificationReasonEnum.TWENTY_HOURLY_MOVING_AVERAGE_TOUCH_FROM_ABOVE+movingAvgData,
-                withNotification:true,
-            }];
+            if (movingAvgData) {
+                return [{
+                    signalGroupType: SignalGroupType.HOURLY_MOVING_AVERAGE,
+                    signalType: SignalType.HOURLY_MOVING_AVERAGE_TOUCH_FROM_ABOVE,
+                    signalDescription: SignalVerificationReasonEnum.TWENTY_HOURLY_MOVING_AVERAGE_TOUCH_FROM_ABOVE+movingAvgData,
+                    withNotification:true,
+                    interval:this.quoteStats.lastInterval
+                }];
+            }
+            
         }
-        
         return [];
         
     }
@@ -55,6 +60,12 @@ export class MovingAveragesHourlyBullish extends Signals {
 
     private recordNewHOD(){
         if (this.quoteStats.intervalCount === 0) {
+            if (this.quoteStats.lastInterval.open>this.quoteStats.metadata.previousDay.high) {
+                const perecentageDiff = generalUtils.getPercentageDifference(this.quoteStats.lastInterval.open,this.quoteStats.metadata.previousDay.high);
+                if (perecentageDiff>0.5) {
+                    this.didOpenAboveYesterdayHigh = true;
+                }
+            }
             const premarketHigh=this.quoteStats.metadata.preMarketMetadata?.preMarketHOD.high || 0;
             if (this.quoteStats.lastInterval.open>this.quoteStats.hourlyMA20Last) {
                 this.isDirty=false;
@@ -99,9 +110,11 @@ export class MovingAveragesHourlyBullish extends Signals {
             movingAVgsData = '🟡';
         }
         else if (MAprecentage>0.4) {
+            return '';
             movingAVgsData = '🟠';
         }
         else {
+            return '';
             movingAVgsData = '🔴';
         }
         movingAVgsData+=' ';
