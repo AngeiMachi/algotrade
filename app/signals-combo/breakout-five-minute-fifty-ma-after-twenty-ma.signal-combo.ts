@@ -39,7 +39,8 @@ export class BreakoutFiveMinuteFiftyMaAfterTwentyMaComboSignal extends Signals {
                         signalType: SignalType.BULLISH_FIFTY_5_MINUTES_MA_AFTER_TWO_TWENTY,
                         signalDescription: SignalVerificationReasonEnum.BULLISH_FIFTY_5_MINUTES_MA_AFTER_TWO_TWENTY,
                         interval:this.quoteStats.lastInterval,
-                        withNotification:true,
+                        withNotification:false,
+                        isDeveloperMode:true
                     })
                     this.didSignalTriger = true;
                 } else if (intervalComboSignal) {
@@ -51,7 +52,8 @@ export class BreakoutFiveMinuteFiftyMaAfterTwentyMaComboSignal extends Signals {
                             signalType: SignalType.BULLISH_FIFTY_5_MINUTES_MA_AFTER_TWENTY_HOD,
                             signalDescription: SignalVerificationReasonEnum.BULLISH_FIFTY_5_MINUTES_MA_AFTER_TWENTY_HOD,
                             interval:this.quoteStats.lastInterval,
-                            withNotification:true,
+                            withNotification:false,
+                            isDeveloperMode:true
                         })
                         this.didSignalTriger = true;
                     }

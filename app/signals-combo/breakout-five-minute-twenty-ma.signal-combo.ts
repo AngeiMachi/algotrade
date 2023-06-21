@@ -36,7 +36,8 @@ export class BreakoutFiveMinuteTwentyMaComboSignal extends Signals {
                     signalGroupType: SignalGroupType.BULLISH_COMBO,
                     signalType: SignalType.BULLISH_NEW_HIGH_BREAKOUT_AFTER_5_MINUTES_TWENTY_MA_CROSSING,
                     signalDescription: SignalVerificationReasonEnum.BULLISH_NEW_HIGH_BREAKOUT_AFTER_5_MINUTES_TWENTY_MA_CROSSING,
-                    withNotification:true,
+                    withNotification:false,
+                    isDeveloperMode:true
                 })
                 
             }
@@ -51,14 +52,10 @@ export class BreakoutFiveMinuteTwentyMaComboSignal extends Signals {
         if (newHODFromFiveMinutesBreak.length>0) {
             const percentageintervalFiveMinuteTwentyMAS = generalUtils.getPercentageDifference (newHODFromFiveMinutesBreak[0].interval?.low || 0,newHODFromFiveMinutesBreak[0].interval?.high || 0);
             this.bullishHODSignal = null;
-            if (percentageintervalFiveMinuteTwentyMAS>0.3){
+            if (percentageintervalFiveMinuteTwentyMAS>0.5 && (newHODFromFiveMinutesBreak[0].interval?.low || 10000 < this.intervalFiveMinuteTwentyMA.close)){
                 return true;
             }
         }
         return false;
     }
-    
-    
-
-
 }
