@@ -120,5 +120,8 @@ const clearQuoteWhenIsLastInterval= (quoteKey: string, interval: IQuoteFullInter
 }
 
 const isLastInterval=(interval: any): boolean => {
-    return interval.timeNewYork.getHours() === 15 && interval.timeNewYork.getMinutes()===50;
+    if (!interval) {
+        return false;
+    }
+    return interval?.timeNewYork.getHours() === 15 && interval.timeNewYork.getMinutes()===50;
 }

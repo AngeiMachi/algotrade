@@ -19,7 +19,7 @@ export function parseMustache(str: string, obj: any) {
 export function minuteDifference(dt2: Date, dt1: Date) {
     var diff = (dt2.getTime() - dt1.getTime()) / 1000;
     diff /= 60;
-    return Math.abs(Math.round(diff));
+    return Math.round(diff);
 }
 
 export function getPercentageDifference(number1:number,number2:number):number{

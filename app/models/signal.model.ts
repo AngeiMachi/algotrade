@@ -9,5 +9,5 @@ export interface SignalModel {
     payload?: any;
     interval?:IQuoteFullIntervalData;
     withNotification?:boolean;
-    isHidden?:boolean;
+    isDeveloperMode?:boolean;
 }

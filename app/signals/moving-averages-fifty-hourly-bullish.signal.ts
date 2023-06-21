@@ -10,12 +10,11 @@ export class MovingAveragesFiftyHourlyBullish extends Signals {
     private lastValidHOD:number=0;
     private isValidFor50MA:boolean=false;
     private isDirty=true;
-    private didOpenAboveYesterdayHigh=false;
 
     public monitor(): SignalModel[] {
         this.recordNewHOD();
         this.validateFor50MA();
-        if(this.didOpenAboveYesterdayHigh && this.is50MATouched()){
+        if( this.is50MATouched()){
             const movingAvgData = this.composeMovingAverages();
             if (movingAvgData) {
                 return [{
@@ -65,9 +64,6 @@ export class MovingAveragesFiftyHourlyBullish extends Signals {
         if (this.quoteStats.intervalCount === 0) {
             if (this.quoteStats.lastInterval.open>this.quoteStats.metadata.previousDay.high) {
                 const perecentageDiff = generalUtils.getPercentageDifference(this.quoteStats.lastInterval.open,this.quoteStats.metadata.previousDay.high);
-                if (perecentageDiff>0.5) {
-                    this.didOpenAboveYesterdayHigh = true;
-                }
             }
             const premarketHigh=this.quoteStats.metadata.preMarketMetadata?.preMarketHOD.high || 0;
             if (this.quoteStats.lastInterval.close>this.quoteStats.hourlyMA50Last) {

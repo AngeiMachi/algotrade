@@ -6,7 +6,7 @@ import { IQuoteFullIntervalData, IQuoteIntervals } from '../models/quote-data.mo
 import { IQuoteMetadata } from '../models/quote-data.model';
 import { MovingAverageType } from '../models/enums';
 import * as globalConfig from '../config/globals.config';
-
+import * as quoteState from './state';
 export class QuoteStatistics {
     private _quote: string;
     public get quoteName() {
@@ -218,6 +218,8 @@ export class QuoteStatistics {
         this.metadata.SMA50.didOpenOboveSMA = quoteUtils.isAboveMovingAverage(this.lastInterval, this.metadata.SMA50.today);
         this.metadata.SMA100.didOpenOboveSMA = quoteUtils.isAboveMovingAverage(this.lastInterval, this.metadata.SMA100.today);
         this.metadata.SMA200.didOpenOboveSMA = quoteUtils.isAboveMovingAverage(this.lastInterval, this.metadata.SMA200.today);
+
+        quoteState.initSmaData(this.quoteName);
     }
 
     private addPremarketMetadata(quoteInterval: IQuoteFullIntervalData) {

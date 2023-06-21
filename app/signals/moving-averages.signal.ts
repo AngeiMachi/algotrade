@@ -29,17 +29,19 @@ export class MovingAveragesSignal extends Signals {
                         signalDescription: SignalVerificationReasonEnum.MOVING_AVERAGE_TOUCH_FROM_BELOW + '(' + movingAverage[0] + ')',
                         withNotification:false,
                         payload: { type: movingAverage[0] },
+                        isDeveloperMode:true
                     });
                     movingAverage[2] = true;
                 }
             } else {
-                if (this.quoteStats.lastInterval.open < movingAverage[1].today && this.quoteStats.lastInterval.high >= movingAverage[1].today && !movingAverage[2]) {
+                if (this.quoteStats.lastInterval.open < movingAverage[1].today && this.quoteStats.lastInterval.high >= (movingAverage[1].today-movingAverage[1].today*0.01) && !movingAverage[2]) {
                     signals.push({
                         signalGroupType: SignalGroupType.MOVING_AVERAGES,
                         signalType: SignalType.MOVING_AVERAGE_TOUCH_FROM_ABOVE,
                         signalDescription: SignalVerificationReasonEnum.MOVING_AVERAGE_TOUCH_FROM_ABOVE + '(' + movingAverage[0] + ')',
                         withNotification:false,
                         payload: { type: movingAverage[0] },
+                        isDeveloperMode:true
                     });
                     movingAverage[2] = true;
                 }

@@ -7,7 +7,6 @@ import * as quotesIterator from './quotes-iterator';
 import * as quoteCache from './quotes-cache';
 import * as behaviorManager from './behavior-manager';
 
-const quotes = ["SPY","AMZN"];
 
 export default async function startApp() {
     try {

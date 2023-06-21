@@ -26,7 +26,9 @@ export class MovingAverageDailyTwentySignal extends Signals {
                             signalType: SignalType.MOVING_AVERAGE_INTRADAY_TWENTY_BREAK_ABOVE,
                             signalDescription: SignalVerificationReasonEnum.MOVING_AVERAGE_INTRADAY_TWENTY_BREAK_ABOVE +"("
                             +this.twentyMovingAvgBreakTimesCount+")",
-                            interval:this.quoteStats.lastInterval
+                            interval:this.quoteStats.lastInterval,
+                            isDeveloperMode:true
+            
                         });
                 }
                 else {

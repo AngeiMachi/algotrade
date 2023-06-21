@@ -28,7 +28,9 @@ export class BreakoutAfterTouchTenDailyMAComboSignal extends Signals {
         this.signals=_signals;
         const isMovingAverageTouchedSignal = _signals.filter(signal=>signal.signalGroupType===SignalGroupType.MOVING_AVERAGES && signal.signalType===SignalType.MOVING_AVERAGE_TOUCH_FROM_BELOW)[0]
     
-        if (isMovingAverageTouchedSignal?.payload?.type =='SMA10' || isMovingAverageTouchedSignal?.payload?.type =='SMA20') {
+        if (isMovingAverageTouchedSignal?.payload?.type =='SMA10' || 
+            isMovingAverageTouchedSignal?.payload?.type =='SMA20' || 
+            isMovingAverageTouchedSignal?.payload?.type =='SMA50') {
             this.isMovingAverageTouched=true;
         }
 
@@ -45,16 +47,6 @@ export class BreakoutAfterTouchTenDailyMAComboSignal extends Signals {
                 this.didbreakout=true;
             }
         }
-
-       
-        
-
         return [...outputSignals,..._signals];
     }
-
-
-    
-    
-
-
 }

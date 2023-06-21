@@ -58,7 +58,8 @@ export class MovingAverageDailyFiftySignal extends Signals {
                 signalGroupType: SignalGroupType.INTRADAY_MOVING_AVERAGE,
                 signalType: SignalType.MOVING_AVERAGE_INTRADAY_FIFTY_BREAK_ABOVE,
                 signalDescription: SignalVerificationReasonEnum.MOVING_AVERAGE_INTRADAY_FIFTY_BREAK_ABOVE +"("
-                +this.fiftyMovingAvgBreakTimesCount+")"
+                +this.fiftyMovingAvgBreakTimesCount+")",
+                isDeveloperMode:true
             });
         }
         else {

@@ -77,7 +77,7 @@ export class QuoteMonoRunner {
     }
 
     //this method is tipically running for one interval unless there is connection/power outage
-    public recordQuoteIntervalsIncludingMissed(quoteIntervals: IQuoteIntervals, isLive: boolean = false) {
+    public recordQuoteIntervalsIncludingMissed2(quoteIntervals: IQuoteIntervals, isLive: boolean = false) {
         let timeDiff = 5;
         const quoteInterval: IQuoteFullIntervalData = quoteUtils.getRecentIntervalData(quoteIntervals);
         if(this.quoteStats?.lastInterval?.timeNewYork && quoteInterval?.timeNewYork ) {
@@ -90,6 +90,37 @@ export class QuoteMonoRunner {
             }
             
         }
+    }
+
+    public recordQuoteIntervalsIncludingMissed(quoteIntervals: IQuoteIntervals, isLive: boolean = false) {
+        let shouldStartRecord = false;
+        let shouldIterateMoreThanOnce = true;
+
+        const quoteInterval: IQuoteFullIntervalData = quoteUtils.getRecentIntervalData(quoteIntervals);
+        if(this.quoteStats?.lastInterval?.timeNewYork && quoteInterval?.timeNewYork ) {
+            const timeDiff =generalUtils.minuteDifference(quoteInterval.timeNewYork,this.quoteStats.lastInterval.timeNewYork);
+            this.recordNewStockInterval(quoteInterval,isLive);
+            shouldIterateMoreThanOnce = timeDiff>5;   
+        } 
+        if (shouldIterateMoreThanOnce) {
+            for (const [key, interval] of Object.entries(quoteIntervals)) {
+                if (shouldStartRecord) {
+                    this.recordNewStockInterval(interval,isLive);
+                }
+    
+                if (!this.quoteStats?.lastInterval?.timeNewYork) {
+                    shouldStartRecord = true;
+                } else if (new Date(interval.timeNewYork)>new Date(this.quoteStats.lastInterval.timeNewYork)) {
+                    continue;
+                } else if (new Date(interval.timeNewYork)<new Date(this.quoteStats.lastInterval.timeNewYork)) {
+                    continue;
+                } else {
+                    // are equal
+                    shouldStartRecord = true;
+                } 
+            }
+        }
+        
     }
     
     public recordNewStockInterval(quoteInterval: IQuoteFullIntervalData, isLive: boolean = false): number {

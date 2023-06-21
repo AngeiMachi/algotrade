@@ -35,12 +35,13 @@ function initQuote(quoteStatistics: QuoteStatistics) {
         prevPrice: quoteStatistics.metadata.previousDay.close,
     };
 
-    quoteState.sma = initSmaData(quoteStatistics);
-
     state.push(quoteState);
 }
 
-function initSmaData(quoteStatistics: QuoteStatistics) {
+export function initSmaData(quoteName:string) {
+    const index = _.findIndex(state, ['quoteName', quoteName]);
+    const quoteStatistics = state[index].quoteStatistics as QuoteStatistics;
+
     const tempMovingAveragesArr: any[] = [];
     let sma = [] as IMovingAverageData[];
     for (let key in MovingAverageType) {
@@ -67,7 +68,7 @@ function initSmaData(quoteStatistics: QuoteStatistics) {
         };
     });
 
-    return sma;
+    state[index].sma =sma;
 }
 
 export function addNewQuote(quoteStats: QuoteStatistics) {

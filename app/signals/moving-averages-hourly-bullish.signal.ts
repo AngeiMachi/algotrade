@@ -8,12 +8,12 @@ export class MovingAveragesHourlyBullish extends Signals {
     private lastValidHOD:number=0;
     private isValidFor20MA:boolean=false;
     private isDirty=true;
-    private didOpenAboveYesterdayHigh=false;
+    private didOpenAboveYesterdayCloseOrHigh=false;
 
     public monitor(): SignalModel[] {
         this.recordNewHOD();
         this.validateFor20MA();
-        if(this.didOpenAboveYesterdayHigh && this.is20MATouched()){
+        if(this.didOpenAboveYesterdayCloseOrHigh && this.is20MATouched()){
             const movingAvgData = this.composeMovingAverages();
             if (movingAvgData) {
                 return [{
@@ -60,10 +60,12 @@ export class MovingAveragesHourlyBullish extends Signals {
 
     private recordNewHOD(){
         if (this.quoteStats.intervalCount === 0) {
-            if (this.quoteStats.lastInterval.open>this.quoteStats.metadata.previousDay.high) {
-                const perecentageDiff = generalUtils.getPercentageDifference(this.quoteStats.lastInterval.open,this.quoteStats.metadata.previousDay.high);
+            const closeOrHeight = this.quoteStats.metadata.previousDay.close>this.quoteStats.metadata.previousDay.open ?
+                                  this.quoteStats.metadata.previousDay.close:this.quoteStats.metadata.previousDay.high
+            if (this.quoteStats.lastInterval.open>closeOrHeight) {
+                const perecentageDiff = generalUtils.getPercentageDifference(this.quoteStats.lastInterval.open,closeOrHeight);
                 if (perecentageDiff>0.5) {
-                    this.didOpenAboveYesterdayHigh = true;
+                    this.didOpenAboveYesterdayCloseOrHigh = true;
                 }
             }
             const premarketHigh=this.quoteStats.metadata.preMarketMetadata?.preMarketHOD.high || 0;
