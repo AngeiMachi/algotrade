@@ -8,3 +8,4 @@ export * from './moving-averages-hourly-bullish.signal';
 export * from './moving-averages-fifty-hourly-bullish.signal';
 export * from './bullish-building-above-twenty-moving-average.signal';
 export * from './bullish-move-sequence.signal';
+export * from './bearish-move-sequence.signal';

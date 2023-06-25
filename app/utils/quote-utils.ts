@@ -6,7 +6,6 @@ import { logger } from '../config/winston.config';
 
 import * as convertUtils from './convert-utils';
 import { convertDateToTDMillisecondInterval } from './convert-utils';
-
 import {
     ITDAmeritradeIntervalData,
     IQuotesHistoricalData,
@@ -15,6 +14,7 @@ import {
     IQuoteFullIntervalData,
     IMarketHours,
     SessionHoursDefault,
+
     ITDAmeritradePriceHistory,
 } from '../models/quote-data.model';
 import { TimeFrame } from '../models/enums';
@@ -213,6 +213,7 @@ export function composeMetadata(
         preMarketMetadata: {
             preMarketIntervals:{},
             preMarketHOD: {} as IQuoteFullIntervalData,
+            preMarketLOD: {} as IQuoteFullIntervalData,
             premarketCloseIntervals:[]
         },
         averageDailyVolume10Day: calculateAverage(dailyIntervals, tradingDate, 10),

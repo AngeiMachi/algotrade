@@ -1,18 +1,12 @@
-import * as environmentConfig from "../config/environment.Config.json";
 import * as globalConfig from "../config/globals.config"
 import * as OneSignal from 'onesignal-node';
 import { v4 as uuidv4 } from 'uuid';
 
 const oneSignalclient = new OneSignal.Client('6caf4483-266e-4b54-a9f8-c3e53671ebf6', 'MjZjMDNkODctMGE3Ny00ODZjLTk2MjItMjA1NTAxMzU4ZGQw');
 
-const pushedConfig = {
-    app_key: environmentConfig.PushedNotifications.appKey,
-    app_secret: environmentConfig.PushedNotifications.appSecret,
-    target_type: environmentConfig.PushedNotifications.targetType,
-};
 
 export const sendPushMessage = async (message: string) => {
-    if (globalConfig.ShouldUsePushNotifications) {
+    if (globalConfig.Notifications.usePush) {
         const notification = {
             contents: {
                 en: message,

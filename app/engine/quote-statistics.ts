@@ -224,6 +224,7 @@ export class QuoteStatistics {
 
     private addPremarketMetadata(quoteInterval: IQuoteFullIntervalData) {
         let maxHigh = this.metadata.preMarketMetadata.preMarketHOD.high || 0;
+        let minLow = this.metadata.preMarketMetadata.preMarketLOD.high || 10000;
 
         const propertyName =moment(quoteInterval.timeNewYork).format('YYYY-MM-DD HH:mm:ss').toString();
         
@@ -232,6 +233,9 @@ export class QuoteStatistics {
         if (quoteUtils.isIntervalOfCurrentTradingDate(propertyName)) {
             if (quoteInterval.high > maxHigh) {
                 this.metadata.preMarketMetadata.preMarketHOD = quoteInterval;
+            }
+            if (quoteInterval.low<minLow) {
+                this.metadata.preMarketMetadata.preMarketLOD = quoteInterval;
             }
     
             if (propertyName.includes(':55:00')) {

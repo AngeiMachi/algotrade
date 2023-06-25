@@ -1,15 +1,12 @@
 import * as _ from 'lodash';
-import { v4 as uuidv4 } from 'uuid';
 import { QuoteState, QuoteStateSignals } from '../models/state.model';
 import { getState } from '../engine/state';
 import express from 'express';
 import * as PushAPI from './pushed-api';
-import * as OneSignal from 'onesignal-node';
-import * as environmentConfig from '../config/environment.Config.json';
 import * as quotesIterator from '../engine/quotes-iterator';
-const app = express();
+import * as globalConfig from "../config/globals.config"
 
-const oneSignalclient = new OneSignal.Client('6caf4483-266e-4b54-a9f8-c3e53671ebf6', 'MjZjMDNkODctMGE3Ny00ODZjLTk2MjItMjA1NTAxMzU4ZGQw');
+const app = express();
 const server = require('http').Server(app);
 const bodyParser = require('body-parser')
 const jsonParser = bodyParser.json()
@@ -94,8 +91,16 @@ const sendPush = async (quote: QuoteState) => {
     const signals = _.filter(quote.signalsHistory, { interval: quote.quoteStatistics.intervalCount }) as QuoteStateSignals[];
     signals.forEach((signal) => {
         if (signal.signalDetails.withNotification) {
-            message += signal.signalDetails.signalDescription + '\r\n';
-            signalsWithNotificationsCount++;
+            if (globalConfig.Notifications.sendComboOnly) {
+                if (signal.signalDetails.signalDescription.includes('🎉')){
+                    message += signal.signalDetails.signalDescription + '\r\n';
+                    signalsWithNotificationsCount++;
+                } 
+            } else {
+                message += signal.signalDetails.signalDescription + '\r\n';
+                signalsWithNotificationsCount++;
+            }
+            
         }
     });
     if (message.length > 59) {
@@ -107,6 +112,9 @@ const sendPush = async (quote: QuoteState) => {
         const response = await PushAPI.sendPushMessage(message);
     }
 };
+
+const buildPushMessage  = (quote: QuoteState) => {
+}
 
 const isInPushPolicy = (quote: QuoteState) => {
     const signals = _.filter(quote.signalsHistory, { interval: quote.quoteStatistics.intervalCount }) as QuoteStateSignals[];

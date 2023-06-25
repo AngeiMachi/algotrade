@@ -14,7 +14,9 @@ import { BullishHODSignal,
          MovingAveragesHourlyBullish, 
          MovingAveragesFiftyHourlyBullish,
          BullishBuildingAboveTwentyMA,
-         BullishMoveSequenceSignal } 
+         BullishMoveSequenceSignal,
+         BearishMoveSequenceSignal
+            } 
          from '../signals';
 import { QuoteStatistics } from './quote-statistics';
 import { SignalModel } from '../models/signal.model';
@@ -39,11 +41,13 @@ export class QuoteMonoRunner {
     private movingAveragesHourlyBullish!:MovingAveragesHourlyBullish;
     private movingAveragesFiftyHourlyBullish!:MovingAveragesFiftyHourlyBullish;
     private bullishBuildingAboveTwentyMA!:BullishBuildingAboveTwentyMA;
-    private bullishMoveSequenceSignal!:BullishMoveSequenceSignal
+    private bullishMoveSequenceSignal!:BullishMoveSequenceSignal;
+    private bearishMoveSequenceSignal!:BearishMoveSequenceSignal;
 
     private breakoutFiveMinuteTwentyMaComboSignal!:BreakoutFiveMinuteTwentyMaComboSignal;
     private breakoutFiveMinuteFiftyMaAfterTwentyMaComboSignal!:BreakoutFiveMinuteFiftyMaAfterTwentyMaComboSignal;
     private breakoutAfterTouchTenDailyMAComboSignal!:BreakoutAfterTouchTenDailyMAComboSignal;
+    
 
     constructor(quote: string, todayDate: string = '') {
         this.quoteStats = new QuoteStatistics(quote, todayDate);
@@ -55,6 +59,7 @@ export class QuoteMonoRunner {
         quoteState.addNewQuote(this.quoteStats);
 
         //quoteIntervals = quoteUtils.cleanPreMarketIntervals(quoteIntervals, marketHours);
+        this.bearishMoveSequenceSignal = new BearishMoveSequenceSignal(this.quoteStats);
         this.bullishMoveSequenceSignal = new BullishMoveSequenceSignal(this.quoteStats);
         this.bullishHODSignal = new BullishHODSignal(this.quoteStats);
         this.bullishLevelBreakSignal = new BullishLevelBreakSignal(this.quoteStats);
@@ -128,6 +133,7 @@ export class QuoteMonoRunner {
         this.quoteStats.composeAndPrintCurrentIntervalStats(quoteInterval, isLive);
 
         this.signals = [
+            ...this.bearishMoveSequenceSignal.monitor(),
             ...this.bullishMoveSequenceSignal.monitor(),
             ...this.bullishHODSignal.monitor(),
             ...this.bullishLevelBreakSignal.monitor(),
