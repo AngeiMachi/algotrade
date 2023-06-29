@@ -1,12 +1,12 @@
 import { BehaviorTypes } from '../models/enums';
 
 export const Mock = {
-    IsMock: true,
+    IsMock: false,
     startAtOpen:false,
     StartLiveSimulationAtInterval: 100,
-    MockDataDate: '2023-06-23',
-    MockDataLiveSimulationTime:"09:25:00" ,
-    intervalLapTime:"*/30 * * * * *" // "*/30 * * * * *" = every 30 seconds; "*/1 * * * *" = every 1 minute
+    MockDataDate: '2023-06-27',
+    MockDataLiveSimulationTime:"14:25:00" ,
+    intervalLapTime:"*/5 * * * *" // "*/30 * * * * *" = every 30 seconds; "*/1 * * * *" = every 1 minute
     
 };
 
@@ -22,7 +22,7 @@ export const QuotesConfig = {
         indexes:{
             behaviors:[],
             signals:[],
-            names:["SPY","QQQ","IWM","SQQQ","TQQQ","XLE","XLF","JETS","ARKK","SMH","TZA"],
+            names:["SPY","QQQ","IWM","DIA","SQQQ","TQQQ","XLE","XLF","JETS","ARKK","SMH","TZA"],
         },
         leaders:{
             behaviors:[],
@@ -38,14 +38,14 @@ export const QuotesConfig = {
         },
         smallcap:{
             behaviors:[
-                BehaviorTypes.DeprecateIfNotAboveMovingAverages
+                // BehaviorTypes.DeprecateIfNotAboveMovingAverages
             ],
             signals:[
     
             ],
             names:[
                 "SPCE","HYLN","BABA","BIDU","PFE","MRNA","MBLY","FTNT","LULU","UCAR","PTGX","LI","NCLH","PATH","SHOP","ADBE","CRM","AMAT","ZM","GETY","SBUX","PINS","CVNA","XOM","GME","MTCH","AI",
-                "TWLO","SPLK","UPST","AFRM","ROKU","INTC","LUV","AAL","MRVL","MARA","COIN","RIOT",
+                "TWLO","SPLK","UPST","AFRM","ROKU","INTC","LUV","AAL","MRVL","MARA","COIN","RIOT","JOBY",
                 "DKNG" ,"SAVA","BYND","SNOW","SPOT","FUBO","TEAM","CVX","GCT",
                 "ABNB","TTD","DOCU","NOVA","UBER","V","MA","IBM","TGT",
                 "UPS","U","RBLX","CMG","UNH","RH","ETSY","SSYS","DASH","PLTR","WDC","IONQ",
@@ -63,9 +63,8 @@ export const QuotesConfig = {
         leaders:{
             behaviors:[],
             signals:[],
-            names:[
-                // "AMZN"
-                "AAPL","AMZN","TSLA","MSFT","META","BA","GOOGL","AMD","NVDA","CAT","ORCL","GE"
+            names:[ 
+                  "AAPL","AMZN","TSLA","MSFT","META","BA","GOOGL","AMD","NVDA","CAT","ORCL","GE"
             ],
         },
         trending:{
@@ -75,13 +74,13 @@ export const QuotesConfig = {
         },
         smallcap:{
             behaviors:[
-                // BehaviorTypes.DeprecateIfNotAboveMovingAverages
+                //BehaviorTypes.DeprecateIfNotAboveMovingAverages
             ],
             signals:[
     
             ],
             names:[ 
-                // "AI",
+                
                 "NKLA","BABA","BIDU","PFE","MRNA","MBLY","FTNT","LULU","UCAR","PTGX","LI","NCLH","PATH","SHOP","ADBE","CRM","AMAT","ZM","GETY","SBUX","PINS","CVNA","XOM","GME","MTCH","AI",
                 "TWLO","SPLK","UPST","AFRM","ROKU","INTC","LUV","AAL","MRVL","MARA","COIN","RIOT",
                 "DKNG" ,"SAVA","BYND","SNOW","SPOT","FUBO","TEAM","CVX","GCT",
