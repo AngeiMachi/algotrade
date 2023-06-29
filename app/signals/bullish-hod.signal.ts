@@ -13,6 +13,8 @@ export class BullishHODSignal extends Signals {
     private preHOD: number=100000;
     private didBreakOutPreHOD: boolean = false;
     private didMakeHigherLow: boolean = false;
+    private didMakeLowforPre: boolean = false;
+    private didTouch10MA: boolean = false;
 
     private lastHODInterval = {} as IQuoteFullIntervalData;
     private lastHODIntervalCount: number = 0;
@@ -43,7 +45,19 @@ export class BullishHODSignal extends Signals {
             this.lastHODInterval = this.quoteStats.lastInterval;
             this.lastHODIntervalCount = this.quoteStats.intervalCount;
         } else if (this.quoteStats.lastInterval.close > this.lastHODInterval.high) {
-            if (this.quoteStats.intervalCount - this.lastHODIntervalCount >= 2 && this.didMakeHigherLow && this.HODSignalCount==1) {
+
+            if (!this.didBreakOutPreHOD && (this.didMakeHigherLow ||this.HODSignalCount==2) && this.quoteStats.lastInterval.close > this.preHOD  ) {
+                    signals.push({
+                        signalGroupType: SignalGroupType.BULLISH_HOD,
+                        signalType: SignalType.BULLISH_HIGH_OF_DAY_WITH_PREMARKET_BREAKOUT,
+                        signalDescription: SignalVerificationReasonEnum.BULLISH_HIGH_OF_DAY_WITH_PREMARKET_BREAKOUT,
+                        interval:this.quoteStats.lastInterval,
+                        withNotification:true,
+                    });
+                    this.didBreakOutPreHOD = true;
+                    this.didMakeHigherLow = false;
+                }
+            else if ( this.didMakeHigherLow && this.HODSignalCount==1) {
                 signals.push({
                     signalGroupType: SignalGroupType.BULLISH_HOD,
                     signalType: SignalType.BULLISH_HIGH_OF_DAY,
@@ -52,31 +66,43 @@ export class BullishHODSignal extends Signals {
                     withNotification:true,
                 });
                 this.didMakeHigherLow = false;
-            }
-            this.lastHODInterval = { ...this.quoteStats.lastInterval };
-            this.lastHODIntervalCount = this.quoteStats.intervalCount;
-        } else if (this.quoteStats.lastInterval.high > this.lastHODInterval.high && this.quoteStats.intervalCount - this.lastHODIntervalCount <= 2) {
-            this.lastHODInterval = this.quoteStats.lastInterval;
-            this.didMakeHigherLow = false;
-        } else if (this.quoteStats.lastInterval.close < this.quoteStats.lastInterval.open && this.quoteStats.lastInterval.close < this.lastHODInterval.close) {
-            this.redCandlesCount++;
-            if (this.redCandlesCount==2) {
-                this.didMakeHigherLow = true;
-                this.redCandlesCount=0;
+                
             }
             
-        }
+            this.lastHODInterval = { ...this.quoteStats.lastInterval };
+            this.lastHODIntervalCount = this.quoteStats.intervalCount;
+            
+        } else if (this.quoteStats.lastInterval.high > this.lastHODInterval.high ) {
+            this.lastHODInterval = this.quoteStats.lastInterval;
+            this.didMakeHigherLow = false;
+        } else if (!this.didMakeHigherLow){
+            if (this.quoteStats.lastInterval.low<(this.quoteStats.lastInterval.MA10 || 0)) {
+                this.didTouch10MA = true;
+            }
+            if (this.quoteStats.lastInterval.close < this.quoteStats.lastInterval.open && this.quoteStats.lastInterval.close < this.lastHODInterval.close) {
+                this.redCandlesCount++;
+            }
 
-        if (this.quoteStats.lastInterval.close > this.preHOD && !this.didBreakOutPreHOD && this.quoteStats.intervalCount > 2) {
-            this.didBreakOutPreHOD = true;
-            signals.push({
-                signalGroupType: SignalGroupType.BULLISH_HOD,
-                signalType: SignalType.BULLISH_HIGH_OF_DAY_WITH_PREMARKET_BREAKOUT,
-                signalDescription: SignalVerificationReasonEnum.BULLISH_HIGH_OF_DAY_WITH_PREMARKET_BREAKOUT,
-                interval:this.quoteStats.lastInterval,
-                withNotification:true,
-            });
+            if (this.redCandlesCount>2 && this.didTouch10MA) {
+                this.didMakeHigherLow = true;
+                this.didTouch10MA=false;
+                this.redCandlesCount=0;
+            }
         }
+        // if (this.didMakeHigherLow && this.quoteStats.lastInterval.close > this.preHOD &&
+        //     this.quoteStats.lastInterval.open < this.preHOD &&
+        //     this.quoteStats.lastInterval.close >= this.lastHODInterval.close &&
+        //     this.quoteStats.lastInterval.close> this.quoteStats.lastInterval.open &&
+        //     !this.didBreakOutPreHOD && this.quoteStats.intervalCount > 2) {
+        //     this.didBreakOutPreHOD = true;
+        //     signals.push({
+        //         signalGroupType: SignalGroupType.BULLISH_HOD,
+        //         signalType: SignalType.BULLISH_HIGH_OF_DAY_WITH_PREMARKET_BREAKOUT,
+        //         signalDescription: SignalVerificationReasonEnum.BULLISH_HIGH_OF_DAY_WITH_PREMARKET_BREAKOUT,
+        //         interval:this.quoteStats.lastInterval,
+        //         withNotification:true,
+        //     });
+        // }
         return signals;
     }
 

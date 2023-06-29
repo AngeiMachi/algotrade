@@ -83,7 +83,7 @@ export class BearishMoveSequenceSignal extends Signals {
     }
 
     private isMinimumPercentageDifferenceEnabled():boolean {
-        const movingAveragesObj = _.pick(this.quoteStats.metadata, ['SMA10','SMA20', 'SMA50', 'SMA100', 'SMA200']);
+        const movingAveragesObj = _.pick(this.quoteStats.metadata, ['SMA20', 'SMA50', 'SMA100', 'SMA200']);
         const movingAverages = Object.entries(movingAveragesObj);
         let movingAveragesAboveCount = 0;
 
@@ -107,8 +107,8 @@ export class BearishMoveSequenceSignal extends Signals {
             const percentangeDistanceFrom20MA = generalUtils.getPercentageDifference(this.quoteStats.metadata.SMA20.previousDay,this.quoteStats.lastInterval.open);
         
             if (this.quoteStats.metadata.previousDay.low>this.quoteStats.lastInterval.open && 
-                percentangeDistance>0.5 && 
-                percentangeDistanceFrom10MA<5 || percentangeDistanceFrom20MA<5) {
+                (percentangeDistance>0.5  || percentangeDistance<3) && 
+                (percentangeDistanceFrom10MA<5 || percentangeDistanceFrom20MA<5)) {
                 this.didOpenBelowPreviousDay = true;
             }
         }

@@ -122,6 +122,7 @@ export class QuoteStatistics {
                 this.composeMetadata();
             }
             
+            this._lastInterval.MA10 = this.calculateFiveMinuteMA(MovingAverageType.SMA10);
             this._lastInterval.MA20 = this.calculateFiveMinuteMA(MovingAverageType.SMA20);
             this._lastInterval.MA50 = this.calculateFiveMinuteMA(MovingAverageType.SMA50);
             this.processHourlyStatistics();
