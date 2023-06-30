@@ -15,7 +15,8 @@ import { BullishHODSignal,
          MovingAveragesFiftyHourlyBullish,
          BullishBuildingAboveTwentyMA,
          BullishMoveSequenceSignal,
-         BearishMoveSequenceSignal
+         BearishMoveSequenceSignal,
+         BearishLODSignal
             } 
          from '../signals';
 import { QuoteStatistics } from './quote-statistics';
@@ -33,6 +34,7 @@ export class QuoteMonoRunner {
     private signals: SignalModel[] = [];
 
     private bullishHODSignal!: BullishHODSignal;
+    private bearishLODSignal!: BearishLODSignal;
     private bullishLevelBreakSignal!: BullishLevelBreakSignal;
     private bullishVolumeSignal!: BullishVolumeSignal;
     private movingAveragesSignal!: MovingAveragesSignal;
@@ -62,6 +64,9 @@ export class QuoteMonoRunner {
         this.bearishMoveSequenceSignal = new BearishMoveSequenceSignal(this.quoteStats);
         this.bullishMoveSequenceSignal = new BullishMoveSequenceSignal(this.quoteStats);
         this.bullishHODSignal = new BullishHODSignal(this.quoteStats);
+        this.bearishLODSignal =  new BearishLODSignal(this.quoteStats);
+
+
         this.bullishLevelBreakSignal = new BullishLevelBreakSignal(this.quoteStats);
         this.bullishVolumeSignal = new BullishVolumeSignal(this.quoteStats);
         this.movingAveragesSignal = new MovingAveragesSignal(this.quoteStats);
@@ -136,6 +141,7 @@ export class QuoteMonoRunner {
             ...this.bearishMoveSequenceSignal.monitor(),
             ...this.bullishMoveSequenceSignal.monitor(),
             ...this.bullishHODSignal.monitor(),
+            ...this.bearishLODSignal.monitor(),
             ...this.bullishLevelBreakSignal.monitor(),
             ...this.bullishVolumeSignal.monitor(),
             ...this.movingAverageDailyTwentySignal.monitor(),

@@ -1,10 +1,10 @@
 import { BehaviorTypes } from '../models/enums';
 
 export const Mock = {
-    IsMock: false,
+    IsMock: true,
     startAtOpen:false,
     StartLiveSimulationAtInterval: 100,
-    MockDataDate: '2023-06-27',
+    MockDataDate: '2023-06-29',
     MockDataLiveSimulationTime:"14:25:00" ,
     intervalLapTime:"*/5 * * * *" // "*/30 * * * * *" = every 30 seconds; "*/1 * * * *" = every 1 minute
     
@@ -45,7 +45,7 @@ export const QuotesConfig = {
             ],
             names:[
                 "SPCE","HYLN","BABA","BIDU","PFE","MRNA","MBLY","FTNT","LULU","UCAR","PTGX","LI","NCLH","PATH","SHOP","ADBE","CRM","AMAT","ZM","GETY","SBUX","PINS","CVNA","XOM","GME","MTCH","AI",
-                "TWLO","SPLK","UPST","AFRM","ROKU","INTC","LUV","AAL","MRVL","MARA","COIN","RIOT","JOBY",
+                "TWLO","SPLK","UPST","AFRM","ROKU","INTC","LUV","AAL","MRVL","MARA","COIN","RIOT","JOBY","NKE",
                 "DKNG" ,"SAVA","BYND","SNOW","SPOT","FUBO","TEAM","CVX","GCT",
                 "ABNB","TTD","DOCU","NOVA","UBER","V","MA","IBM","TGT",
                 "UPS","U","RBLX","CMG","UNH","RH","ETSY","SSYS","DASH","PLTR","WDC","IONQ",
@@ -64,7 +64,7 @@ export const QuotesConfig = {
             behaviors:[],
             signals:[],
             names:[ 
-                  "AAPL","AMZN","TSLA","MSFT","META","BA","GOOGL","AMD","NVDA","CAT","ORCL","GE"
+                  //"AAPL","AMZN","TSLA","MSFT","META","BA","GOOGL","AMD","NVDA","CAT","ORCL","GE"
             ],
         },
         trending:{
@@ -80,14 +80,14 @@ export const QuotesConfig = {
     
             ],
             names:[ 
-                
-                "NKLA","BABA","BIDU","PFE","MRNA","MBLY","FTNT","LULU","UCAR","PTGX","LI","NCLH","PATH","SHOP","ADBE","CRM","AMAT","ZM","GETY","SBUX","PINS","CVNA","XOM","GME","MTCH","AI",
-                "TWLO","SPLK","UPST","AFRM","ROKU","INTC","LUV","AAL","MRVL","MARA","COIN","RIOT",
-                "DKNG" ,"SAVA","BYND","SNOW","SPOT","FUBO","TEAM","CVX","GCT",
-                "ABNB","TTD","DOCU","NOVA","UBER","V","MA","IBM","TGT",
-                "UPS","U","RBLX","CMG","UNH","RH","ETSY","SSYS","DASH","PLTR","WDC","IONQ",
-                "FVRR","AXSM","BBIB","SQ","PYPL","CRWD","PANW","FDX","ZIM","MCD",
-                "HD","KO","WMT","DIS","T","CSCO","APPS","MU","TSM","QCOM","RIVN","FSR"
+                "CVNA"
+                // "NKLA","BABA","BIDU","PFE","MRNA","MBLY","FTNT","LULU","UCAR","PTGX","LI","NCLH","PATH","SHOP","ADBE","CRM","AMAT","ZM","GETY","SBUX","PINS","CVNA","XOM","GME","MTCH","AI",
+                // "TWLO","SPLK","UPST","AFRM","ROKU","INTC","LUV","AAL","MRVL","MARA","COIN","RIOT",
+                // "DKNG" ,"SAVA","BYND","SNOW","SPOT","FUBO","TEAM","CVX","GCT",
+                // "ABNB","TTD","DOCU","NOVA","UBER","V","MA","IBM","TGT",
+                // "UPS","U","RBLX","CMG","UNH","RH","ETSY","SSYS","DASH","PLTR","WDC","IONQ",
+                // "FVRR","AXSM","BBIB","SQ","PYPL","CRWD","PANW","FDX","ZIM","MCD",
+                // "HD","KO","WMT","DIS","T","CSCO","APPS","MU","TSM","QCOM","RIVN","FSR"
             ],
         },
     }
