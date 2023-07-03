@@ -4,7 +4,7 @@ export const Mock = {
     IsMock: true,
     startAtOpen:false,
     StartLiveSimulationAtInterval: 100,
-    MockDataDate: '2023-06-29',
+    MockDataDate: '2023-06-30',
     MockDataLiveSimulationTime:"14:25:00" ,
     intervalLapTime:"*/5 * * * *" // "*/30 * * * * *" = every 30 seconds; "*/1 * * * *" = every 1 minute
     
@@ -38,19 +38,20 @@ export const QuotesConfig = {
         },
         smallcap:{
             behaviors:[
-                // BehaviorTypes.DeprecateIfNotAboveMovingAverages
+                 BehaviorTypes.DeprecateIfNotAboveMovingAverages
             ],
             signals:[
     
             ],
             names:[
-                "SPCE","HYLN","BABA","BIDU","PFE","MRNA","MBLY","FTNT","LULU","UCAR","PTGX","LI","NCLH","PATH","SHOP","ADBE","CRM","AMAT","ZM","GETY","SBUX","PINS","CVNA","XOM","GME","MTCH","AI",
+                "SPCE","HYLN","BABA","BIDU","PFE","MRNA","MBLY","FTNT","LULU","UCAR","PTGX","LI","NCLH","PATH",
+                "SHOP","ADBE","CRM","AMAT","ZM","GETY","SBUX","PINS","CVNA","XOM","GME","MTCH","AI",
                 "TWLO","SPLK","UPST","AFRM","ROKU","INTC","LUV","AAL","MRVL","MARA","COIN","RIOT","JOBY","NKE",
-                "DKNG" ,"SAVA","BYND","SNOW","SPOT","FUBO","TEAM","CVX","GCT",
-                "ABNB","TTD","DOCU","NOVA","UBER","V","MA","IBM","TGT",
-                "UPS","U","RBLX","CMG","UNH","RH","ETSY","SSYS","DASH","PLTR","WDC","IONQ",
-                "FVRR","AXSM","BBIB","SQ","PYPL","CRWD","PANW","FDX","ZIM","MCD",
-                "HD","KO","WMT","DIS","T","CSCO","APPS","MU","TSM","QCOM","RIVN","FSR"
+                "DKNG" ,"SAVA","BYND","SNOW","SPOT","FUBO","TEAM","CVX","GCT","MDB","ENPH","PLUG","QS",
+                "ABNB","TTD","DOCU","NOVA","UBER","V","MA","IBM","TGT","OXY","GM","CE","HON",
+                "UPS","U","RBLX","CMG","UNH","RH","ETSY","SSYS","DASH","PLTR","WDC","IONQ","AVGO","NIO","XPEV","FSLR","CCL",
+                "FVRR","AXSM","BBIB","SQ","PYPL","CRWD","PANW","FDX","ZIM","MCD","GS","JPM","MS","BAC",
+                "HD","KO","WMT","DIS","T","CSCO","APPS","MU","TSM","QCOM","RIVN","FSR","SNAP","BNTX"
             ],
         },
     },
@@ -58,7 +59,7 @@ export const QuotesConfig = {
         indexes:{
             behaviors:[],
             signals:[],
-            names:["SPY","QQQ"],
+            names:["SPY"],
         },
         leaders:{
             behaviors:[],
@@ -79,8 +80,9 @@ export const QuotesConfig = {
             signals:[
     
             ],
-            names:[ 
-                "CVNA"
+            names:[
+               "AAPL"
+                //"AMZN","META"
                 // "NKLA","BABA","BIDU","PFE","MRNA","MBLY","FTNT","LULU","UCAR","PTGX","LI","NCLH","PATH","SHOP","ADBE","CRM","AMAT","ZM","GETY","SBUX","PINS","CVNA","XOM","GME","MTCH","AI",
                 // "TWLO","SPLK","UPST","AFRM","ROKU","INTC","LUV","AAL","MRVL","MARA","COIN","RIOT",
                 // "DKNG" ,"SAVA","BYND","SNOW","SPOT","FUBO","TEAM","CVX","GCT",

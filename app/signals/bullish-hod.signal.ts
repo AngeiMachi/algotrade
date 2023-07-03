@@ -13,7 +13,9 @@ export class BullishHODSignal extends Signals {
     private preHOD: number=100000;
     private didBreakOutPreHOD: boolean = false;
     private didMakeHigherLow: boolean = false;
+    private didMakeFirstCandleHigherLow = false
     private didTouch10MA: boolean = false;
+    private didGoBelowHOD :boolean = false;
 
     private lastHODInterval = {} as IQuoteFullIntervalData;
     private lastHODIntervalCount: number = 0;
@@ -40,11 +42,16 @@ export class BullishHODSignal extends Signals {
             this.preHOD = this.quoteStats.metadata.preMarketMetadata?.preMarketHOD.high || 100000;
             this.lastHODInterval = this.quoteStats.lastInterval;
             this.lastHODIntervalCount = 0;
+            if (this.quoteStats.lastInterval.close<this.quoteStats.lastInterval.open) {
+                this.redCandlesCount++;
+                // sometimes the first candle is red and the third or more breaks the high 
+                this.didMakeFirstCandleHigherLow = true;
+            }
         } else if(this.initialInterval?.intervalNumber==this.quoteStats.intervalCount) {
             this.lastHODInterval = this.quoteStats.lastInterval;
             this.lastHODIntervalCount = this.quoteStats.intervalCount;
         } else if (this.quoteStats.lastInterval.close > this.lastHODInterval.high) {
-            if (!this.didBreakOutPreHOD && (this.didMakeHigherLow ||this.HODSignalCount==2) && this.quoteStats.lastInterval.close > this.preHOD  ) {
+            if (!this.didBreakOutPreHOD && ((this.didMakeHigherLow ||  (this.didMakeFirstCandleHigherLow && this.quoteStats.intervalCount>=2))  ||this.HODSignalCount==2) && this.quoteStats.lastInterval.close > this.preHOD  ) {
                     signals.push({
                         signalGroupType: SignalGroupType.BULLISH_HOD,
                         signalType: SignalType.BULLISH_HIGH_OF_DAY_WITH_PREMARKET_BREAKOUT,
@@ -53,9 +60,8 @@ export class BullishHODSignal extends Signals {
                         withNotification:true,
                     });
                     this.didBreakOutPreHOD = true;
-                    this.didMakeHigherLow = false;
                 }
-            else if ( this.didMakeHigherLow && this.HODSignalCount==1) {
+            else if ( (this.didMakeHigherLow ||  (this.didMakeFirstCandleHigherLow && this.quoteStats.intervalCount>=2))&& this.HODSignalCount==1) {
                 signals.push({
                     signalGroupType: SignalGroupType.BULLISH_HOD,
                     signalType: SignalType.BULLISH_HIGH_OF_DAY,
@@ -63,25 +69,29 @@ export class BullishHODSignal extends Signals {
                     interval:this.quoteStats.lastInterval,
                     withNotification:true,
                 });
-                this.didMakeHigherLow = false;
+                
                 
             }
-            
+            this.didMakeFirstCandleHigherLow = false;
+            this.didMakeHigherLow = false;
             this.lastHODInterval = { ...this.quoteStats.lastInterval };
             this.lastHODIntervalCount = this.quoteStats.intervalCount;
             
         } else if (this.quoteStats.lastInterval.high > this.lastHODInterval.high ) {
             this.lastHODInterval = this.quoteStats.lastInterval;
-            this.didMakeHigherLow = false;
         } else if (!this.didMakeHigherLow){
-            if (this.quoteStats.lastInterval.low<(this.quoteStats.lastInterval.MA10 || 0)) {
+            // trying to find a low in multiple scenarios
+            if (!this.didTouch10MA && (this.quoteStats.lastInterval.low<(this.quoteStats.lastInterval.MA10 || 0))) {
                 this.didTouch10MA = true;
+            }
+            if (!this.didGoBelowHOD && (this.quoteStats.lastInterval.low< this.lastHODInterval.low)) {
+                this.didGoBelowHOD = true;
             }
             if (this.quoteStats.lastInterval.close < this.quoteStats.lastInterval.open && this.quoteStats.lastInterval.close < this.lastHODInterval.close) {
                 this.redCandlesCount++;
             }
 
-            if (this.redCandlesCount>2 && this.didTouch10MA) {
+            if (this.redCandlesCount>=2 && (this.didTouch10MA || this.didGoBelowHOD)) {
                 this.didMakeHigherLow = true;
                 this.didTouch10MA=false;
                 this.redCandlesCount=0;
