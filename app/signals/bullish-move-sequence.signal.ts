@@ -61,7 +61,7 @@ export class BullishMoveSequenceSignal extends Signals {
                 
                 this.didSignalTriggered = true;
                 signals.push({
-                    signalGroupType: SignalGroupType.BULLISH_HOD,
+                    signalGroupType: SignalGroupType.BEARISH_COMBO,
                     signalType: SignalType.BULLISH_SEQUENCE_MOVE,
                     signalDescription: SignalVerificationReasonEnum.BULLISH_SEQUENCE_MOVE,
                     withNotification:true,

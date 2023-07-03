@@ -70,7 +70,7 @@ export class BearishMoveSequenceSignal extends Signals {
                 
                 this.didSignalTriggered = true;
                 signals.push({
-                    signalGroupType: SignalGroupType.BREARISH_LOD,
+                    signalGroupType: SignalGroupType.BEARISH_COMBO,
                     signalType: SignalType.BEARISH_SEQUENCE_MOVE,
                     signalDescription: SignalVerificationReasonEnum.BEARISH_SEQUENCE_MOVE,
                     withNotification:true,

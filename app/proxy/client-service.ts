@@ -91,8 +91,8 @@ const sendPush = async (quote: QuoteState) => {
     const signals = _.filter(quote.signalsHistory, { interval: quote.quoteStatistics.intervalCount }) as QuoteStateSignals[];
     signals.forEach((signal) => {
         if (signal.signalDetails.withNotification) {
-            if (globalConfig.Notifications.sendComboOnly) {
-                if (signal.signalDetails.signalDescription.includes('🎉')){
+            if (globalConfig.Notifications?.allowedNotifications) {
+                if (globalConfig.Notifications?.allowedNotifications.groupTypes.includes(signal.signalDetails.signalGroupType)){
                     message += signal.signalDetails.signalDescription + '\r\n';
                     signalsWithNotificationsCount++;
                 } 
@@ -113,8 +113,7 @@ const sendPush = async (quote: QuoteState) => {
     }
 };
 
-const buildPushMessage  = (quote: QuoteState) => {
-}
+
 
 const isInPushPolicy = (quote: QuoteState) => {
     const signals = _.filter(quote.signalsHistory, { interval: quote.quoteStatistics.intervalCount }) as QuoteStateSignals[];

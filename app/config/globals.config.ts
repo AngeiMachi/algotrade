@@ -1,12 +1,12 @@
-import { BehaviorTypes } from '../models/enums';
+import { BehaviorTypes, SignalGroupType } from '../models/enums';
 
 export const Mock = {
     IsMock: true,
     startAtOpen:false,
     StartLiveSimulationAtInterval: 100,
     MockDataDate: '2023-06-30',
-    MockDataLiveSimulationTime:"14:25:00" ,
-    intervalLapTime:"*/5 * * * *" // "*/30 * * * * *" = every 30 seconds; "*/1 * * * *" = every 1 minute
+    MockDataLiveSimulationTime:"09:25:00" ,
+    intervalLapTime:"*/30 * * * * *" // "*/30 * * * * *" = every 30 seconds; "*/1 * * * *" = every 1 minute
     
 };
 
@@ -14,7 +14,13 @@ export const ShouldUsePushNotifications = true;
 
 export const Notifications = {
     usePush :true,
-    sendComboOnly:true
+    allowedNotifications: {
+        groupTypes: [
+            SignalGroupType.BULLISH_VOLUME,
+            SignalGroupType.BULLISH_COMBO,
+            SignalGroupType.BEARISH_COMBO,
+        ]
+    }
 };
 
 export const QuotesConfig = {
@@ -65,7 +71,7 @@ export const QuotesConfig = {
             behaviors:[],
             signals:[],
             names:[ 
-                  //"AAPL","AMZN","TSLA","MSFT","META","BA","GOOGL","AMD","NVDA","CAT","ORCL","GE"
+                  "AAPL","AMZN","TSLA","MSFT","META","BA","GOOGL","AMD","NVDA","CAT","ORCL","GE"
             ],
         },
         trending:{
@@ -81,7 +87,7 @@ export const QuotesConfig = {
     
             ],
             names:[
-               "AAPL"
+               "CVNA","BABA"
                 //"AMZN","META"
                 // "NKLA","BABA","BIDU","PFE","MRNA","MBLY","FTNT","LULU","UCAR","PTGX","LI","NCLH","PATH","SHOP","ADBE","CRM","AMAT","ZM","GETY","SBUX","PINS","CVNA","XOM","GME","MTCH","AI",
                 // "TWLO","SPLK","UPST","AFRM","ROKU","INTC","LUV","AAL","MRVL","MARA","COIN","RIOT",

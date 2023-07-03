@@ -49,6 +49,7 @@ export interface IQuoteMetadata {
     };
     averageDailyVolume10Day: number | IQuotePriceFormat;
     averageDailyVolume3Month: number | IQuotePriceFormat;
+    averageVolatility30Day : number
     average5Minute3Month: number;
     fiftyTwoWeekLow: number | IQuotePriceFormat;
     fiftyTwoWeekHigh: number | IQuotePriceFormat;

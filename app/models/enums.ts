@@ -50,7 +50,8 @@ export enum SignalGroupType {
     INTRADAY_MOVING_AVERAGE,
     HOURLY_MOVING_AVERAGE,
     BUILDING_BULL_FLAG_FIVE_MINUTES,
-    BULLISH_COMBO
+    BULLISH_COMBO,
+    BEARISH_COMBO,
 }
 
 export enum SignalType {

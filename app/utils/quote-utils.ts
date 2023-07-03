@@ -1,10 +1,9 @@
 import * as _ from 'lodash';
 import moment from 'moment-timezone';
-
 import * as globalConfig from '../config/globals.config';
 import { logger } from '../config/winston.config';
-
 import * as convertUtils from './convert-utils';
+import * as generalUtils from './general';
 import { convertDateToTDMillisecondInterval } from './convert-utils';
 import {
     ITDAmeritradeIntervalData,
@@ -65,13 +64,29 @@ export function getPreviousTradingDate(tradingDate: string | number) {
     return substractDays - 86400000 * substractDays; // 86400000 = 24 hours in milliseconds
 }
 
-export function calculateAverage(intervals: ITDAmeritradeIntervalData[], tradingDate: string, intervalsToAverageBack: number): number {
+export function calculateAverageVolume(intervals: ITDAmeritradeIntervalData[], tradingDate: string, intervalsToAverageBack: number): number {
     const dayBefore = getPreviousTradingDate(tradingDate) as string;
     const index = getLastTradingDateIndex(intervals, dayBefore);
     if (index > -1) {
         const intervalsForAverage = _.slice(intervals, index - intervalsToAverageBack, index);
         const average = _.meanBy(intervalsForAverage, 'volume');
         return average;
+    }
+    return -1;
+}
+
+export function calculateAverageVolatility(intervals: ITDAmeritradeIntervalData[], tradingDate: string, intervalsToAverageBack: number): number {
+    const dayBefore = getPreviousTradingDate(tradingDate) as string;
+    const index = getLastTradingDateIndex(intervals, dayBefore);
+    if (index > -1) {
+        const intervalsForAverage = _.slice(intervals, index - intervalsToAverageBack, index);
+        let sum=0;
+        for (let i=1;i<intervalsForAverage.length;i++) {
+            sum+= generalUtils.getPercentageDifference(intervalsForAverage[i-1].close,intervalsForAverage[i].close);
+        }
+        return sum/intervalsToAverageBack;
+        //const average = _.meanBy(intervalsForAverage, item=>generalUtils.getPercentageDifference(item.open,item.close));
+        //return average;
     }
     return -1;
 }
@@ -216,11 +231,13 @@ export function composeMetadata(
             preMarketLOD: {} as IQuoteFullIntervalData,
             premarketCloseIntervals:[]
         },
-        averageDailyVolume10Day: calculateAverage(dailyIntervals, tradingDate, 10),
-        averageDailyVolume3Month: calculateAverage(dailyIntervals, tradingDate, 90),
+        averageDailyVolume10Day: calculateAverageVolume(dailyIntervals, tradingDate, 10),
+        averageDailyVolume3Month: calculateAverageVolume(dailyIntervals, tradingDate, 90),
+        averageVolatility30Day: calculateAverageVolatility(dailyIntervals, tradingDate, 30),
         get average5Minute3Month() {
             return (this.averageDailyVolume3Month as number) / 78;
         },
+
         previousDay: convertUtils.convertTDAmeritradeDailyIntervals([getPreviousCandle(dailyIntervals, tradingDate) as ITDAmeritradeIntervalData])[0],
         previousWeek: convertUtils.convertTDAmeritradeDailyIntervals([getPreviousCandle(weeklyIntervals, tradingDate, TimeFrame.Weekly) as ITDAmeritradeIntervalData])[0],
         SMA5: {
