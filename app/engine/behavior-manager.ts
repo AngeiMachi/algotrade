@@ -1,6 +1,6 @@
 import { IQuoteMetadata, IQuotes } from '../models/quote-data.model';
 import * as globalConfig from '../config/globals.config'
-import {QuoteGroupConfig} from '../models/miscellaneous.model'
+import {FunctionalBehavior, QuoteGroupConfig} from '../models/miscellaneous.model'
 import { BehaviorTypes } from '../models/enums';
 import { logger } from '../config/winston.config';
 import * as PushAPI from '../proxy/pushed-api';
@@ -38,4 +38,8 @@ export const manangeAfterMetadata=(quoteName:string,metadata:IQuoteMetadata,quot
             }
 
     }
+
+    const deprecateIfAvarageVolumeisLessThan = quoteToBeUsed[quoteConfigGroupName].behaviors?.find((item)=>(item as FunctionalBehavior)?.behavior==BehaviorTypes.DeprecateIfAvarageVolumeisLessThan)
+
+    let i = deprecateIfAvarageVolumeisLessThan;
 }

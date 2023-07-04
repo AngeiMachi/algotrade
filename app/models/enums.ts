@@ -102,5 +102,7 @@ export enum MovingAverageType {
 }
 
 export enum BehaviorTypes {
-    DeprecateIfNotAboveMovingAverages
+    DeprecateIfNotAboveMovingAverages,
+    DeprecateIfAvarageVolumeisLessThan,
+    DepricateIfPriceIsLessThan
 }

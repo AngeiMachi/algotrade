@@ -112,7 +112,6 @@ export class BearishMoveSequenceSignal extends Signals {
                 this.didOpenBelowPreviousDay = true;
             }
         }
-        
     }
 
     private verifyDidTouch10MA() {
@@ -125,8 +124,9 @@ export class BearishMoveSequenceSignal extends Signals {
     }
 
     private verifyDidBreakPreviousDay() {
-        if (this.quoteStats.intervalCount === 0 ){
-            if (this.quoteStats.quoteIntervals[0].open>this.quoteStats.metadata.previousDay.close) {
+        if (this.quoteStats.intervalCount <= 2 && this.quoteStats.intervalCount >=0 ){
+            if (this.quoteStats.quoteIntervals[0].open>this.quoteStats.metadata.previousDay.low && 
+                this.quoteStats.quoteIntervals[0].open<this.quoteStats.metadata.previousDay.high ) {
                 if (this.quoteStats.lastInterval.close<this.quoteStats.metadata.previousDay.low) {
                     const percentangeDistance =  generalUtils.getPercentageDifference(this.quoteStats.lastInterval.close,this.quoteStats.metadata.previousDay.high);
                     if (percentangeDistance>0.3) {
@@ -136,5 +136,4 @@ export class BearishMoveSequenceSignal extends Signals {
             }
         }
     }
-    
 }
