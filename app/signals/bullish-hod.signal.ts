@@ -79,15 +79,17 @@ export class BullishHODSignal extends Signals {
             
         } else if (this.quoteStats.lastInterval.high > this.lastHODInterval.high ) {
             this.lastHODInterval = this.quoteStats.lastInterval;
-        } else if (!this.didMakeHigherLow){
+        } 
+        if (!this.didMakeHigherLow){
             // trying to find a low in multiple scenarios
-            if (!this.didTouch10MA && (this.quoteStats.lastInterval.low<(this.quoteStats.lastInterval.MA10 || 0))) {
+            if (!this.didTouch10MA && (this.quoteStats.lastInterval.low<(this.quoteStats.lastInterval.MA10 || 0)) &&
+                this.quoteStats.intervalCount>0) {
                 this.didTouch10MA = true;
             }
             if (!this.didGoBelowHOD && (this.quoteStats.lastInterval.low< this.lastHODInterval.low)) {
                 this.didGoBelowHOD = true;
             }
-            if (this.quoteStats.lastInterval.close < this.quoteStats.lastInterval.open && this.quoteStats.lastInterval.close < this.lastHODInterval.close) {
+            if (this.quoteStats.lastInterval.close < this.quoteStats.lastInterval.open && this.quoteStats.lastInterval.low <= this.lastHODInterval.close) {
                 this.redCandlesCount++;
             }
 

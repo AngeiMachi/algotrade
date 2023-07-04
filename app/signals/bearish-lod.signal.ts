@@ -76,14 +76,16 @@ export class BearishLODSignal extends Signals {
             
         } else if (this.quoteStats.lastInterval.low < this.lastLODInterval.low ) {
             this.lastLODInterval = this.quoteStats.lastInterval;
-        } else if (!this.didMakeLowerHigh){
-            if (!this.didTouch10MA && (this.quoteStats.lastInterval.high>(this.quoteStats.lastInterval.MA10 || 10000))) {
+        } 
+        if (!this.didMakeLowerHigh){
+            if (!this.didTouch10MA && (this.quoteStats.lastInterval.high>(this.quoteStats.lastInterval.MA10 || 10000)) &&
+                this.quoteStats.intervalCount>0) {
                 this.didTouch10MA = true;
             }
             if (!this.didGoAboveLOD && (this.quoteStats.lastInterval.high> this.lastLODInterval.high)) {
                 this.didGoAboveLOD = true;
             }
-            if (this.quoteStats.lastInterval.close > this.quoteStats.lastInterval.open && this.quoteStats.lastInterval.close > this.lastLODInterval.close) {
+            if (this.quoteStats.lastInterval.close > this.quoteStats.lastInterval.open && this.quoteStats.lastInterval.high >= this.lastLODInterval.close) {
                 this.greenCandlesCount++;
             }
 
