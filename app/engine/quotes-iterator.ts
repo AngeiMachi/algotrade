@@ -97,7 +97,8 @@ const iterateQuotes= () => {
         try {
             const quoteStockStats: QuoteMonoRunner = quotes[quoteKey];
 
-            proxyService.getTDAmeritradeIntraday(quoteKey, false).then(quoteIntervals=>{
+            
+            proxyService.getTDAmeritradeIntraday(quoteKey, true).then(quoteIntervals=>{
                 const stockInterval: IQuoteFullIntervalData = quoteUtils.getRecentIntervalData(quoteIntervals);
                 
                 if (quoteIntervals) {

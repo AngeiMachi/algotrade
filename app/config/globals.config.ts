@@ -4,7 +4,7 @@ export const Mock = {
     IsMock: true,
     startAtOpen:false,
     StartLiveSimulationAtInterval: 100,
-    MockDataDate: '2023-07-03',
+    MockDataDate: '2023-07-12',
     MockDataLiveSimulationTime:"12:25:00" ,
     intervalLapTime:"*/5 * * * * *" // "*/30 * * * * *" = every 30 seconds; "*/1 * * * *" = every 1 minute
     
@@ -16,9 +16,10 @@ export const Notifications = {
     usePush :true,
     allowedNotifications: {
         groupTypes: [
-            SignalGroupType.BULLISH_VOLUME,
+            //SignalGroupType.BULLISH_VOLUME,
             SignalGroupType.BULLISH_COMBO,
             SignalGroupType.BEARISH_COMBO,
+            SignalGroupType.HOURLY_MOVING_AVERAGE
         ]
     }
 };
@@ -44,7 +45,7 @@ export const QuotesConfig = {
         },
         smallcap:{
             behaviors:[
-                 //BehaviorTypes.DeprecateIfNotAboveMovingAverages
+                 BehaviorTypes.DeprecateIfNotAboveMovingAverages
                 // {behavior:BehaviorTypes.DeprecateIfAvarageVolumeisLessThan,values:[1]}
             ],
             signals:[
@@ -52,10 +53,10 @@ export const QuotesConfig = {
             ],
             names:[
                 "BABA","BIDU","PFE","MRNA","MBLY","FTNT","UCAR","PTGX","LI","NCLH","PATH",
-                "SHOP","ADBE","CRM","AMAT","SBUX","PINS","CVNA","XOM","GME","MTCH","AI",
+                "SHOP","ADBE","CRM","AMAT","SBUX","PINS","CVNA","XOM","GME","MTCH","AI","NOW","DDOG",
                 "TWLO","SPLK","UPST","AFRM","ROKU","INTC","AAL","MRVL","MARA","COIN","RIOT","JOBY","NKE",
-                "DKNG" ,"SAVA","BYND","SNOW","SPOT","FUBO","TEAM","CVX","MDB","ENPH","PLUG","QS",
-                "ABNB","DOCU","NOVA","UBER","IBM","TGT","OXY","GM","CE","HON",
+                "DKNG" ,"SAVA","BYND","SNOW","SPOT","FUBO","TEAM","CVX","MDB","ENPH","PLUG","QS","LMND",
+                "ABNB","DOCU","NOVA","UBER","IBM","TGT","OXY","GM","CE","HON","ASAN",
                 "UPS","U","RBLX","CMG","UNH","ETSY","SSYS","DASH","PLTR","WDC","IONQ","AVGO","NIO","XPEV","FSLR","CCL",
                 "FVRR","AXSM","BBIB","PYPL","CRWD","PANW","FDX","MCD","GS","JPM","MS","BAC",
                 "HD","KO","WMT","DIS","APPS","MU","TSM","QCOM","RIVN","FSR","SNAP","BNTX"
@@ -88,7 +89,7 @@ export const QuotesConfig = {
     
             ],
             names:[
-                "BAC"
+                "PANW"
                 // "SPCE","HYLN","BABA","BIDU","PFE","MRNA","MBLY","FTNT","LULU","UCAR","PTGX","LI","NCLH","PATH",
                 // "SHOP","ADBE","CRM","AMAT","ZM","GETY","SBUX","PINS","CVNA","XOM","GME","MTCH","AI",
                 // "TWLO","SPLK","UPST","AFRM","ROKU","INTC","LUV","AAL","MRVL","MARA","COIN","RIOT","JOBY","NKE",

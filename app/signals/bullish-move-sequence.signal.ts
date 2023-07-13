@@ -18,14 +18,14 @@ export class BullishMoveSequenceSignal extends Signals {
     }
     monitor(): SignalModel[] { 
         const signals: SignalModel[] = [];
-        if (this.quoteStats.intervalCount>=0 && this.quoteStats.intervalCount<4 && !this.didSignalTriggered) {
+        if (this.quoteStats.intervalCount>=0 && this.quoteStats.intervalCount<3 && !this.didSignalTriggered) {
         
             this.verifyDidOpenObovePreviousDay();
             this.verifyDidTouch10MA();
             this.verifyDidBreakPreviousDay();
 
         }
-        if (this.quoteStats.intervalCount === 0) { 
+        if (this.quoteStats.intervalCount < 3 && this.quoteStats.intervalCount >= 0) { 
             const min5MA20 = this.quoteStats.lastInterval.MA20 || 10000;
             const min5MA50 = this.quoteStats.lastInterval.MA50 || 0;
             if ((this.quoteStats.metadata.SMA10.didOpenOboveSMA || ((this.quoteStats.metadata.SMA10.today || 10000)<this.quoteStats.lastInterval.close))&&
