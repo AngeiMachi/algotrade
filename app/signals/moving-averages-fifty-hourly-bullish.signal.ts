@@ -107,7 +107,7 @@ export class MovingAveragesFiftyHourlyBullish extends Signals {
         else if (MAprecentage>0.6) {
             movingAVgsData = '🟡';
         }
-        else if (MAprecentage>0.4) {
+        else if (MAprecentage>0.2) {
             movingAVgsData = '🟠';
         }
         else {

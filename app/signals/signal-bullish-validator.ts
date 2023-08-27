@@ -3,6 +3,7 @@ import * as generalUtils from '../utils/general';
 import { SignalModel } from '../models/signal.model';
 import { QuoteStatistics } from '../engine/quote-statistics';
 import { Signals } from "./signals";
+import { SignalGroupType, SignalType } from '../models/enums';
 
 const MINIMUM_PERCENTAGE_DISTANCE_TO_ENABLE_SIGNAL = 4;
 
@@ -16,6 +17,11 @@ export class SignalBullishValidator extends Signals {
 
     protected didSignalTriggered:boolean = false;
     
+    protected signalMetaData:string =' ';
+    private didPrevWeekBreak:boolean = false;
+    private didBreak52Week:boolean = false;
+    private didOpenAboveAllDailyMovingAverages =  false;
+
     constructor (_quoteStats: QuoteStatistics,validationWindow:number=3) {
         super(_quoteStats);
 
@@ -27,6 +33,7 @@ export class SignalBullishValidator extends Signals {
 
         if (this.quoteStats.intervalCount>=0 && this.quoteStats.intervalCount<this.validationWWindow && !this.didSignalTriggered) {
         
+            this.collectBullishData(_signals);
             this.verifyDidOpenObovePreviousDay();
             this.verifyDidTouch10MA();
             this.verifyDidBreakPreviousDay();
@@ -34,6 +41,19 @@ export class SignalBullishValidator extends Signals {
         }
 
         return outputSignals;        
+    }
+
+    private collectBullishData(_signals:SignalModel[]) {
+        const break52WeekHigh =  _signals.filter(signal=>signal.signalGroupType===SignalGroupType.BULLISH_LEVEL_BREAK && signal.signalType===SignalType.BULLISH_BREAK_52_WEEK_HIGH)[0];
+       if (break52WeekHigh && !this.didBreak52Week){
+             this.didBreak52Week =  true;
+             this.didPrevWeekBreak? this.signalMetaData.replace('/W','/52W'):this.signalMetaData +='/52W';
+       } 
+       const prevWeekBreak =  _signals.filter(signal=>signal.signalGroupType===SignalGroupType.BULLISH_LEVEL_BREAK && signal.signalType===SignalType.BULLISH_BREAK_PREVIOUS_WEEK)[0];
+       if (prevWeekBreak && !this.didPrevWeekBreak && !this.didBreak52Week ){
+             this.didPrevWeekBreak =  true;
+             this.signalMetaData +='/W';
+       } 
     }
 
     private verifyDidOpenObovePreviousDay() {

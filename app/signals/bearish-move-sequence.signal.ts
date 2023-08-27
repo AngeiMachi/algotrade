@@ -74,6 +74,7 @@ export class BearishMoveSequenceSignal extends Signals {
                     signalType: SignalType.BEARISH_SEQUENCE_MOVE,
                     signalDescription: SignalVerificationReasonEnum.BEARISH_SEQUENCE_MOVE,
                     withNotification:true,
+                    interval:this.quoteStats.lastInterval
                 })
             }
         } 

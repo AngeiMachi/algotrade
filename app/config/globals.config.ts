@@ -1,12 +1,12 @@
 import { BehaviorTypes, SignalGroupType } from '../models/enums';
 
 export const Mock = {
-    IsMock: true,
+    IsMock: false,
     startAtOpen:false,
     StartLiveSimulationAtInterval: 100,
-    MockDataDate: '2023-07-12',
-    MockDataLiveSimulationTime:"12:25:00" ,
-    intervalLapTime:"*/5 * * * * *" // "*/30 * * * * *" = every 30 seconds; "*/1 * * * *" = every 1 minute
+    MockDataDate: '2023-08-07',
+    MockDataLiveSimulationTime:"09:05:00" ,
+    intervalLapTime:"*/10 * * * * *" // "*/30 * * * * *" = every 30 seconds; "*/1 * * * *" = every 1 minute
     
 };
 
@@ -16,10 +16,11 @@ export const Notifications = {
     usePush :true,
     allowedNotifications: {
         groupTypes: [
-            //SignalGroupType.BULLISH_VOLUME,
+            SignalGroupType.BULLISH_VOLUME,
             SignalGroupType.BULLISH_COMBO,
             SignalGroupType.BEARISH_COMBO,
-            SignalGroupType.HOURLY_MOVING_AVERAGE
+            SignalGroupType.HOURLY_MOVING_AVERAGE,
+            SignalGroupType.HAMMER_COMBO
         ]
     }
 };
@@ -45,21 +46,21 @@ export const QuotesConfig = {
         },
         smallcap:{
             behaviors:[
-                 BehaviorTypes.DeprecateIfNotAboveMovingAverages
+                // BehaviorTypes.DeprecateIfNotAboveMovingAverages
                 // {behavior:BehaviorTypes.DeprecateIfAvarageVolumeisLessThan,values:[1]}
             ],
             signals:[
     
             ],
             names:[
-                "BABA","BIDU","PFE","MRNA","MBLY","FTNT","UCAR","PTGX","LI","NCLH","PATH",
-                "SHOP","ADBE","CRM","AMAT","SBUX","PINS","CVNA","XOM","GME","MTCH","AI","NOW","DDOG",
-                "TWLO","SPLK","UPST","AFRM","ROKU","INTC","AAL","MRVL","MARA","COIN","RIOT","JOBY","NKE",
-                "DKNG" ,"SAVA","BYND","SNOW","SPOT","FUBO","TEAM","CVX","MDB","ENPH","PLUG","QS","LMND",
-                "ABNB","DOCU","NOVA","UBER","IBM","TGT","OXY","GM","CE","HON","ASAN",
-                "UPS","U","RBLX","CMG","UNH","ETSY","SSYS","DASH","PLTR","WDC","IONQ","AVGO","NIO","XPEV","FSLR","CCL",
-                "FVRR","AXSM","BBIB","PYPL","CRWD","PANW","FDX","MCD","GS","JPM","MS","BAC",
-                "HD","KO","WMT","DIS","APPS","MU","TSM","QCOM","RIVN","FSR","SNAP","BNTX"
+                "PFE","MRNA","LI","NCLH","F","BABA","SOFI","RUN",
+                "SHOP","CRM","SBUX","PINS","CVNA","GME","MTCH","AI","DDOG","AMC",
+                "UPST","AFRM","ROKU","INTC","AAL","MARA","COIN","RIOT","NKE",
+                "DKNG" ,"BYND","SNOW","FUBO","TEAM","CVX","PLUG","QS","DAL",
+                "ABNB","TGT","GM","HOOD",
+                "UPS","U","RBLX","DASH","PLTR","IONQ","NIO","XPEV","CCL",
+                "FDX","MCD","GS","JPM","MS","BAC",
+                "HD","KO","WMT","DIS","APPS","MU","RIVN","FSR","SNAP",
             ],
         },
     },
@@ -73,7 +74,8 @@ export const QuotesConfig = {
             behaviors:[],
             signals:[],
             names:[ 
-                 // "AAPL","AMZN","TSLA","MSFT","META","BA","GOOGL","AMD","NVDA","CAT","ORCL","GE"
+                "GOOGL"
+                // "AAPL","AMZN","TSLA","MSFT","META","BA","GOOGL","AMD","NVDA","CAT","ORCL","GE"
             ],
         },
         trending:{
@@ -88,17 +90,16 @@ export const QuotesConfig = {
             signals:[
     
             ],
-            names:[
-                "PANW"
-                // "SPCE","HYLN","BABA","BIDU","PFE","MRNA","MBLY","FTNT","LULU","UCAR","PTGX","LI","NCLH","PATH",
-                // "SHOP","ADBE","CRM","AMAT","ZM","GETY","SBUX","PINS","CVNA","XOM","GME","MTCH","AI",
-                // "TWLO","SPLK","UPST","AFRM","ROKU","INTC","LUV","AAL","MRVL","MARA","COIN","RIOT","JOBY","NKE",
-                // "DKNG" ,"SAVA","BYND","SNOW","SPOT","FUBO","TEAM","CVX","GCT","MDB","ENPH","PLUG","QS",
-                // "ABNB","TTD","DOCU","NOVA","UBER","V","MA","IBM","TGT","OXY","GM","CE","HON",
-                // "UPS","U","RBLX","CMG","UNH","RH","ETSY","SSYS","DASH","PLTR","WDC","IONQ","AVGO","NIO","XPEV","FSLR","CCL",
-                // "FVRR","AXSM","BBIB","SQ","PYPL","CRWD","PANW","FDX","ZIM","MCD","GS","JPM","MS","BAC",
-                // "HD","KO","WMT","DIS","T","CSCO","APPS","MU","TSM","QCOM","RIVN","FSR","SNAP","BNTX"
-            ],
+            names:[    
+                // "BABA","BIDU","PFE","MRNA","MBLY","FTNT","UCAR","PTGX","LI","NCLH","PATH","SOFI","F","CHWY",
+                // "SHOP","ADBE","CRM","AMAT","SBUX","PINS","CVNA","XOM","GME","MTCH","AI","NOW","DDOG",
+                // "TWLO","SPLK","UPST","AFRM","ROKU","INTC","AAL","MRVL","MARA","COIN","RIOT","JOBY","NKE",
+                // "DKNG" ,"SAVA","BYND","SNOW","SPOT","FUBO","TEAM","CVX","MDB","ENPH","PLUG","QS","LMND","ON","DAL",
+                // "ABNB","DOCU","NOVA","UBER","IBM","TGT","OXY","GM","CE","HON","ASAN","HOOD","PDD","TOST","HPE","FOLD","AEHR",
+                // "UPS","U","RBLX","CMG","UNH","ETSY","SSYS","DASH","PLTR","WDC","IONQ","AVGO","NIO","XPEV","FSLR","CCL","PAGS",
+                // "FVRR","AXSM","PYPL","CRWD","PANW","FDX","MCD","GS","JPM","MS","BAC","KEY",
+                // "HD","KO","WMT","DIS","APPS","MU","TSM","QCOM","RIVN","FSR","SNAP","BNTX"   
+                     ],
         },
     }
     

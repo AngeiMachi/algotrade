@@ -39,6 +39,8 @@ export enum SignalVerificationReasonEnum {
     BULLISH_FIFTY_5_MINUTES_MA_AFTER_TWO_TWENTY= "🎉| 20(5m)✖️2->50(5m)",
     BULLISH_FIFTY_5_MINUTES_MA_AFTER_TWENTY_HOD= "🎉| 20(5m)->HOD->50(5m)",
     BULLUSH_HOD_WITH_PREMARKET_BREAKOUT_AFTER_CONDITION_FILLED = "🎉|🟢 Bullish Breakout",
+    BULLISH_HAMMER_SIGNAL = "Buillish Hammer",
+    BEARISH_HAMMER_SIGNAL = "Bearish Hammer"
 }
 
 export enum SignalGroupType {
@@ -52,6 +54,7 @@ export enum SignalGroupType {
     BUILDING_BULL_FLAG_FIVE_MINUTES,
     BULLISH_COMBO,
     BEARISH_COMBO,
+    HAMMER_COMBO
 }
 
 export enum SignalType {
@@ -80,6 +83,8 @@ export enum SignalType {
     BULLISH_FIFTY_5_MINUTES_MA_AFTER_TWO_TWENTY,
     BULLISH_FIFTY_5_MINUTES_MA_AFTER_TWENTY_HOD,
     BULLUSH_HOD_WITH_PREMARKET_BREAKOUT_AFTER_CONDITION_FILLED,
+    BULLISH_HAMMER_SIGNAL,
+    BEARISH_HAMMER_SIGNAL
 }
 
 export enum SignalCode {}

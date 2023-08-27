@@ -27,9 +27,9 @@ export class BullishMoveSequenceComboSignal extends SignalBullishValidator {
             const min5MA50 = this.quoteStats.lastInterval.MA50 || 0;
             if ((this.quoteStats.metadata.SMA10.didOpenOboveSMA || ((this.quoteStats.metadata.SMA10.today || 10000)<this.quoteStats.lastInterval.close))&&
                 this.quoteStats.metadata.SMA20.didOpenOboveSMA &&
-                this.quoteStats.metadata.SMA50.didOpenOboveSMA &&
-                this.quoteStats.metadata.SMA100.didOpenOboveSMA &&
-                this.quoteStats.metadata.SMA200.didOpenOboveSMA &&
+                (this.quoteStats.metadata.SMA50.didOpenOboveSMA  || ((this.quoteStats.metadata.SMA50.today  || 1000)<this.quoteStats.lastInterval.close)) &&
+                (this.quoteStats.metadata.SMA100.didOpenOboveSMA || ((this.quoteStats.metadata.SMA100.today || 1000)<this.quoteStats.lastInterval.close)) &&
+                (this.quoteStats.metadata.SMA200.didOpenOboveSMA || ((this.quoteStats.metadata.SMA200.today || 1000)<this.quoteStats.lastInterval.close)) &&
                 this.quoteStats.hourlyMA20Last< this.quoteStats.lastInterval.close &&
                 this.quoteStats.hourlyMA50Last < this.quoteStats.lastInterval.close && 
                 this.quoteStats.lastInterval.open<this.quoteStats.lastInterval.close && 
@@ -63,7 +63,8 @@ export class BullishMoveSequenceComboSignal extends SignalBullishValidator {
                 outputSignals.push({
                     signalGroupType: SignalGroupType.BEARISH_COMBO,
                     signalType: SignalType.BULLISH_SEQUENCE_MOVE,
-                    signalDescription: SignalVerificationReasonEnum.BULLISH_SEQUENCE_MOVE,
+                    signalDescription: SignalVerificationReasonEnum.BULLISH_SEQUENCE_MOVE+this.signalMetaData,
+                    interval:this.quoteStats.lastInterval,
                     withNotification:true,
                 })
             }

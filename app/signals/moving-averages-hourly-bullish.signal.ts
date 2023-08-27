@@ -22,10 +22,7 @@ export class MovingAveragesHourlyBullish extends Signals {
                     signalDescription: SignalVerificationReasonEnum.TWENTY_HOURLY_MOVING_AVERAGE_TOUCH_FROM_ABOVE+movingAvgData,
                     interval:this.quoteStats.lastInterval,
                     isDeveloperMode:true,
-                    withNotification:false,
-                    
-                    
-                    
+                    withNotification:false, 
                 }];
             }
             
@@ -115,8 +112,7 @@ export class MovingAveragesHourlyBullish extends Signals {
         else if (MAprecentage>0.6) {
             movingAVgsData = '🟡';
         }
-        else if (MAprecentage>0.4) {
-            return '';
+        else if (MAprecentage>0.2) {
             movingAVgsData = '🟠';
         }
         else {
