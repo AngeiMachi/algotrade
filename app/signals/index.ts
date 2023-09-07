@@ -10,3 +10,5 @@ export * from './bullish-building-above-twenty-moving-average.signal';
 export * from './bullish-move-sequence.signal';
 export * from './bearish-move-sequence.signal';
 export * from './bearish-lod.signal';
+export * from './daily-twenty-moving-average-break.signals';
+export * from './bullish-deep.signal';

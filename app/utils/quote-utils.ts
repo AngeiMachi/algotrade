@@ -192,9 +192,11 @@ function getIntervalIndex(intervals: ITDAmeritradeIntervalData[], tradingDate: s
 function getLastTradingDateIndex(intervals: ITDAmeritradeIntervalData[], tradingDate: string) {
     let lastTradingDateIndex = -1;
     let lastTradingDate = tradingDate;
+    let countIterations=0;
     while (lastTradingDateIndex === -1) {
+        countIterations++;
         lastTradingDateIndex = getIntervalIndex(intervals, lastTradingDate);
-        if (lastTradingDateIndex === -1) {
+        if (countIterations === 7) {
             break;
         }
         lastTradingDate = moment(lastTradingDate).subtract(1, 'days').format('YYYY-MM-DD');

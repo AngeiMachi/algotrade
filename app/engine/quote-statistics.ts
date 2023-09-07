@@ -224,8 +224,8 @@ export class QuoteStatistics {
     }
 
     private addPremarketMetadata(quoteInterval: IQuoteFullIntervalData) {
-        let maxHigh = this.metadata.preMarketMetadata.preMarketHOD.high || 0;
-        let minLow = this.metadata.preMarketMetadata.preMarketLOD.high || 10000;
+        let maxHigh = this.metadata.preMarketMetadata?.preMarketHOD?.high || 0;
+        let minLow = this.metadata.preMarketMetadata?.preMarketLOD?.high || 10000;
 
         const propertyName =moment(quoteInterval.timeNewYork).format('YYYY-MM-DD HH:mm:ss').toString();
         

@@ -70,13 +70,26 @@ export class SignalBullishValidator extends Signals {
     }
 
     private verifyDidTouch10MA() {
-        if (this.quoteStats.metadata.SMA10.didOpenOboveSMA || 
-            ((this.quoteStats.metadata.SMA10?.today || 10000)<this.quoteStats.lastInterval.close && this.quoteStats.intervalCount ===0 )){
-            const percentangeDistanceFrom10MAtouch = generalUtils.getPercentageDifference(this.quoteStats.metadata.SMA10.previousDay,this.quoteStats.lastInterval.low);
-            if (percentangeDistanceFrom10MAtouch<2 || this.quoteStats.metadata.SMA10.previousDay>this.quoteStats.lastInterval.low) {
-                this.didTouch10MA = true;
-            }
+        if (!this.didTouch10MA) {
+            if (this.quoteStats.metadata.SMA10.didOpenOboveSMA || 
+                ((this.quoteStats.metadata.SMA10?.today || 10000)<this.quoteStats.lastInterval.close && this.quoteStats.intervalCount ===0 )){
+                const percentangeDistanceFrom10MAtouch = generalUtils.getPercentageDifference(this.quoteStats.metadata.SMA10.previousDay,this.quoteStats.lastInterval.low);
+                if (percentangeDistanceFrom10MAtouch<2 || this.quoteStats.metadata.SMA10.previousDay>this.quoteStats.lastInterval.low) {
+                    this.didTouch10MA = true;
+                }
+            } 
+
+            // if (this.quoteStats.metadata.SMA20.didOpenOboveSMA || 
+            //     ((this.quoteStats.metadata.SMA20?.today || 10000)<this.quoteStats.lastInterval.close && this.quoteStats.intervalCount ===0 )){
+            //     const percentangeDistanceFrom20MAtouch = generalUtils.getPercentageDifference(this.quoteStats.metadata.SMA20.previousDay,this.quoteStats.lastInterval.low);
+            //     if (percentangeDistanceFrom20MAtouch<2 || this.quoteStats.metadata.SMA20.previousDay>this.quoteStats.lastInterval.low) {
+            //         this.didTouch10MA = true;
+            //     }
+            // }}
         }
+        
+        
+        
     }
 
     private verifyDidBreakPreviousDay() {

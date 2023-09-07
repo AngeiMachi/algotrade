@@ -16,7 +16,9 @@ import { BullishHODSignal,
          BullishBuildingAboveTwentyMA,
          BullishMoveSequenceSignal,
          BearishMoveSequenceSignal,
-         BearishLODSignal
+         BearishLODSignal,
+         DailyTwentyMovingAverageBreakSignal,
+         BullishDeepSignal
             } 
          from '../signals';
 import { QuoteStatistics } from './quote-statistics';
@@ -53,6 +55,8 @@ export class QuoteMonoRunner {
     private breakoutAfterTouchTenDailyMAComboSignal!:BreakoutAfterTouchTenDailyMAComboSignal;
     private bullishMoveSequenceComboSignal!:BullishMoveSequenceComboSignal;
     private hammerComboSignal!:HammerComboSignal;
+    private dailyTwentyMovingAverageBreakSignal!:DailyTwentyMovingAverageBreakSignal;
+    private bullishDeepSignal!:BullishDeepSignal;
     
 
     constructor(quote: string, todayDate: string = '') {
@@ -86,6 +90,8 @@ export class QuoteMonoRunner {
         this.breakoutAfterTouchTenDailyMAComboSignal = new BreakoutAfterTouchTenDailyMAComboSignal(this.quoteStats);
         this.bullishMoveSequenceComboSignal = new BullishMoveSequenceComboSignal(this.quoteStats);
         this.hammerComboSignal =  new HammerComboSignal(this.quoteStats);
+        this.dailyTwentyMovingAverageBreakSignal = new DailyTwentyMovingAverageBreakSignal(this.quoteStats);
+        this.bullishDeepSignal = new BullishDeepSignal(this.quoteStats);
 
         Object.keys(quoteIntervals).forEach((key) => {
             this.recordNewStockInterval(quoteIntervals[key]);
@@ -155,6 +161,8 @@ export class QuoteMonoRunner {
             ...this.movingAveragesHourlyBullish.monitor(),
             ...this.movingAveragesFiftyHourlyBullish.monitor(),
             ...this.movingAveragesSignal.monitor(),
+            ...this.dailyTwentyMovingAverageBreakSignal.monitor(),
+            ...this.bullishDeepSignal.monitor(),
             //...this.bullishBuildingAboveTwentyMA.monitor(),
 
         ];

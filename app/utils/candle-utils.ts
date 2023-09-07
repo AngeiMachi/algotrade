@@ -31,3 +31,7 @@ export const isInvertedHammer = (interval:IQuoteFullIntervalData):boolean => {
         return false;
     }
 }
+
+export const isGreeen = (interval:IQuoteFullIntervalData):boolean => {
+    return interval.close>interval.open
+}
