@@ -42,7 +42,8 @@ export enum SignalVerificationReasonEnum {
     BULLISH_HAMMER_SIGNAL = "Buillish Hammer",
     BEARISH_HAMMER_SIGNAL = "Bearish Hammer",
     BULLISH_TWENTY_MOVING_AVERAGE_BREAK = "Potencial Bullish",
-    BULLISH_DEEP = "📉📈 Bullish Deep"
+    BULLISH_DEEP = "📉📈 Bull Deep",
+    BEARISH_PEAK = "📈📉 Bear Peak"
 }
 
 export enum SignalGroupType {
@@ -90,7 +91,8 @@ export enum SignalType {
     BULLISH_HAMMER_SIGNAL,
     BEARISH_HAMMER_SIGNAL,
     BULLISH_TWENTY_MOVING_AVERAGE_BREAK,
-    BULLISH_DEEP
+    BULLISH_DEEP,
+    BEARISH_PEAK
 }
 
 export enum SignalCode {}

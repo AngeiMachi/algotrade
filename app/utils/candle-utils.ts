@@ -35,3 +35,7 @@ export const isInvertedHammer = (interval:IQuoteFullIntervalData):boolean => {
 export const isGreeen = (interval:IQuoteFullIntervalData):boolean => {
     return interval.close>interval.open
 }
+
+export const isRed = (interval:IQuoteFullIntervalData):boolean => {
+    return interval.close<interval.open
+}
