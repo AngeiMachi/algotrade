@@ -8,6 +8,8 @@ import {IQuoteFullIntervalData} from '../models/quote-data.model';
 
 export class BullishDeepSignal extends Signals {
 
+    private candlesLength:number[] =[];
+    private averageCandleLength:number=0;
     private BullishnessProps!: {
         volumeAndVolatility:boolean,
         didOpenAbove20MADaily:boolean,
@@ -17,7 +19,9 @@ export class BullishDeepSignal extends Signals {
     private didSignalTrigger:boolean = false;
     private intervalsToReanbleCount:number=10;
     private isValidForSignal:boolean = false;
-    private shouldTouch50MA:boolean =false;
+    
+    private HOD:number=0;
+
     public monitor(): SignalModel[] {
         let signals: SignalModel[] = [];
 
@@ -25,17 +29,20 @@ export class BullishDeepSignal extends Signals {
 
         if (this.isValidForSignal) {
             
+            this.updateAverageCandleLength();
+
             this.resetSignal();
     
             if (!this.didSignalTrigger && this.quoteStats.intervalCount>1){
                 let candleCount = 0;
+                let candleLengthSum =0;
                 
                 for (let i=this.quoteStats.intervalCount-1 ;i>=0 && candleCount<=6;i--) {
                     candleCount++;
-                    
-                    signals = this.checkBullishSignal(candleCount,i);
+                    candleLengthSum+= this.quoteStats.quoteIntervals[i].high -this.quoteStats.quoteIntervals[i].low;
+                    signals = this.checkBullishSignal(candleCount,candleLengthSum/candleCount,i);
                     if (signals.length===0) {
-                        signals =  this.checkBearishSignal(candleCount,i);
+                        signals =  this.checkBearishSignal(candleCount,candleLengthSum/candleCount,i);
                     }
                     
                     if (signals.length>0) break;
@@ -88,12 +95,12 @@ export class BullishDeepSignal extends Signals {
         }
     }
 
-    checkBullishSignal(candleCount:number,interval:number): SignalModel[] {
+    checkBullishSignal(candleCount:number,deepAverageCandleLength:number,interval:number): SignalModel[] {
         const signals: SignalModel[] = [];
 
         const percentageDiff = generalUtils.getPercentageDifference(this.quoteStats.lastInterval.low,this.quoteStats.quoteIntervals[interval].high); 
         const candleLength =  generalUtils.getPercentageDifference(this.quoteStats.lastInterval.low,this.quoteStats.lastInterval.high); 
-        
+        const prevCandle = this.quoteStats.quoteIntervals[this.quoteStats.intervalCount-1];
         const averageVolatility30Day = this.quoteStats.metadata.averageVolatility30Day;
 
         if (this.isAnotherCandleFarEnoughFrom10MABullish(this.quoteStats.lastInterval) && 
@@ -118,10 +125,11 @@ export class BullishDeepSignal extends Signals {
         return [];
     }
 
-    checkBearishSignal(candleCount:number,interval:number,): SignalModel[] {
+    checkBearishSignal(candleCount:number,peakAverageCandleLength:number,interval:number,): SignalModel[] {
         const signals: SignalModel[] = [];
         const percentageDiff = generalUtils.getPercentageDifference(this.quoteStats.lastInterval.high,this.quoteStats.quoteIntervals[interval].low); 
         const candleLength =  generalUtils.getPercentageDifference(this.quoteStats.lastInterval.low,this.quoteStats.lastInterval.high); 
+        const prevCandle = this.quoteStats.quoteIntervals[this.quoteStats.intervalCount-1];
         const averageVolatility30Day = this.quoteStats.metadata.averageVolatility30Day;
 
         if (this.isAnotherCandleFarEnoughFrom10MABearish(this.quoteStats.lastInterval) && 
@@ -209,7 +217,16 @@ export class BullishDeepSignal extends Signals {
     }
 
 
+    updateAverageCandleLength() {
+        const candleLength = this.quoteStats.lastInterval.high-this.quoteStats.lastInterval.low;
+        
+        this.candlesLength.push(candleLength);
+        this.candlesLength.sort((a, b) => b - a);
 
-
-
+        const sum = this.candlesLength.reduce((accumulator, currentValue) => {
+            return accumulator + currentValue;
+            }, 0);
+        this.averageCandleLength =sum/this.candlesLength.length;
+        
+    }
 }

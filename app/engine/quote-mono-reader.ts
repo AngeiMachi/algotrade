@@ -171,7 +171,7 @@ export class QuoteMonoRunner {
         this.signals=this.breakoutFiveMinuteFiftyMaAfterTwentyMaComboSignal.monitor(this.signals);
         this.signals=this.breakoutAfterTouchTenDailyMAComboSignal.monitor(this.signals);
         this.signals=this.bullishMoveSequenceComboSignal.monitor(this.signals);
-        this.signals=this.hammerComboSignal.monitor(this.signals);
+        //this.signals=this.hammerComboSignal.monitor(this.signals);
         
         if (this.signals.length > 0) {
             quoteState.updateSignals(this.quoteStats.quoteName, this.signals,isLive);
