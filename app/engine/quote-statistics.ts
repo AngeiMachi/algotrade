@@ -52,6 +52,7 @@ export class QuoteStatistics {
     public hourlyMA50:number[]=[];
     public hourlyMA20Last:number=1000000;
     public hourlyMA50Last:number=1000000;
+    
 
     constructor(quote: string, _statsDate: string = '') {
         this._quote = quote;

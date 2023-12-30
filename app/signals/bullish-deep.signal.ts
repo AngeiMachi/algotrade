@@ -9,7 +9,7 @@ import {IQuoteFullIntervalData} from '../models/quote-data.model';
 export class BullishDeepSignal extends Signals {
 
     private candlesLength:number[] =[];
-    private averageCandleLength:number=0;
+    private averageLongestCandlesLength:number=0;
     private BullishnessProps!: {
         volumeAndVolatility:boolean,
         didOpenAbove20MADaily:boolean,
@@ -62,7 +62,7 @@ export class BullishDeepSignal extends Signals {
             
             if (this.quoteStats.metadata.averageVolatility30Day>1 && 
                 (this.quoteStats.metadata.averageDailyVolume10Day as number>2000000 && this.quoteStats.metadata.averageVolatility30Day>4) ||
-                this.quoteStats.metadata.averageDailyVolume10Day as number>5000000) {
+                this.quoteStats.metadata.averageDailyVolume10Day as number>4000000) {
                     volumeAndVolatility =true;
                     this.isValidForSignal = true;
             }
@@ -99,14 +99,16 @@ export class BullishDeepSignal extends Signals {
         const signals: SignalModel[] = [];
 
         const percentageDiff = generalUtils.getPercentageDifference(this.quoteStats.lastInterval.low,this.quoteStats.quoteIntervals[interval].high); 
-        const candleLength =  generalUtils.getPercentageDifference(this.quoteStats.lastInterval.low,this.quoteStats.lastInterval.high); 
+        const candleLengthPersentage =  generalUtils.getPercentageDifference(this.quoteStats.lastInterval.low,this.quoteStats.lastInterval.high); 
+        const candleLength = this.quoteStats.lastInterval.high-this.quoteStats.lastInterval.low;
         const prevCandle = this.quoteStats.quoteIntervals[this.quoteStats.intervalCount-1];
         const averageVolatility30Day = this.quoteStats.metadata.averageVolatility30Day;
 
         if (this.isAnotherCandleFarEnoughFrom10MABullish(this.quoteStats.lastInterval) && 
             this.isCandleClosedInsidePrevCandleBullish() && 
             this.isCandleVolumeStrongEnough() &&
-            candleLength*1.7>(percentageDiff/candleCount) && 
+            candleLengthPersentage*1.7>(percentageDiff/candleCount) && 
+            //candleLength>(this.averageLongestCandlesLength * 2/3) &&
             this.quoteStats.lastInterval.low < this.quoteStats.quoteIntervals[interval].low &&
             percentageDiff*1.4>averageVolatility30Day && 
             candleCount>=2 && 
@@ -128,14 +130,16 @@ export class BullishDeepSignal extends Signals {
     checkBearishSignal(candleCount:number,peakAverageCandleLength:number,interval:number,): SignalModel[] {
         const signals: SignalModel[] = [];
         const percentageDiff = generalUtils.getPercentageDifference(this.quoteStats.lastInterval.high,this.quoteStats.quoteIntervals[interval].low); 
-        const candleLength =  generalUtils.getPercentageDifference(this.quoteStats.lastInterval.low,this.quoteStats.lastInterval.high); 
+        const candleLengthPersentage =  generalUtils.getPercentageDifference(this.quoteStats.lastInterval.low,this.quoteStats.lastInterval.high); 
+        const candleLength = this.quoteStats.lastInterval.high-this.quoteStats.lastInterval.low;
         const prevCandle = this.quoteStats.quoteIntervals[this.quoteStats.intervalCount-1];
         const averageVolatility30Day = this.quoteStats.metadata.averageVolatility30Day;
 
         if (this.isAnotherCandleFarEnoughFrom10MABearish(this.quoteStats.lastInterval) && 
             this.isCandleClosedInsidePrevCandleBearish() && 
             this.isCandleVolumeStrongEnough() &&
-            candleLength*1.7>(percentageDiff/candleCount) && 
+            candleLengthPersentage*1.7>(percentageDiff/candleCount) && 
+            //candleLength>(this.averageLongestCandlesLength * 2/3) &&
             this.quoteStats.lastInterval.high > this.quoteStats.quoteIntervals[interval].high &&
             percentageDiff*1.4>averageVolatility30Day && 
             candleCount>=2 && 
@@ -188,7 +192,7 @@ export class BullishDeepSignal extends Signals {
     }
 
     isCandleVolumeStrongEnough():boolean {
-        return this.quoteStats.lastInterval.volume>50000 
+        return this.quoteStats.lastInterval.volume>100000 
     }
 
     composeBullishMetadata():string {
@@ -203,6 +207,7 @@ export class BullishDeepSignal extends Signals {
         }
         return '';
     }
+
     composeBearishMetadata():string {
         if (!this.BullishnessProps.didOpenAbove20MADaily && this.BullishnessProps.is20MABelow50MAHourly) {
             return ' | 💯';
@@ -222,11 +227,13 @@ export class BullishDeepSignal extends Signals {
         
         this.candlesLength.push(candleLength);
         this.candlesLength.sort((a, b) => b - a);
-
-        const sum = this.candlesLength.reduce((accumulator, currentValue) => {
+        const longCandles = this.candlesLength.slice(0,6);
+        const sum = longCandles.reduce((accumulator, currentValue) => {
             return accumulator + currentValue;
             }, 0);
-        this.averageCandleLength =sum/this.candlesLength.length;
+        this.averageLongestCandlesLength =sum/longCandles.length;
+        
+
         
     }
 }
