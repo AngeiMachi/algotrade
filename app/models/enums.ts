@@ -4,6 +4,12 @@ export enum SentimentDirectionEnum {
     PUT = 2,
 }
 
+export enum MADirectionEnum {
+    NONE = 'NONE',
+    UP = 'UP',
+    DOWN = 'DOWN',
+}
+
 export enum buyReasonEnum {
     NONE = '',
     AS_FIRST_VOLUME_INTERVAL = 'As First Volume ',
@@ -11,6 +17,7 @@ export enum buyReasonEnum {
     MULTIPLE_HIGH_AVERAGE_VOLUME = 'Multiple Intervals Exceed Average Volume',
     BULLISH_HIGH_OF_DAY_WITH_PRIOR_DAY_BREAKOUT = 'Bullish High Of Day With Prior Day Breakout',
 }
+
 
 export enum SignalVerificationReasonEnum {
     NONE = '',
@@ -31,20 +38,22 @@ export enum SignalVerificationReasonEnum {
     MOVING_AVERAGE_TOUCH_FROM_ABOVE = 'Mov Avg touch Up',
     MOVING_AVERAGE_INTRADAY_TWENTY_BREAK_ABOVE = "20(5m) MA break UP",
     MOVING_AVERAGE_INTRADAY_FIFTY_BREAK_ABOVE = "5️0(5m) MA break UP",
-    TWENTY_HOURLY_MOVING_AVERAGE_TOUCH_FROM_BELOW="",
-    TWENTY_HOURLY_MOVING_AVERAGE_TOUCH_FROM_ABOVE="2️⃣0️⃣(H) Touched ⤴️",
-    FIFTY_HOURLY_MOVING_AVERAGE_TOUCH_FROM_ABOVE="5️⃣0️⃣(H) Touched ⤴️",
+    TWENTY_HOURLY_MOVING_AVERAGE_TOUCH_FROM_BELOW = "",
+    TWENTY_HOURLY_MOVING_AVERAGE_TOUCH_FROM_ABOVE = "2️⃣0️⃣(H) Touched ⤴️",
+    FIFTY_HOURLY_MOVING_AVERAGE_TOUCH_FROM_ABOVE = "5️⃣0️⃣(H) Touched ⤴️",
     BUILDING_ABOVE_TWENTY_MOVING_AVERAGE = "Building Bull flag",
     BULLISH_NEW_HIGH_BREAKOUT_AFTER_5_MINUTES_TWENTY_MA_CROSSING = "🎉| 20(5m)->HOD",
-    BULLISH_FIFTY_5_MINUTES_MA_AFTER_TWO_TWENTY= "🎉| 20(5m)✖️2->50(5m)",
-    BULLISH_FIFTY_5_MINUTES_MA_AFTER_TWENTY_HOD= "🎉| 20(5m)->HOD->50(5m)",
+    BULLISH_FIFTY_5_MINUTES_MA_AFTER_TWO_TWENTY = "🎉| 20(5m)✖️2->50(5m)",
+    BULLISH_FIFTY_5_MINUTES_MA_AFTER_TWENTY_HOD = "🎉| 20(5m)->HOD->50(5m)",
     BULLUSH_HOD_WITH_PREMARKET_BREAKOUT_AFTER_CONDITION_FILLED = "🎉|🟢 Bullish Breakout",
     BULLISH_HAMMER_SIGNAL = "Buillish Hammer",
     BEARISH_HAMMER_SIGNAL = "Bearish Hammer",
     BULLISH_TWENTY_MOVING_AVERAGE_BREAK = "Potencial Bullish",
     BULLISH_DEEP = "📉📈 Bull Deep",
-    BEARISH_PEAK = "📈📉 Bear Peak"
+    BEARISH_PEAK = "📈📉 Bear Peak",
+    TACTICAL_DIRECTION_CHANGE_INITIATED = "🚨 direcrion change",
 }
+
 
 export enum SignalGroupType {
     BULLISH_HOD,
@@ -59,8 +68,10 @@ export enum SignalGroupType {
     BEARISH_COMBO,
     HAMMER_COMBO,
     PRE_OPEN_SIGNAL,
-    DEEP_OR_PEAK
+    DEEP_OR_PEAK,
+    INITIATED
 }
+
 
 export enum SignalType {
     NONE,
@@ -92,7 +103,8 @@ export enum SignalType {
     BEARISH_HAMMER_SIGNAL,
     BULLISH_TWENTY_MOVING_AVERAGE_BREAK,
     BULLISH_DEEP,
-    BEARISH_PEAK
+    BEARISH_PEAK,
+    TACTICAL_DIRECTION_CHANGE_INITIATED
 }
 
 export enum SignalCode {}

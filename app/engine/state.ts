@@ -3,10 +3,10 @@ import * as _ from 'lodash';
 import * as clientService from '../proxy/client-service';
 import { logger } from '../config/winston.config';
 
-import { MovingAverageType, SignalVerificationReasonEnum } from '../models/enums';
+import { MADirectionEnum, MovingAverageType, SignalVerificationReasonEnum } from '../models/enums';
 import { QuotesState, QuoteState, QuoteStateSignals, IMovingAverageData } from '../models/state.model';
 import { QuoteStatistics } from './quote-statistics';
-import { SignalModel } from '../models/signal.model';
+import { SignalModel, TacticalDirectionChangeSignalInput } from '../models/signal.model';
 import { IMarketHours } from '../models/quote-data.model';
 
 let state: QuoteState[] = [];
@@ -33,6 +33,9 @@ function initQuote(quoteStatistics: QuoteStatistics) {
     quoteState.signalsHistory = [];
     quoteState.metadata = {
         prevPrice: quoteStatistics.metadata.previousDay.close,
+    };
+    quoteState.initiatedSignals = {
+        tacticalDirectionChangeSignalInput:[],
     };
 
     state.push(quoteState);
@@ -125,5 +128,40 @@ export function getState() {
     }
     return returnedState;
 }
+
+export const updaeTacticalDirectionSignal = (quoteName: string, followType:string,direcrion:MADirectionEnum) => {
+    const index = _.findIndex(state, ['quoteName', quoteName]);
+    const quote = state[index] as QuoteState;
+    const tacticalDirectionChangeSignalInput = {
+        maPointing:[{
+            maType:MovingAverageType.SMA10,
+            direction:direcrion,
+        }],
+        direction:direcrion,
+        maCrosssisng:[],
+        isTriggered:false,
+        info:followType+'-'+direcrion,
+    } as TacticalDirectionChangeSignalInput;
+    switch (followType) {
+        case 'ABSOLUTE':
+            tacticalDirectionChangeSignalInput.maCrosssisng?.push({
+                maType:MovingAverageType.SMA50,
+                crossedBy:MovingAverageType.SMA10,
+                direction:direcrion,
+            });
+        case 'HARD':
+            tacticalDirectionChangeSignalInput.maCrosssisng?.push({
+                maType:MovingAverageType.SMA20,
+                crossedBy:MovingAverageType.SMA10,
+                direction:direcrion,
+            });
+        case 'SOFT':
+            quote.initiatedSignals.tacticalDirectionChangeSignalInput.push(tacticalDirectionChangeSignalInput);
+        default: 
+            break;
+    } 
+    clientService.updateQuote(quote,false);
+
+};
 
 

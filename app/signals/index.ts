@@ -12,3 +12,4 @@ export * from './bearish-move-sequence.signal';
 export * from './bearish-lod.signal';
 export * from './daily-twenty-moving-average-break.signals';
 export * from './bullish-deep.signal';
+export * from './tactical-direction-change.inititated-signal';

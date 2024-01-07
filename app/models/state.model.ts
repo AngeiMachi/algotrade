@@ -1,6 +1,6 @@
 import { QuoteStatistics } from '../engine/quote-statistics';
 import { MovingAverageType } from './enums';
-import { SignalModel } from './signal.model';
+import { SignalModel, TacticalDirectionChangeSignalInput } from './signal.model';
 
 export interface QuoteStateSignals {
     id: number;
@@ -20,6 +20,9 @@ export interface QuoteState {
     quoteName: string;
     signalsHistory: QuoteStateSignals[];
     sma: IMovingAverageData[];
+    initiatedSignals:{
+        tacticalDirectionChangeSignalInput:TacticalDirectionChangeSignalInput[];
+    }
 }
 
 export interface IMovingAverageData {

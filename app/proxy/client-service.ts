@@ -1,6 +1,7 @@
 import * as _ from 'lodash';
 import { QuoteState, QuoteStateSignals } from '../models/state.model';
 import { getState } from '../engine/state';
+import * as state from '../engine/state';
 import express from 'express';
 import * as PushAPI from './pushed-api';
 import * as quotesIterator from '../engine/quotes-iterator';
@@ -43,6 +44,12 @@ app.get('/getAllQuotes', (req, res) => {
 app.post('/addNewQuote',jsonParser,async (req, res) => {
     const data = req.body;
     await quotesIterator.addNewQuote(data.quote);
+    res.sendStatus(200);
+});
+
+app.post('/followQuote',jsonParser,async (req, res) => {
+    const data = req.body;
+    state.updaeTacticalDirectionSignal(data.quoteName,data.followType,data.direction);
     res.sendStatus(200);
 });
 
