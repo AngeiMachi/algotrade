@@ -26,4 +26,6 @@ export interface TacticalDirectionChangeSignalInput {
     maCrosssisng?:MaCrosssisng[];
     isTriggered:boolean;
     info:string;
+    initiator:SignalVerificationReasonEnum | string;
+    interval:number;
 }

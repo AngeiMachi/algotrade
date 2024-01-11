@@ -33,7 +33,7 @@ export class TacticalDirectionChangeInitiatedSignal extends Signals {
                     }                    
                     if (conditionCount===signalInput.maPointing.length + (signalInput.maCrosssisng?.length || 0) ) {
                         signalInput.isTriggered = true;
-                        info += signalInput.info+';';
+                        info += signalInput.info+',';
                     }
                 }
             }
@@ -44,16 +44,14 @@ export class TacticalDirectionChangeInitiatedSignal extends Signals {
                 signals.push({
                     signalGroupType: SignalGroupType.INITIATED,
                     signalType: SignalType.TACTICAL_DIRECTION_CHANGE_INITIATED,
-                    signalDescription: SignalVerificationReasonEnum.TACTICAL_DIRECTION_CHANGE_INITIATED+'('+info+')',
+                    signalDescription: SignalVerificationReasonEnum.TACTICAL_DIRECTION_CHANGE_INITIATED+this.composeMetadata(info),
                     interval:this.quoteStats.lastInterval,
                     withNotification:true,
                     isDeveloperMode:false
                 });
                 info='';
-            }
-            
-        }
-        
+            }   
+        } 
         return signals;
     }
 
@@ -77,5 +75,30 @@ export class TacticalDirectionChangeInitiatedSignal extends Signals {
             return true;
         }
         return false;
+    }
+
+    composeMetadata(info: string): string {
+        let metadata = ' -';
+        let priorityIndex = new Map();
+        let infoArray = info.split(',');
+        let infoArrayEnries = infoArray.entries();
+        for (let [index,infoItem] of infoArrayEnries) {
+            if (infoItem.includes('ABSOLUTE')) {
+                priorityIndex.set('ABSOLUTE',index);
+            } else if (infoItem.includes('HARD')) {
+                priorityIndex.set('HARD',index);
+            } else if (infoItem.includes('SOFT')) {
+                priorityIndex.set('SOFT',index);
+            }
+        }
+
+        if (priorityIndex.has('ABSOLUTE')) {
+            metadata +=(infoArray[priorityIndex.get('ABSOLUTE')].includes(MADirectionEnum.UP)?'📈':'📉')+' (Absolute)';
+        } else if (priorityIndex.has('HARD')) {
+            metadata +=(infoArray[priorityIndex.get('HARD')].includes(MADirectionEnum.UP)?'📈':'📉')+' (Hard)';
+        } else if (priorityIndex.has('SOFT')) {
+            metadata +=(infoArray[priorityIndex.get('SOFT')].includes(MADirectionEnum.UP)?'📈':'📉') +' (Soft)';
+        }
+        return metadata;
     }
 }

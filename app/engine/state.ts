@@ -129,39 +129,53 @@ export function getState() {
     return returnedState;
 }
 
-export const updaeTacticalDirectionSignal = (quoteName: string, followType:string,direcrion:MADirectionEnum) => {
+export const updaeTacticalDirectionSignal = (quoteName: string, followType:string,direcrion:MADirectionEnum,
+    initiator:SignalVerificationReasonEnum | string ="Manual") => {
     const index = _.findIndex(state, ['quoteName', quoteName]);
     const quote = state[index] as QuoteState;
-    const tacticalDirectionChangeSignalInput = {
-        maPointing:[{
-            maType:MovingAverageType.SMA10,
+    if (!doesTacticalDirectionSignalExists(quoteName,followType,direcrion)) {
+        const tacticalDirectionChangeSignalInput = {
+            maPointing:[{
+                maType:MovingAverageType.SMA10,
+                direction:direcrion,
+            }],
             direction:direcrion,
-        }],
-        direction:direcrion,
-        maCrosssisng:[],
-        isTriggered:false,
-        info:followType+'-'+direcrion,
-    } as TacticalDirectionChangeSignalInput;
-    switch (followType) {
-        case 'ABSOLUTE':
-            tacticalDirectionChangeSignalInput.maCrosssisng?.push({
-                maType:MovingAverageType.SMA50,
-                crossedBy:MovingAverageType.SMA10,
-                direction:direcrion,
-            });
-        case 'HARD':
-            tacticalDirectionChangeSignalInput.maCrosssisng?.push({
-                maType:MovingAverageType.SMA20,
-                crossedBy:MovingAverageType.SMA10,
-                direction:direcrion,
-            });
-        case 'SOFT':
-            quote.initiatedSignals.tacticalDirectionChangeSignalInput.push(tacticalDirectionChangeSignalInput);
-        default: 
-            break;
-    } 
-    clientService.updateQuote(quote,false);
-
+            maCrosssisng:[],
+            isTriggered:false,
+            info:followType+'-'+direcrion,
+            initiator:initiator,
+            interval:quote.quoteStatistics.intervalCount,
+        } as TacticalDirectionChangeSignalInput;
+        switch (followType) {
+            case 'ABSOLUTE':
+                tacticalDirectionChangeSignalInput.maCrosssisng?.push({
+                    maType:MovingAverageType.SMA50,
+                    crossedBy:MovingAverageType.SMA10,
+                    direction:direcrion,
+                });
+            case 'HARD':
+                tacticalDirectionChangeSignalInput.maCrosssisng?.push({
+                    maType:MovingAverageType.SMA20,
+                    crossedBy:MovingAverageType.SMA10,
+                    direction:direcrion,
+                });
+            case 'SOFT':
+                quote.initiatedSignals.tacticalDirectionChangeSignalInput.push(tacticalDirectionChangeSignalInput);
+            default: 
+                break;
+        } 
+        clientService.updateQuote(quote,false);
+    }
 };
+export const  doesTacticalDirectionSignalExists = (quoteName: string,followType:string,direcrion:MADirectionEnum):boolean => {
+    const index = _.findIndex(state, ['quoteName', quoteName]);
+    const quote = state[index] as QuoteState;
+    for (let tacticalSignal of quote.initiatedSignals.tacticalDirectionChangeSignalInput) {
+        if (tacticalSignal.info == followType+'-'+direcrion && !tacticalSignal.isTriggered) {
+            return true;
+        }
+    }
+    return false;
+}
 
 

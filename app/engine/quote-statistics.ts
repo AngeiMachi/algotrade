@@ -53,6 +53,8 @@ export class QuoteStatistics {
     public hourlyMA20Last:number=1000000;
     public hourlyMA50Last:number=1000000;
     
+    public HOD:number=0;
+    public LOD:number=1000000;
 
     constructor(quote: string, _statsDate: string = '') {
         this._quote = quote;
@@ -127,6 +129,8 @@ export class QuoteStatistics {
             this._lastInterval.MA20 = this.calculateFiveMinuteMA(MovingAverageType.SMA20);
             this._lastInterval.MA50 = this.calculateFiveMinuteMA(MovingAverageType.SMA50);
             this.processHourlyStatistics();
+
+            this.recordHodAndLod();
         }
     }
         
@@ -243,6 +247,14 @@ export class QuoteStatistics {
             if (propertyName.includes(':55:00')) {
                 this.metadata.preMarketMetadata.premarketCloseIntervals.push(quoteInterval);
             }
+        }
+    }
+    private recordHodAndLod() {
+        if (this._lastInterval.high>this.HOD) {
+            this.HOD=this._lastInterval.high;
+        }
+        if (this._lastInterval.low<this.LOD) {
+            this.LOD=this._lastInterval.low;
         }
     }
 }

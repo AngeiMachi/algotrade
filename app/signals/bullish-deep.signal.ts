@@ -1,11 +1,13 @@
-import { SignalGroupType,SignalType,SignalVerificationReasonEnum } from '../models/enums';
+import { MADirectionEnum, SignalGroupType,SignalType,SignalVerificationReasonEnum } from '../models/enums';
 import * as candleUtils from '../utils/candle-utils';
 import * as generalUtils from '../utils/general';
 import { Signals } from './signals';
 import { SignalModel } from '../models/signal.model';
 import {IQuoteFullIntervalData} from '../models/quote-data.model';
+import * as state from '../engine/state';
 
-
+const sensitivity = 1.4;
+const movementStrength = 0.6; // at leaset 60% of the daily movement
 export class BullishDeepSignal extends Signals {
 
     private candlesLength:number[] =[];
@@ -19,15 +21,22 @@ export class BullishDeepSignal extends Signals {
     private didSignalTrigger:boolean = false;
     private intervalsToReanbleCount:number=10;
     private isValidForSignal:boolean = false;
+
+    private bullishMeasuredMove:number=0;
+    private bullishMeasuredMoveInterval:IQuoteFullIntervalData={} as IQuoteFullIntervalData;
+    private bearishMeasuredMove:number=0;
+    private bearishMeasuredMoveInterval:IQuoteFullIntervalData={} as IQuoteFullIntervalData;
     
     private HOD:number=0;
+    private LOD:number=100000;
 
     public monitor(): SignalModel[] {
         let signals: SignalModel[] = [];
 
         this.initializeBullishnessProps();
-
         if (this.isValidForSignal) {
+
+            this.resetMeasuredMove();
             
             this.updateAverageCandleLength();
 
@@ -40,12 +49,13 @@ export class BullishDeepSignal extends Signals {
                 for (let i=this.quoteStats.intervalCount-1 ;i>=0 && candleCount<=6;i--) {
                     candleCount++;
                     candleLengthSum+= this.quoteStats.quoteIntervals[i].high -this.quoteStats.quoteIntervals[i].low;
-                    signals = this.checkBullishSignal(candleCount,candleLengthSum/candleCount,i);
+                    this.measureMove(i);
+                    if (signals.length==0) {
+                        signals = this.checkBullishSignal(candleCount,candleLengthSum/candleCount,i);
+                    }
                     if (signals.length===0) {
                         signals =  this.checkBearishSignal(candleCount,candleLengthSum/candleCount,i);
-                    }
-                    
-                    if (signals.length>0) break;
+                    } 
                 }
             }
         }
@@ -99,29 +109,34 @@ export class BullishDeepSignal extends Signals {
         const signals: SignalModel[] = [];
 
         const percentageDiff = generalUtils.getPercentageDifference(this.quoteStats.lastInterval.low,this.quoteStats.quoteIntervals[interval].high); 
-        const candleLengthPersentage =  generalUtils.getPercentageDifference(this.quoteStats.lastInterval.low,this.quoteStats.lastInterval.high); 
+        const candleLengthPercentage =  generalUtils.getPercentageDifference(this.quoteStats.lastInterval.low,this.quoteStats.lastInterval.high); 
         const candleLength = this.quoteStats.lastInterval.high-this.quoteStats.lastInterval.low;
         const prevCandle = this.quoteStats.quoteIntervals[this.quoteStats.intervalCount-1];
-        const averageVolatility30Day = this.quoteStats.metadata.averageVolatility30Day;
 
-        if (this.isAnotherCandleFarEnoughFrom10MABullish(this.quoteStats.lastInterval) && 
+        if (
             this.isCandleClosedInsidePrevCandleBullish() && 
             this.isCandleVolumeStrongEnough() &&
-            candleLengthPersentage*1.7>(percentageDiff/candleCount) && 
+            candleLengthPercentage*1.7>(percentageDiff/candleCount) && 
+            this.isMovementStrongEnoughForBullish(interval) &&
             //candleLength>(this.averageLongestCandlesLength * 2/3) &&
-            this.quoteStats.lastInterval.low < this.quoteStats.quoteIntervals[interval].low &&
-            percentageDiff*1.4>averageVolatility30Day && 
+            
             candleCount>=2 && 
             (candleUtils.isHammer(this.quoteStats.lastInterval) || 
             (candleUtils.isGreeen(this.quoteStats.lastInterval)) && !candleUtils.isInvertedHammer(this.quoteStats.lastInterval) )) {
-                signals.push({ 
-                    signalGroupType: SignalGroupType.DEEP_OR_PEAK,
-                    signalType: SignalType.BULLISH_DEEP,
-                    signalDescription: SignalVerificationReasonEnum.BULLISH_DEEP+this.composeBullishMetadata(),
-                    withNotification:true,
-                });
-                this.didSignalTrigger =true;
-                this.intervalsToReanbleCount = 4;
+                if (this.isAnotherCandleFarEnoughFrom10MABullish(this.quoteStats.lastInterval)) {
+                    signals.push({ 
+                        signalGroupType: SignalGroupType.DEEP_OR_PEAK,
+                        signalType: SignalType.BULLISH_DEEP,
+                        signalDescription: SignalVerificationReasonEnum.BULLISH_DEEP+this.composeBullishMetadata(),
+                        withNotification:true,
+                    });
+                    this.didSignalTrigger =true;
+                    this.intervalsToReanbleCount = 4;
+                }
+             
+                state.updaeTacticalDirectionSignal(this.quoteStats.quoteName,"SOFT",MADirectionEnum.UP);
+                
+                
                 return signals;
         }
         return [];
@@ -130,29 +145,33 @@ export class BullishDeepSignal extends Signals {
     checkBearishSignal(candleCount:number,peakAverageCandleLength:number,interval:number,): SignalModel[] {
         const signals: SignalModel[] = [];
         const percentageDiff = generalUtils.getPercentageDifference(this.quoteStats.lastInterval.high,this.quoteStats.quoteIntervals[interval].low); 
-        const candleLengthPersentage =  generalUtils.getPercentageDifference(this.quoteStats.lastInterval.low,this.quoteStats.lastInterval.high); 
+        const candleLengthPercentage =  generalUtils.getPercentageDifference(this.quoteStats.lastInterval.low,this.quoteStats.lastInterval.high); 
         const candleLength = this.quoteStats.lastInterval.high-this.quoteStats.lastInterval.low;
         const prevCandle = this.quoteStats.quoteIntervals[this.quoteStats.intervalCount-1];
-        const averageVolatility30Day = this.quoteStats.metadata.averageVolatility30Day;
 
-        if (this.isAnotherCandleFarEnoughFrom10MABearish(this.quoteStats.lastInterval) && 
+        if (
             this.isCandleClosedInsidePrevCandleBearish() && 
             this.isCandleVolumeStrongEnough() &&
-            candleLengthPersentage*1.7>(percentageDiff/candleCount) && 
+            candleLengthPercentage*1.7>(percentageDiff/candleCount) && 
+            this.isMovementStrongEnoughForBearish(interval) &&
             //candleLength>(this.averageLongestCandlesLength * 2/3) &&
-            this.quoteStats.lastInterval.high > this.quoteStats.quoteIntervals[interval].high &&
-            percentageDiff*1.4>averageVolatility30Day && 
+            
             candleCount>=2 && 
             (candleUtils.isInvertedHammer(this.quoteStats.lastInterval) || 
             (candleUtils.isRed(this.quoteStats.lastInterval)) && !candleUtils.isHammer(this.quoteStats.lastInterval)) ) {
-                signals.push({ 
-                    signalGroupType: SignalGroupType.DEEP_OR_PEAK,
-                    signalType: SignalType.BEARISH_PEAK,
-                    signalDescription: SignalVerificationReasonEnum.BEARISH_PEAK +this.composeBearishMetadata(),
-                    withNotification:true,
-                });
-                this.didSignalTrigger =true;
-                this.intervalsToReanbleCount = 4;
+                if (this.isAnotherCandleFarEnoughFrom10MABearish(this.quoteStats.lastInterval)) {
+                    signals.push({ 
+                        signalGroupType: SignalGroupType.DEEP_OR_PEAK,
+                        signalType: SignalType.BEARISH_PEAK,
+                        signalDescription: SignalVerificationReasonEnum.BEARISH_PEAK +this.composeBearishMetadata(),
+                        withNotification:true,
+                    });
+                    this.didSignalTrigger =true;
+                    this.intervalsToReanbleCount = 4;
+                } 
+
+                state.updaeTacticalDirectionSignal(this.quoteStats.quoteName,"SOFT",MADirectionEnum.DOWN);
+                
                 return signals;
         }
         return [];
@@ -160,7 +179,7 @@ export class BullishDeepSignal extends Signals {
 
 
     isAnotherCandleFarEnoughFrom10MABullish(quoteInterval:IQuoteFullIntervalData):boolean {
-        const anotherCandleLength = (quoteInterval.high-quoteInterval.low)*1.2;
+        const anotherCandleLength = (quoteInterval. high-quoteInterval.low)*1.2;
         if  ((quoteInterval.close<(quoteInterval.MA10 || 0))){
             if (quoteInterval.close+anotherCandleLength < (quoteInterval.MA10 || 0)) {
                 return true;
@@ -176,6 +195,7 @@ export class BullishDeepSignal extends Signals {
             if (quoteInterval.close-anotherCandleLength > (quoteInterval.MA10 || 100000)) {
                 return true;
             } else {
+                
                 return false;
             }
         } 
@@ -196,31 +216,32 @@ export class BullishDeepSignal extends Signals {
     }
 
     composeBullishMetadata():string {
+        const percentageDiff = generalUtils.getPercentageDifference(this.quoteStats.lastInterval.low,this.bullishMeasuredMoveInterval.high).toFixed(1);
         if (this.BullishnessProps.didOpenAbove20MADaily && this.BullishnessProps.is20MAAbove50MAHourly) {
-            return '| 💯';
+            return '| 💯 ('+percentageDiff+'%)';
         }
         if (this.BullishnessProps.didOpenAbove20MADaily) {
-            return '| 🟡(D)⬆️ ✅';
+            return '| 🟡(D)⬆️ ✅ ('+percentageDiff+'%)';
         }
         if (this.BullishnessProps.is20MAAbove50MAHourly) {
-            return '| 🟡🔵 ✅';
+            return '| 🟡🔵 ✅ ('+percentageDiff+'%)';
         }
-        return '';
+        return '('+percentageDiff+'%)';;
     }
 
     composeBearishMetadata():string {
+        const percentageDiff = generalUtils.getPercentageDifference(this.quoteStats.lastInterval.high,this.bearishMeasuredMoveInterval.low).toFixed(1);
         if (!this.BullishnessProps.didOpenAbove20MADaily && this.BullishnessProps.is20MABelow50MAHourly) {
-            return ' | 💯';
+            return ' | 💯 ('+percentageDiff+'%)';
         }
         if (!this.BullishnessProps.didOpenAbove20MADaily) {
-            return ' | 🟡(D)⬇️ ✅';
+            return ' | 🟡(D)⬇️ ✅ ('+percentageDiff+'%)';
         }
         if (this.BullishnessProps.is20MABelow50MAHourly) {
-            return ' | 🔵🟡 ✅';
+            return ' | 🔵🟡 ✅ ('+percentageDiff+'%)';
         }
-        return '';
+        return '('+percentageDiff+'%)';
     }
-
 
     updateAverageCandleLength() {
         const candleLength = this.quoteStats.lastInterval.high-this.quoteStats.lastInterval.low;
@@ -235,5 +256,44 @@ export class BullishDeepSignal extends Signals {
         
 
         
+    }
+
+    measureMove(intervalNumber:number){
+        if (this.quoteStats.lastInterval.high-this.quoteStats.quoteIntervals[intervalNumber].low>this.bearishMeasuredMove) {
+            this.bearishMeasuredMove = this.quoteStats.lastInterval.high-this.quoteStats.quoteIntervals[intervalNumber].low;
+            this.bearishMeasuredMoveInterval = this.quoteStats.quoteIntervals[intervalNumber];
+        }
+        if (this.quoteStats.quoteIntervals[intervalNumber].high-this.quoteStats.lastInterval.low>this.bullishMeasuredMove) {
+            this.bullishMeasuredMove = this.quoteStats.quoteIntervals[intervalNumber].high-this.quoteStats.lastInterval.low;
+            this.bullishMeasuredMoveInterval = this.quoteStats.quoteIntervals[intervalNumber];
+        }
+
+      
+    }
+    resetMeasuredMove(){
+        this.bearishMeasuredMove = this.quoteStats.lastInterval.high-this.quoteStats.lastInterval.low;
+        this.bullishMeasuredMove = this.quoteStats.lastInterval.high-this.quoteStats.lastInterval.low;
+    }
+
+    isMovementStrongEnoughForBullish(interval:number):boolean {
+        const percentageDiff = generalUtils.getPercentageDifference(this.quoteStats.lastInterval.low,this.quoteStats.quoteIntervals[interval].high); 
+        if (this.quoteStats.lastInterval.close<this.quoteStats.quoteIntervals[interval].low &&
+            percentageDiff*sensitivity>this.quoteStats.metadata.averageVolatility30Day &&
+            (movementStrength*(this.quoteStats.HOD-this.quoteStats.LOD))<=this.bullishMeasuredMove &&
+            (movementStrength*(this.quoteStats.HOD-this.quoteStats.LOD))<=this.quoteStats.quoteIntervals[interval].high-this.quoteStats.lastInterval.close) {
+            return true;
+        }
+        return false;
+    }
+    isMovementStrongEnoughForBearish(interval:number):boolean {
+        const percentageDiff = generalUtils.getPercentageDifference(this.quoteStats.lastInterval.high,this.quoteStats.quoteIntervals[interval].low); 
+
+        if (this.quoteStats.lastInterval.close > this.quoteStats.quoteIntervals[interval].high &&
+            percentageDiff*sensitivity>this.quoteStats.metadata.averageVolatility30Day &&
+            (movementStrength*(this.quoteStats.HOD-this.quoteStats.LOD))<=this.bearishMeasuredMove &&
+            (movementStrength*(this.quoteStats.HOD-this.quoteStats.LOD))<=this.quoteStats.lastInterval.close-this.quoteStats.quoteIntervals[interval].low) {
+            return true;
+        }
+        return false;
     }
 }
