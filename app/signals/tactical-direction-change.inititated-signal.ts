@@ -7,6 +7,7 @@ import { Signals } from './signals';
 export class TacticalDirectionChangeInitiatedSignal extends Signals { 
 
     private isTacticalDirectionSignalExists:boolean = false;
+    private signalLazyQueue:Map<string,boolean>=new Map();
     
     public monitor(): SignalModel[] {
         let info='';
@@ -17,12 +18,18 @@ export class TacticalDirectionChangeInitiatedSignal extends Signals {
                 if (!signalInput.isTriggered) {
                     this.isTacticalDirectionSignalExists = true;
                     let conditionCount = 0;
+                    this.verifySignalQueue(signalInput.info);
                     for (let maPointing of signalInput.maPointing){
+                        if (this.quoteStats.intervalCount==signalInput.interval+1) {
+                            this.addSignalToQueue(signalInput.info);
+                        }
+
                         if(!this.isMaPointingCorrectly(maPointing)) {
                             return [];
-                        } else {
+                        } else if (!this.signalLazyQueue.has(signalInput.info)) {
                             conditionCount++;
                         }
+                        
                     }
                     for (let maCrosssisng of signalInput.maCrosssisng || []){
                          if(!this.isMaCrossedCorrectly(maCrosssisng)) {
@@ -39,7 +46,7 @@ export class TacticalDirectionChangeInitiatedSignal extends Signals {
             }
     
             if (this.quoteState.initiatedSignals?.tacticalDirectionChangeSignalInput.length>0 &&
-                this.isTacticalDirectionSignalExists) {
+                this.isTacticalDirectionSignalExists && info!='') {
                 this.isTacticalDirectionSignalExists = false;
                 signals.push({
                     signalGroupType: SignalGroupType.INITIATED,
@@ -56,6 +63,9 @@ export class TacticalDirectionChangeInitiatedSignal extends Signals {
     }
 
     private isMaPointingCorrectly(maPointing: MaPointing): boolean {
+        if (this.quoteStats.intervalCount<2) {
+            return false;
+        }
         const lastMa = (this.quoteStats.lastInterval["MA"+maPointing.maType as keyof IQuoteFullIntervalData] || 0) as number;
         const prevMa = (this.quoteStats.quoteIntervals[this.quoteStats.intervalCount-2]["MA"+maPointing.maType  as keyof IQuoteFullIntervalData] || 0) as number;
         if (maPointing.direction === MADirectionEnum.UP && lastMa > prevMa && this.quoteStats.lastInterval.close>lastMa ) {
@@ -101,4 +111,26 @@ export class TacticalDirectionChangeInitiatedSignal extends Signals {
         }
         return metadata;
     }
+
+    addSignalToQueue(info: string): boolean {
+        if ((!this.signalLazyQueue.has(info)) &&
+            ((info.includes(MADirectionEnum.UP) && this.quoteStats.lastInterval.close > (this.quoteStats.lastInterval.MA10 || 10000)) ||
+            (info.includes(MADirectionEnum.DOWN) && this.quoteStats.lastInterval.close < (this.quoteStats.lastInterval.MA10 || 0)))) {
+            this.signalLazyQueue.set(info,true);
+
+            return true;
+        }
+        return false;
+    }
+
+    verifySignalQueue(info: string): void {
+        if (this.signalLazyQueue.has(info)) {
+            if ((info.includes(MADirectionEnum.UP) && this.quoteStats.lastInterval.close < (this.quoteStats.lastInterval.MA10 || 0)) ||
+                (info.includes(MADirectionEnum.DOWN) && this.quoteStats.lastInterval.close > (this.quoteStats.lastInterval.MA10 || 10000))) {
+                this.signalLazyQueue.delete(info);
+            }
+        }
+
+    }
+    
 }

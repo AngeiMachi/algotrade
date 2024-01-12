@@ -132,11 +132,10 @@ export class BullishDeepSignal extends Signals {
                     });
                     this.didSignalTrigger =true;
                     this.intervalsToReanbleCount = 4;
+                } else {
+                    state.updaeTacticalDirectionSignal(this.quoteStats.quoteName,"SOFT",MADirectionEnum.UP);
                 }
-             
-                state.updaeTacticalDirectionSignal(this.quoteStats.quoteName,"SOFT",MADirectionEnum.UP);
-                
-                
+              
                 return signals;
         }
         return [];
@@ -168,10 +167,9 @@ export class BullishDeepSignal extends Signals {
                     });
                     this.didSignalTrigger =true;
                     this.intervalsToReanbleCount = 4;
-                } 
-
-                state.updaeTacticalDirectionSignal(this.quoteStats.quoteName,"SOFT",MADirectionEnum.DOWN);
-                
+                }  else {
+                    state.updaeTacticalDirectionSignal(this.quoteStats.quoteName,"SOFT",MADirectionEnum.DOWN);
+                }
                 return signals;
         }
         return [];
