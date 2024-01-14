@@ -12,15 +12,17 @@ export class TacticalDirectionChangeInitiatedSignal extends Signals {
     public monitor(): SignalModel[] {
         let info='';
         let signals: SignalModel[] = [];
-
+        let initiatedBy='';
         if (this.quoteStats.intervalCount>0){
             for (let signalInput of this.quoteState.initiatedSignals?.tacticalDirectionChangeSignalInput || []){
                 if (!signalInput.isTriggered) {
                     this.isTacticalDirectionSignalExists = true;
                     let conditionCount = 0;
-                    this.verifySignalQueue(signalInput.info);
+                    if (signalInput.isLazy) {
+                        this.verifySignalQueue(signalInput.info);
+                    }
                     for (let maPointing of signalInput.maPointing){
-                        if (this.quoteStats.intervalCount==signalInput.interval+1) {
+                        if (this.quoteStats.intervalCount==signalInput.interval+1 && signalInput.isLazy) {
                             this.addSignalToQueue(signalInput.info);
                         }
 
@@ -40,7 +42,8 @@ export class TacticalDirectionChangeInitiatedSignal extends Signals {
                     }                    
                     if (conditionCount===signalInput.maPointing.length + (signalInput.maCrosssisng?.length || 0) ) {
                         signalInput.isTriggered = true;
-                        info += signalInput.info+',';
+                        info += signalInput.info;
+                        initiatedBy = signalInput.initiator;
                     }
                 }
             }
@@ -51,7 +54,7 @@ export class TacticalDirectionChangeInitiatedSignal extends Signals {
                 signals.push({
                     signalGroupType: SignalGroupType.INITIATED,
                     signalType: SignalType.TACTICAL_DIRECTION_CHANGE_INITIATED,
-                    signalDescription: SignalVerificationReasonEnum.TACTICAL_DIRECTION_CHANGE_INITIATED+this.composeMetadata(info),
+                    signalDescription: SignalVerificationReasonEnum.TACTICAL_DIRECTION_CHANGE_INITIATED+this.composeMetadata(info)+' by '+initiatedBy,
                     interval:this.quoteStats.lastInterval,
                     withNotification:true,
                     isDeveloperMode:false
@@ -103,11 +106,11 @@ export class TacticalDirectionChangeInitiatedSignal extends Signals {
         }
 
         if (priorityIndex.has('ABSOLUTE')) {
-            metadata +=(infoArray[priorityIndex.get('ABSOLUTE')].includes(MADirectionEnum.UP)?'📈':'📉')+' (Absolute)';
+            metadata +=(infoArray[priorityIndex.get('ABSOLUTE')].includes(MADirectionEnum.UP)?('📈'+this.getBullishIndicator()):('📉'+this.getBearishIndicator()))+' (Absolute)';
         } else if (priorityIndex.has('HARD')) {
-            metadata +=(infoArray[priorityIndex.get('HARD')].includes(MADirectionEnum.UP)?'📈':'📉')+' (Hard)';
+            metadata +=(infoArray[priorityIndex.get('HARD')].includes(MADirectionEnum.UP)?('📈'+this.getBullishIndicator()):('📉'+this.getBearishIndicator()))+' (Hard)';
         } else if (priorityIndex.has('SOFT')) {
-            metadata +=(infoArray[priorityIndex.get('SOFT')].includes(MADirectionEnum.UP)?'📈':'📉') +' (Soft)';
+            metadata +=(infoArray[priorityIndex.get('SOFT')].includes(MADirectionEnum.UP)?('📈'+this.getBullishIndicator()):('📉'+this.getBearishIndicator()));
         }
         return metadata;
     }

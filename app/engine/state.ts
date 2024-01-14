@@ -130,7 +130,7 @@ export function getState() {
 }
 
 export const updaeTacticalDirectionSignal = (quoteName: string, followType:string,direcrion:MADirectionEnum,
-    initiator:SignalVerificationReasonEnum | string ="Manual") => {
+    initiator:SignalVerificationReasonEnum | string ="Manual",isLazy:boolean=true) => {
     const index = _.findIndex(state, ['quoteName', quoteName]);
     const quote = state[index] as QuoteState;
     if (!doesTacticalDirectionSignalExists(quoteName,followType,direcrion)) {
@@ -145,6 +145,7 @@ export const updaeTacticalDirectionSignal = (quoteName: string, followType:strin
             info:followType+'-'+direcrion,
             initiator:initiator,
             interval:quote.quoteStatistics.intervalCount,
+            isLazy:isLazy,
         } as TacticalDirectionChangeSignalInput;
         switch (followType) {
             case 'ABSOLUTE':

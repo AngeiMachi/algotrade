@@ -127,13 +127,13 @@ export class BullishDeepSignal extends Signals {
                     signals.push({ 
                         signalGroupType: SignalGroupType.DEEP_OR_PEAK,
                         signalType: SignalType.BULLISH_DEEP,
-                        signalDescription: SignalVerificationReasonEnum.BULLISH_DEEP+this.composeBullishMetadata(),
+                        signalDescription: SignalVerificationReasonEnum.BULLISH_DEEP+this.getBullishIndicator()+this.getBullishMeasuredMove(),
                         withNotification:true,
                     });
                     this.didSignalTrigger =true;
                     this.intervalsToReanbleCount = 4;
                 } else {
-                    state.updaeTacticalDirectionSignal(this.quoteStats.quoteName,"SOFT",MADirectionEnum.UP);
+                    state.updaeTacticalDirectionSignal(this.quoteStats.quoteName,"SOFT",MADirectionEnum.UP,SignalVerificationReasonEnum.BULLISH_DEEP,false);
                 }
               
                 return signals;
@@ -162,13 +162,13 @@ export class BullishDeepSignal extends Signals {
                     signals.push({ 
                         signalGroupType: SignalGroupType.DEEP_OR_PEAK,
                         signalType: SignalType.BEARISH_PEAK,
-                        signalDescription: SignalVerificationReasonEnum.BEARISH_PEAK +this.composeBearishMetadata(),
+                        signalDescription: SignalVerificationReasonEnum.BEARISH_PEAK +this.getBearishIndicator()+this.getBearishMeasuredMove(),
                         withNotification:true,
                     });
                     this.didSignalTrigger =true;
                     this.intervalsToReanbleCount = 4;
                 }  else {
-                    state.updaeTacticalDirectionSignal(this.quoteStats.quoteName,"SOFT",MADirectionEnum.DOWN);
+                    state.updaeTacticalDirectionSignal(this.quoteStats.quoteName,"SOFT",MADirectionEnum.DOWN,SignalVerificationReasonEnum.BEARISH_PEAK,false);
                 }
                 return signals;
         }
@@ -211,6 +211,15 @@ export class BullishDeepSignal extends Signals {
 
     isCandleVolumeStrongEnough():boolean {
         return this.quoteStats.lastInterval.volume>100000 
+    }
+
+    getBullishMeasuredMove():string {
+        const percentageDiff = generalUtils.getPercentageDifference(this.quoteStats.lastInterval.low,this.bullishMeasuredMoveInterval.high).toFixed(1);
+        return '('+percentageDiff+'%)'
+    }
+    getBearishMeasuredMove():string {
+        const percentageDiff = generalUtils.getPercentageDifference(this.quoteStats.lastInterval.high,this.bearishMeasuredMoveInterval.low).toFixed(1);
+        return '('+percentageDiff+'%)'
     }
 
     composeBullishMetadata():string {

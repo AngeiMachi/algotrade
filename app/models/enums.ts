@@ -49,9 +49,9 @@ export enum SignalVerificationReasonEnum {
     BULLISH_HAMMER_SIGNAL = "Buillish Hammer",
     BEARISH_HAMMER_SIGNAL = "Bearish Hammer",
     BULLISH_TWENTY_MOVING_AVERAGE_BREAK = "Potencial Bullish",
-    BULLISH_DEEP = "📉📈 Bull Deep",
-    BEARISH_PEAK = "📈📉 Bear Peak",
-    TACTICAL_DIRECTION_CHANGE_INITIATED = "🚨 direcrion change",
+    BULLISH_DEEP = "📉📈 Deep",
+    BEARISH_PEAK = "📈📉 Peak",
+    TACTICAL_DIRECTION_CHANGE_INITIATED = "🚨 Switch",
 }
 
 

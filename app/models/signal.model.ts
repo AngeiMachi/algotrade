@@ -28,4 +28,5 @@ export interface TacticalDirectionChangeSignalInput {
     info:string;
     initiator:SignalVerificationReasonEnum | string;
     interval:number;
+    isLazy:boolean;
 }

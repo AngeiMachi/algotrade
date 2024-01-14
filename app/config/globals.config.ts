@@ -1,10 +1,10 @@
 import { BehaviorTypes, SignalGroupType } from '../models/enums';
 
 export const Mock = {
-    IsMock: false,
+    IsMock: true,
     startAtOpen:false,
     StartLiveSimulationAtInterval: 100,
-    MockDataDate: '2024-01-10',
+    MockDataDate: '2024-01-12',
     MockDataLiveSimulationTime:"15:30:00" ,
     intervalLapTime:"*/30 * * * * *" // "*/30 * * * * *" = every 30 seconds; "*/1 * * * *" = every 1 minute
     
@@ -65,7 +65,7 @@ export const QuotesConfig = {
                 "ABNB","DOCU","NOVA","UBER","IBM","TGT","OXY","GM","CE","HON","ASAN","HOOD","PDD","TOST","HPE","FOLD","AEHR","SE",
                 "UPS","U","RBLX","CMG","UNH","ETSY","SSYS","DASH","PLTR","WDC","IONQ","AVGO","NIO","XPEV","FSLR","CCL","PAGS",
                 "FVRR","AXSM","PYPL","CRWD","PANW","FDX","MCD","GS","JPM","MS","BAC","KEY","ROIV","WRK","TLRY","NU",
-                "HD","KO","WMT","DIS","APPS","MU","TSM","QCOM","RIVN","FSR","SNAP","BNTX","HYLN","NKLA"  
+                "HD","KO","WMT","DIS","APPS","MU","TSM","QCOM","RIVN","SNAP","BNTX","HYLN","NKLA"  
             ],
         },
     },
@@ -95,10 +95,8 @@ export const QuotesConfig = {
     
             ],
             names:[
-                //"PANW"
-                
-
-                "MMM","ZM","HUT","JNPR",
+               // "COIN",
+                "MMM","ZM","HUT","JNPR","SATS",
                 "DELL","VALE","LYFT","S","IOT","NTNX","HAL","ZI","RUN","SQ","ZIM","CSCO","KR","GPS",
                 "BABA","BIDU","PFE","MRNA","MBLY","FTNT","PTGX","LI","NCLH","PATH","SOFI","F","CHWY",
                 "SHOP","ADBE","CRM","AMAT","SBUX","PINS","CVNA","XOM","GME","MTCH","AI","NOW","DDOG","BX","ARM","PSTG" ,"TDOC",
@@ -107,11 +105,7 @@ export const QuotesConfig = {
                 "ABNB","DOCU","NOVA","UBER","IBM","TGT","OXY","GM","CE","HON","ASAN","HOOD","PDD","TOST","HPE","FOLD","AEHR","SE",
                 "UPS","U","RBLX","CMG","UNH","ETSY","SSYS","DASH","PLTR","WDC","IONQ","AVGO","NIO","XPEV","FSLR","CCL","PAGS",
                 "FVRR","AXSM","PYPL","CRWD","PANW","FDX","MCD","GS","JPM","MS","BAC","KEY","ROIV","WRK","TLRY","NU",
-                "HD","KO","WMT","DIS","APPS","MU","TSM","QCOM","RIVN","FSR","SNAP","BNTX","HYLN","NKLA"  
-
-                
-                // "NCLH","TZA","XLF"
-                //'AMD', 'KO', 'MARA', 'ARM', 'ORCL', 'HUT', 'RIOT', 'NCLH', 'TSM', 'BAC', 'PLTR', 'XOM', 'XLE', 'UAL', 'RUN', 'U', 'IWM', 'TLRY', 'TZA', 'ROKU', 'HPE', 'UBER', 'PLUG', 'CHWY', 'PYPL', 'QS', 'DKNG', 'LYFT', 'GM', 'SQQQ', 'OXY', 'DAL', 'INTC', 'PDD', 'CVX', 'PINS', 'TSLA', 'AMZN', 'DELL', 'META', 'MU', 'MRVL', 'SNAP', 'NVDA', 'XLF'
+                "HD","KO","WMT","DIS","APPS","MU","TSM","QCOM","RIVN","SNAP","BNTX","HYLN","NKLA"            
             ],
         },
     }
