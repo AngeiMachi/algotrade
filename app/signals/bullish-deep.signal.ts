@@ -128,6 +128,8 @@ export class BullishDeepSignal extends Signals {
                         signalGroupType: SignalGroupType.DEEP_OR_PEAK,
                         signalType: SignalType.BULLISH_DEEP,
                         signalDescription: SignalVerificationReasonEnum.BULLISH_DEEP+this.getBullishIndicator()+this.getBullishMeasuredMove(),
+                        socialSignalDescription:'Potential '+SignalVerificationReasonEnum.BULLISH_DEEP+" Verified ✔"+"\n\n Measured Move from top to bottom: "+this.getBullishMeasuredMove()+
+                        +'\n\nShort term(mins) direction: Bullish 🟢! '+this.getBullishIndicator()+'\n\nStop loss: '+this.quoteStats.lastInterval.low.toFixed(2),
                         withNotification:true,
                     });
                     this.didSignalTrigger =true;
@@ -163,6 +165,8 @@ export class BullishDeepSignal extends Signals {
                         signalGroupType: SignalGroupType.DEEP_OR_PEAK,
                         signalType: SignalType.BEARISH_PEAK,
                         signalDescription: SignalVerificationReasonEnum.BEARISH_PEAK +this.getBearishIndicator()+this.getBearishMeasuredMove(),
+                        socialSignalDescription:'Potential '+SignalVerificationReasonEnum.BEARISH_PEAK+" Verified ✔"+"\n\n Measured Move from bottom to top: "+this.getBearishMeasuredMove()
+                        +'\n\nShort term(mins) direction: Bearish 🔴! '+this.getBearishIndicator()+'\n\nStop loss: '+this.quoteStats.lastInterval.high.toFixed(2),
                         withNotification:true,
                     });
                     this.didSignalTrigger =true;

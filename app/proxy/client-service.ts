@@ -6,6 +6,7 @@ import express from 'express';
 import * as PushAPI from './pushed-api';
 import * as quotesIterator from '../engine/quotes-iterator';
 import * as globalConfig from "../config/globals.config"
+import * as TwitterAPI from './twitter-api';
 
 const app = express();
 const server = require('http').Server(app);
@@ -81,26 +82,32 @@ server.listen(PORT, () => {
 export const updateQuote = (quote: QuoteState,shouldSendPush:boolean) => {
     const quoteToUpdate = _.omit(quote, ['quoteStatistics']);
     if (shouldSendPush) {
-        sendPush(quote);
+        SignalToClients(quote);
     }
 
     ioGlobal.emit('updateQuote', quoteToUpdate);
 };
 
-const sendPush = async (quote: QuoteState) => {
-    let message = quote.quoteName + ': ';
-    let signalsWithNotificationsCount=0
-
+const SignalToClients = async (quote: QuoteState) => {
+   
     if (!isInPushPolicy(quote)) {
         return;
     }
+
+    sendAppSignals(quote);
+    sendSocialSignals(quote);
+    
+};
+const sendAppSignals = (quote: QuoteState) => {
+    let message = quote.quoteName + ':';
+    let signalsWithNotificationsCount=0;
 
     const signals = _.filter(quote.signalsHistory, { interval: quote.quoteStatistics.intervalCount }) as QuoteStateSignals[];
     signals.forEach((signal) => {
         if (signal.signalDetails.withNotification) {
             if (globalConfig.Notifications?.allowedNotifications) {
                 if (globalConfig.Notifications?.allowedNotifications.groupTypes.includes(signal.signalDetails.signalGroupType)){
-                    message += signal.signalDetails.signalDescription + '\r\n';
+                    message+= signal.signalDetails.signalDescription + '\r\n';
                     signalsWithNotificationsCount++;
                 } 
             } else {
@@ -113,13 +120,30 @@ const sendPush = async (quote: QuoteState) => {
     if (message.length > 59) {
         message = quote.quoteName + ': ' + signals.length + ' Simultanious Signals - Open to view details!';
     }
-    
-   
-    if (signalsWithNotificationsCount>0){
-        const response = await PushAPI.sendPushMessage(message);
+    if (signalsWithNotificationsCount>0){ 
+        const response = PushAPI.sendPushMessage(message);
     }
-};
+}
+const sendSocialSignals = (quote: QuoteState) => { 
+    let message ="⭐ Intraday Real-Time Stocks Signals Powered By Algo AI ⭐ \n\n"+ '$'+quote.quoteName + ':';
+    let signalsWithNotificationsCount=0;
 
+    const signals = _.filter(quote.signalsHistory, { interval: quote.quoteStatistics.intervalCount }) as QuoteStateSignals[];
+    signals.forEach((signal) => {
+        if (signal.signalDetails.withNotification) {
+            if (globalConfig.Notifications?.socialAllowedNotifications) {
+                if (globalConfig.Notifications?.socialAllowedNotifications.groupTypes.includes(signal.signalDetails.signalGroupType)){
+                    message+= (signal.signalDetails.socialSignalDescription? signal.signalDetails.socialSignalDescription: + signal.signalDetails.signalDescription)+'\r\n';
+                    signalsWithNotificationsCount++;
+                } 
+            } 
+        }
+    });
+   
+    if (signalsWithNotificationsCount>0){ 
+        TwitterAPI.postTweet(message);
+    }
+}
 
 
 const isInPushPolicy = (quote: QuoteState) => {

@@ -24,7 +24,7 @@ export abstract class Signals {
         }
             
         if (this.quoteStats.metadata.SMA20.didOpenOboveSMA && is20MAAbove50MAHourly) {
-            return '| ⭐';
+            return ' ⭐⭐⭐';
         } else {
             return '';
         }
@@ -38,7 +38,7 @@ export abstract class Signals {
         }
             
         if (!this.quoteStats.metadata.SMA20.didOpenOboveSMA && is20MABelow50MAHourly) {
-            return '| ⭐';
+            return ' ⭐⭐⭐';
         } else {
             return '';
         }

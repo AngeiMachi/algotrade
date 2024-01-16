@@ -5,6 +5,7 @@ export interface SignalModel {
     signalGroupType: SignalGroupType;
     signalType: SignalType;
     signalDescription: string;
+    socialSignalDescription?:string;
     signalSentiment?: SentimentDirectionEnum;
     payload?: any;
     interval?:IQuoteFullIntervalData;
