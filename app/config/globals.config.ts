@@ -91,7 +91,7 @@ export const QuotesConfig = {
             behaviors:[],
             signals:[],
             names:[
-                "TSLA" 
+                // "TSLA" 
                 //  "AAPL","AMZN","TSLA","MSFT","META","BA","GOOGL","AMD","NVDA","CAT","ORCL","GE","NFLX"
             ],
         },
@@ -108,7 +108,7 @@ export const QuotesConfig = {
     
             ],
             names:[
-            //     "UBER",
+                "UBER",
             //    "COIN",
                 // "MMM","ZM","HUT","JNPR","SATS",
                 // "DELL","VALE","LYFT","S","IOT","NTNX","HAL","ZI","RUN","SQ","ZIM","CSCO","KR","GPS",

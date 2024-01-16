@@ -125,7 +125,7 @@ const sendAppSignals = (quote: QuoteState) => {
     }
 }
 const sendSocialSignals = (quote: QuoteState) => { 
-    let message ="⭐ Intraday Real-Time Stocks Signals Powered By Algo AI ⭐ \n\n"+ '$'+quote.quoteName + ':';
+    let message ="Intraday Real-Time Stocks Signals Powered By Algo AI  $"+quote.quoteName + ':\n\n';
     let signalsWithNotificationsCount=0;
 
     const signals = _.filter(quote.signalsHistory, { interval: quote.quoteStatistics.intervalCount }) as QuoteStateSignals[];
