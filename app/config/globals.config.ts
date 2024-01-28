@@ -1,13 +1,12 @@
 import { BehaviorTypes, SignalGroupType } from '../models/enums';
 
 export const Mock = {
-    IsMock: true,
+    IsMock: false,
     startAtOpen:false,
     StartLiveSimulationAtInterval: 100,
-    MockDataDate: '2024-01-12',
+    MockDataDate: '2024-01-25',
     MockDataLiveSimulationTime:"15:30:00" ,
     intervalLapTime:"*/30 * * * * *" // "*/30 * * * * *" = every 30 seconds; "*/1 * * * *" = every 1 minute
-    
 };
 
 export const ShouldUsePushNotifications = true;
@@ -108,7 +107,7 @@ export const QuotesConfig = {
     
             ],
             names:[
-                "UBER",
+                "HAL","PYPL",
             //    "COIN",
                 // "MMM","ZM","HUT","JNPR","SATS",
                 // "DELL","VALE","LYFT","S","IOT","NTNX","HAL","ZI","RUN","SQ","ZIM","CSCO","KR","GPS",

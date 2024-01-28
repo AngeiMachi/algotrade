@@ -81,7 +81,7 @@ server.listen(PORT, () => {
 
 export const updateQuote = (quote: QuoteState,shouldSendPush:boolean) => {
     const quoteToUpdate = _.omit(quote, ['quoteStatistics']);
-    if (shouldSendPush) {
+    if (true) {
         SignalToClients(quote);
     }
 
@@ -125,20 +125,24 @@ const sendAppSignals = (quote: QuoteState) => {
     }
 }
 const sendSocialSignals = (quote: QuoteState) => { 
-    let message ="Intraday Real-Time Stocks Signals Powered By Algo AI  $"+quote.quoteName + ':\n\n';
+    let message ="FREE Intraday Real-Time Stocks Signals Powered By Algo AI  $"+quote.quoteName + ':\n\n';
     let signalsWithNotificationsCount=0;
 
     const signals = _.filter(quote.signalsHistory, { interval: quote.quoteStatistics.intervalCount }) as QuoteStateSignals[];
     signals.forEach((signal) => {
         if (signal.signalDetails.withNotification) {
             if (globalConfig.Notifications?.socialAllowedNotifications) {
-                if (globalConfig.Notifications?.socialAllowedNotifications.groupTypes.includes(signal.signalDetails.signalGroupType)){
-                    message+= (signal.signalDetails.socialSignalDescription? signal.signalDetails.socialSignalDescription: + signal.signalDetails.signalDescription)+'\r\n';
-                    signalsWithNotificationsCount++;
-                } 
+                if (signal.signalDetails.socialSignalDescription?.includes('⭐')) {
+                    if (globalConfig.Notifications?.socialAllowedNotifications.groupTypes.includes(signal.signalDetails.signalGroupType)){
+                        message+= (signal.signalDetails.socialSignalDescription? signal.signalDetails.socialSignalDescription: + signal.signalDetails.signalDescription)+'\r\n';
+                        signalsWithNotificationsCount++;
+                    } 
+                }
             } 
         }
     });
+
+    message+='\n\n $SPX $SPY $QQQ';
    
     if (signalsWithNotificationsCount>0){ 
         TwitterAPI.postTweet(message);

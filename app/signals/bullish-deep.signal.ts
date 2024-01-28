@@ -72,7 +72,7 @@ export class BullishDeepSignal extends Signals {
             
             if (this.quoteStats.metadata.averageVolatility30Day>1 && 
                 (this.quoteStats.metadata.averageDailyVolume10Day as number>2000000 && this.quoteStats.metadata.averageVolatility30Day>4) ||
-                this.quoteStats.metadata.averageDailyVolume10Day as number>4000000) {
+                (this.quoteStats.metadata.averageDailyVolume10Day as number>4000000) || (this.quoteStats.metadata.previousDay.volume>7000000)) {
                     volumeAndVolatility =true;
                     this.isValidForSignal = true;
             }
