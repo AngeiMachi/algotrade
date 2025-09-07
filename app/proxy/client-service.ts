@@ -50,7 +50,7 @@ app.post('/addNewQuote',jsonParser,async (req, res) => {
 
 app.post('/followQuote',jsonParser,async (req, res) => {
     const data = req.body;
-    state.updaeTacticalDirectionSignal(data.quoteName,data.followType,data.direction);
+    state.updateTacticalDirectionSignal(data.quoteName,data.followType,data.direction);
     res.sendStatus(200);
 });
 
@@ -95,7 +95,7 @@ const SignalToClients = async (quote: QuoteState) => {
     }
 
     sendAppSignals(quote);
-    sendSocialSignals(quote);
+    //sendSocialSignals(quote);
     
 };
 const sendAppSignals = (quote: QuoteState) => {
@@ -128,19 +128,19 @@ const sendSocialSignals = (quote: QuoteState) => {
     let message ="FREE Intraday Real-Time Stocks Signals Powered By Algo AI  $"+quote.quoteName + ':\n\n';
     let signalsWithNotificationsCount=0;
 
-    const signals = _.filter(quote.signalsHistory, { interval: quote.quoteStatistics.intervalCount }) as QuoteStateSignals[];
-    signals.forEach((signal) => {
-        if (signal.signalDetails.withNotification) {
-            if (globalConfig.Notifications?.socialAllowedNotifications) {
-                if (signal.signalDetails.socialSignalDescription?.includes('⭐')) {
-                    if (globalConfig.Notifications?.socialAllowedNotifications.groupTypes.includes(signal.signalDetails.signalGroupType)){
-                        message+= (signal.signalDetails.socialSignalDescription? signal.signalDetails.socialSignalDescription: + signal.signalDetails.signalDescription)+'\r\n';
-                        signalsWithNotificationsCount++;
-                    } 
-                }
-            } 
-        }
-    });
+    // const signals = _.filter(quote.signalsHistory, { interval: quote.quoteStatistics.intervalCount }) as QuoteStateSignals[];
+    // signals.forEach((signal) => {
+    //     if (signal.signalDetails.withNotification) {
+    //         if (globalConfig.Notifications?.socialAllowedNotifications) {
+    //             if (signal.signalDetails.socialSignalDescription?.includes('⭐')) {
+    //                 if (globalConfig.Notifications?.socialAllowedNotifications.groupTypes.includes(signal.signalDetails.signalGroupType)){
+    //                     message+= (signal.signalDetails.socialSignalDescription? signal.signalDetails.socialSignalDescription: + signal.signalDetails.signalDescription)+'\r\n';
+    //                     signalsWithNotificationsCount++;
+    //                 } 
+    //             }
+    //         } 
+    //     }
+    // });
 
     message+='\n\n $SPX $SPY $QQQ';
    

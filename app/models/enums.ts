@@ -35,7 +35,7 @@ export enum SignalVerificationReasonEnum {
     BULLISH_BREAK_PREVIOUS_WEEK = 'Bull Break Prev Week',
     BULLISH_BREAK_52_WEEK_HIGH = 'Bull Break 52 week High',
     MOVING_AVERAGE_TOUCH_FROM_BELOW = 'Mov Avg touch Down',
-    MOVING_AVERAGE_TOUCH_FROM_ABOVE = 'Mov Avg touch Up',
+    MOVING_AVERAGE_TOUCH_FROM_ABOVE = '📉📈 Mov Avg touch 📉📈',
     MOVING_AVERAGE_INTRADAY_TWENTY_BREAK_ABOVE = "20(5m) MA break UP",
     MOVING_AVERAGE_INTRADAY_FIFTY_BREAK_ABOVE = "5️0(5m) MA break UP",
     TWENTY_HOURLY_MOVING_AVERAGE_TOUCH_FROM_BELOW = "",

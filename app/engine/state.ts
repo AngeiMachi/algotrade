@@ -129,7 +129,7 @@ export function getState() {
     return returnedState;
 }
 
-export const updaeTacticalDirectionSignal = (quoteName: string, followType:string,direcrion:MADirectionEnum,
+export const updateTacticalDirectionSignal = (quoteName: string, followType:string,direcrion:MADirectionEnum,
     initiator:SignalVerificationReasonEnum | string ="Manual",isLazy:boolean=true) => {
     const index = _.findIndex(state, ['quoteName', quoteName]);
     const quote = state[index] as QuoteState;

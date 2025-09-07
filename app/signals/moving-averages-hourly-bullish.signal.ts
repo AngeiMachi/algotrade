@@ -16,12 +16,12 @@ export class MovingAveragesHourlyBullish extends Signals {
         if(this.didOpenAboveYesterdayCloseOrHigh && this.is20MATouched()){
             const movingAvgData = this.composeMovingAverages();
             if (movingAvgData) {
-                return [{
+                return [{ 
                     signalGroupType: SignalGroupType.HOURLY_MOVING_AVERAGE,
                     signalType: SignalType.HOURLY_MOVING_AVERAGE_TOUCH_FROM_ABOVE,
                     signalDescription: SignalVerificationReasonEnum.TWENTY_HOURLY_MOVING_AVERAGE_TOUCH_FROM_ABOVE+movingAvgData,
                     interval:this.quoteStats.lastInterval,
-                    isDeveloperMode:true,
+                    isDeveloperMode:false,
                     withNotification:false, 
                 }];
             }

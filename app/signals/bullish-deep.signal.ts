@@ -135,7 +135,7 @@ export class BullishDeepSignal extends Signals {
                     this.didSignalTrigger =true;
                     this.intervalsToReanbleCount = 4;
                 } else {
-                    state.updaeTacticalDirectionSignal(this.quoteStats.quoteName,"SOFT",MADirectionEnum.UP,SignalVerificationReasonEnum.BULLISH_DEEP,false);
+                    state.updateTacticalDirectionSignal(this.quoteStats.quoteName,"SOFT",MADirectionEnum.UP,SignalVerificationReasonEnum.BULLISH_DEEP,false);
                 }
               
                 return signals;
@@ -172,7 +172,7 @@ export class BullishDeepSignal extends Signals {
                     this.didSignalTrigger =true;
                     this.intervalsToReanbleCount = 4;
                 }  else {
-                    state.updaeTacticalDirectionSignal(this.quoteStats.quoteName,"SOFT",MADirectionEnum.DOWN,SignalVerificationReasonEnum.BEARISH_PEAK,false);
+                    state.updateTacticalDirectionSignal(this.quoteStats.quoteName,"SOFT",MADirectionEnum.DOWN,SignalVerificationReasonEnum.BEARISH_PEAK,false);
                 }
                 return signals;
         }

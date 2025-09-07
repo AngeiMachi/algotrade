@@ -21,7 +21,8 @@ export class MovingAveragesFiftyHourlyBullish extends Signals {
                     signalGroupType: SignalGroupType.HOURLY_MOVING_AVERAGE,
                     signalType: SignalType.HOURLY_MOVING_AVERAGE_TOUCH_FROM_ABOVE,
                     signalDescription: SignalVerificationReasonEnum.FIFTY_HOURLY_MOVING_AVERAGE_TOUCH_FROM_ABOVE+movingAvgData,
-                    withNotification:true,
+                    isDeveloperMode:false,
+                    withNotification:false,
                     interval:this.quoteStats.lastInterval
                 }];
             }
