@@ -2,7 +2,7 @@ import { logger } from '../config/winston.config';
 import * as globalConfig from '../config/globals.config';
 import * as quoteUtils from '../utils/quote-utils';
 import * as AlphaVantage from './alpha-vantage-api';
-import * as TDAmeritrade from './td-ameritrade-api';
+import * as YahooAPI from './yahoo-api';
 
 import {
     IAlphaVantageIntervals,
@@ -92,7 +92,7 @@ export async function prepareMockDataTDAmeritrade(quote: string, _marketHours: I
     const mockQuote = (mockQuotes[quote] = mockQuotesFactory(quote));
 
     try {
-        mockData = await TDAmeritrade.getQuote5MinuteIntraday(quote, mockQuote.mockDataDate);
+        mockData = await YahooAPI.getQuote5MinuteIntraday(quote, mockQuote.mockDataDate);
 
         mockQuote.mockDataResponseValues = Object.values(mockData);
         mockQuote.mockDataResponseKeys = Object.keys(mockData);
@@ -119,8 +119,9 @@ export async function prepareMockDataTDAmeritrade(quote: string, _marketHours: I
                     logger.error('prepareMockDataTDAmeritrade ' + quote + '- mock data corrupted');
                 }
             } 
-            while ((mockQuote.mockDataResponseKeys[mockQuote.currentInterval] !== marketHours.sessionHours.regularMarket.start && globalConfig.Mock.startAtOpen) || 
-            (!mockQuote.mockDataResponseKeys[mockQuote.currentInterval].includes(marketHours.date+' '+globalConfig.Mock.MockDataLiveSimulationTime) && !globalConfig.Mock.startAtOpen));
+            while (mockQuote.currentInterval < mockQuote.mockDataResponseKeys.length && 
+                   ((mockQuote.mockDataResponseKeys[mockQuote.currentInterval] !== marketHours.sessionHours.regularMarket.start && globalConfig.Mock.startAtOpen) || 
+                   (mockQuote.mockDataResponseKeys[mockQuote.currentInterval] && !mockQuote.mockDataResponseKeys[mockQuote.currentInterval].includes(marketHours.date+' '+globalConfig.Mock.MockDataLiveSimulationTime) && !globalConfig.Mock.startAtOpen)));
         }
         
         mockQuote.isMockLoaded = true;

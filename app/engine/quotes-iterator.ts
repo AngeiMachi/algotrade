@@ -39,7 +39,7 @@ export const initiateQuotesWatch = ()=> {
 
 export const addNewQuote = async (quoteName: string)=> {
     quotes[quoteName] = new QuoteMonoRunner(quoteName);
-    const quoteIntervals = await proxyService.getTDAmeritradeIntraday(quoteName);
+    const quoteIntervals = await proxyService.getYahooIntraday(quoteName);
     if (Object.keys(quoteIntervals).length==0) {
         delete quotes[quoteName];
         logger.error('error at Stock-Reader.initializeQuotesData - quote=' + quoteName + ' does not Exist and being deprecated');
@@ -81,7 +81,7 @@ const iterateQuote =  async (quoteName: string) =>{
 
         const quoteStockStats: QuoteMonoRunner = quotes[quoteName];
 
-        const quoteIntervals = await proxyService.getTDAmeritradeIntraday(quoteName, true);
+        const quoteIntervals = await proxyService.getYahooIntraday(quoteName, true);
 
         const stockInterval: IQuoteFullIntervalData = quoteUtils.getRecentIntervalData(quoteIntervals);
         quoteStockStats.recordQuoteIntervalsIncludingMissed(quoteIntervals, true);
@@ -98,7 +98,7 @@ const iterateQuotes= () => {
             const quoteStockStats: QuoteMonoRunner = quotes[quoteKey];
 
             
-            proxyService.getTDAmeritradeIntraday(quoteKey, true).then(quoteIntervals=>{
+            proxyService.getYahooIntraday(quoteKey, true).then(quoteIntervals=>{
                 const stockInterval: IQuoteFullIntervalData = quoteUtils.getRecentIntervalData(quoteIntervals);
                 
                 if (quoteIntervals) {

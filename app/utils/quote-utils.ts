@@ -169,11 +169,35 @@ export function getPartialHistory(intervals: ITDAmeritradeIntervalData[], tradin
 
 function getIntervalIndex(intervals: ITDAmeritradeIntervalData[], tradingDate: string) {
     try {
-        // date is 00:00 . TDAmeritrade daily interval is at 08:00 = 28800000 or 07:00 = 25200000
+        // Professional approach: Support both TD Ameritrade and Yahoo Finance data formats
+        
+        // Handle Yahoo Finance format (real timestamps)
+        if (intervals.length > 0 && intervals[0].datetime && intervals[0].datetime > 1000000000000) {
+            // Yahoo Finance timestamps are in milliseconds, find the closest trading day
+            const targetDate = moment.tz(tradingDate, 'America/New_York').startOf('day');
+            const targetDateEnd = moment.tz(tradingDate, 'America/New_York').endOf('day');
+            
+            // Find intervals for the target trading date
+            const dayIntervals = intervals.filter(interval => {
+                const intervalDate = moment(interval.datetime).tz('America/New_York');
+                return intervalDate.isSameOrAfter(targetDate) && intervalDate.isSameOrBefore(targetDateEnd);
+            });
+            
+            if (dayIntervals.length > 0) {
+                // Return the index of the last interval for the target date
+                const lastInterval = dayIntervals[dayIntervals.length - 1];
+                return _.findIndex(intervals, ['datetime', lastInterval.datetime]);
+            }
+            
+            logger.warn(`Quote-Utils.getIntervalIndex: No intervals found for date ${tradingDate}`);
+            return -1;
+        }
+        
+        // Legacy TD Ameritrade format support
         const currentTimeInMilliseconds = convertDateToTDMillisecondInterval(tradingDate);
 
         if (currentTimeInMilliseconds < intervals[0].datetime ) {
-            logger.error('Quote-Utils.getIntervalIndex interval out of bounds');
+                logger.error('Quote-Utils.getIntervalIndex interval out of bounds');
             throw 'interval out of bounds';
         }
 
@@ -185,6 +209,7 @@ function getIntervalIndex(intervals: ITDAmeritradeIntervalData[], tradingDate: s
 
         return index;
     } catch (error) {
+        logger.error('Quote-Utils.getIntervalIndex error:', error);
         return -1;
     }
 }

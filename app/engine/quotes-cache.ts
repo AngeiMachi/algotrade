@@ -1,6 +1,6 @@
 import { TimeFrame } from '../models/enums';
 import { ICacheHistoricalData, ITDAmeritradePriceHistory } from '../models/quote-data.model';
-import * as TDAmeritradeAPI from '../proxy/td-ameritrade-api';
+import * as YahooAPI from '../proxy/yahoo-api';
 import { logger } from '../config/winston.config';
 export let cacheState = {} as ICacheHistoricalData;
 
@@ -47,29 +47,29 @@ export const getQuoteFromCache = ((quoteName:string,timeFrame:TimeFrame): ITDAme
     return null;
 });
 
-export const cacheQuoteFromTDAmeritradeAPI = async (quoteName:string) => {
+export const cacheQuoteFromYahooAPI = async (quoteName:string) => {
     if (!cacheState[quoteName]) {
         addNewQuoteToCache(quoteName);
-        const quoteFullYearDailyHistory = await TDAmeritradeAPI.getQuoteFullYearDailyHistory(quoteName);
+        const quoteFullYearDailyHistory = await YahooAPI.getQuoteFullYearDailyHistory(quoteName);
         cacheQuote(quoteName,quoteFullYearDailyHistory,TimeFrame.Daily);
-        const quoteFullYearWeeklyHistory = await TDAmeritradeAPI.getQuoteFullYearWeeklyHistory(quoteName);
+        const quoteFullYearWeeklyHistory = await YahooAPI.getQuoteFullYearWeeklyHistory(quoteName);
         cacheQuote(quoteName,quoteFullYearWeeklyHistory,TimeFrame.Weekly); 
-        const quoteHourlyHistory = await TDAmeritradeAPI.getQuoteHourlyHistory(quoteName);
+        const quoteHourlyHistory = await YahooAPI.getQuoteHourlyHistory(quoteName);
         cacheQuote(quoteName,quoteHourlyHistory,TimeFrame.Hourly); 
     }
 }
 
-export const cacheQuoteListFromTDAmeritradeAPI = async (quoteListNames:string[]) => {
+export const cacheQuoteListFromYahooAPI = async (quoteListNames:string[]) => {
     try {
         logger.info("Initiating Quote caching...");
         for (let quoteName of quoteListNames) {
-            await cacheQuoteFromTDAmeritradeAPI(quoteName);
+            await cacheQuoteFromYahooAPI(quoteName);
             logger.info(`${quoteName} has been cached`);
         }
         logger.info("All Quotes have been cached succesfully");
     }
     catch (err) {
-        logger.error('cacheQuoteListFromTDAmeritradeAPI failed ' + err);
+        logger.error('cacheQuoteListFromYahooAPI failed ' + err);
     }
     
 }

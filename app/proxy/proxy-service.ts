@@ -9,7 +9,7 @@ import * as convertUtils from '../utils/convert-utils';
 import * as quoteUtils from '../utils/quote-utils';
 import { parseMustache } from '../utils/general';
 
-import * as TDAmeritradeAPI from './td-ameritrade-api';
+import * as YahooAPI from './yahoo-api';
 import * as AlphaVantage from './alpha-vantage-api';
 import * as mockService from './mock-service';
 import * as QuotesCache from '../engine/quotes-cache';
@@ -29,7 +29,7 @@ export const getMarketHours=() => {
 }
 
 const initialize = async ()=> {
-        _marketHours = await getMarketHoursFromTDAmeritrade();
+        _marketHours = await getMarketHoursFromYahoo();
         stateService.setMarketHours(_marketHours);
 }
 
@@ -45,24 +45,24 @@ export const  getAlphaVantageIntraday= async (quote: string): Promise<any> =>{
     }
 }
 
-// main method to get TDAmeritrade Intraday data
-export const  getTDAmeritradeIntraday = async (quote: string, getExtendedHours: boolean = true): Promise<IQuoteIntervals> =>{
+// main method to get Yahoo Intraday data
+export const  getYahooIntraday = async (quote: string, getExtendedHours: boolean = true): Promise<IQuoteIntervals> =>{
     if (globalConfig.Mock.IsMock) {
         if (!mockService.isMockLoaded(quote)) {
                 await mockService.prepareMockDataTDAmeritrade(quote, _marketHours);
         }
         return mockService.serveMockDataTDAmeritrade(quote);
     } else {
-        const quoteIntervals = await TDAmeritradeAPI.getQuote5MinuteIntraday(quote, quoteUtils.getCurrentTradingDate(), getExtendedHours);
+        const quoteIntervals = await YahooAPI.getQuote5MinuteIntraday(quote, quoteUtils.getCurrentTradingDate(), getExtendedHours);
         //return quoteIntervals;
         return quoteUtils.removoLastIntervalData(quoteIntervals);
     }
 }
 
-export const getMarketHoursFromTDAmeritrade= async (): Promise<IMarketHours> =>{
+export const getMarketHoursFromYahoo= async (): Promise<IMarketHours> =>{
     let marketHours={} as IMarketHours;
     try {
-        const mrkHrs = await TDAmeritradeAPI.getMarketHours(quoteUtils.getCurrentTradingDate());
+        const mrkHrs = await YahooAPI.getMarketHours(quoteUtils.getCurrentTradingDate());
         marketHours = convertUtils.converTDAmeritradeMarketHours(mrkHrs);
         
     } catch (err) {
@@ -116,10 +116,10 @@ export const getAlphaVantageHistoricalData= async(quote: string): Promise<any> =
 
 export const getHistoricalData= async (quote: string, specificTradeDates: string[] = []): Promise<IQuotesHistoricalData> => {
     try {
-        const quote5MinuteHistory = await TDAmeritradeAPI.getQuote5MinuteHistory(quote, specificTradeDates);
-        const quoteFullYearDailyHistory = await TDAmeritradeAPI.getQuoteFullYearDailyHistory(quote);
-        const quoteFullYearWeeklyHistory = await TDAmeritradeAPI.getQuoteFullYearWeeklyHistory(quote);
-        const quoteHourlyHistory = await TDAmeritradeAPI.getQuoteHourlyHistory(quote);
+        const quote5MinuteHistory = await YahooAPI.getQuote5MinuteHistory(quote, specificTradeDates);
+        const quoteFullYearDailyHistory = await YahooAPI.getQuoteFullYearDailyHistory(quote);
+        const quoteFullYearWeeklyHistory = await YahooAPI.getQuoteFullYearWeeklyHistory(quote);
+        const quoteHourlyHistory = await YahooAPI.getQuoteHourlyHistory(quote);
 
         return {
             quote5MinuteHistory,
@@ -137,15 +137,15 @@ export const getMetaDataPerDay = async (quote: string, tradeDay: string): Promis
             
             let quoteFullYearDailyHistory = QuotesCache.getQuoteFromCache(quote,TimeFrame.Daily);
             if (!quoteFullYearDailyHistory) {
-                quoteFullYearDailyHistory = await TDAmeritradeAPI.getQuoteFullYearDailyHistory(quote);
+                quoteFullYearDailyHistory = await YahooAPI.getQuoteFullYearDailyHistory(quote);
             }
             let quoteFullYearWeeklyHistory = QuotesCache.getQuoteFromCache(quote,TimeFrame.Weekly);
             if (!quoteFullYearWeeklyHistory) {
-                quoteFullYearWeeklyHistory = await TDAmeritradeAPI.getQuoteFullYearDailyHistory(quote);
+                quoteFullYearWeeklyHistory = await YahooAPI.getQuoteFullYearWeeklyHistory(quote);
             }
             let quoteHourlyHistory = QuotesCache.getQuoteFromCache(quote,TimeFrame.Hourly);
             if (!quoteHourlyHistory) {
-                quoteHourlyHistory = await TDAmeritradeAPI.getQuoteHourlyHistory(quote);
+                quoteHourlyHistory = await YahooAPI.getQuoteHourlyHistory(quote);
             }
             
             const quotesHistoricalData: IQuotesHistoricalData = {
@@ -169,10 +169,10 @@ export const getMetaDataPerDay = async (quote: string, tradeDay: string): Promis
         }
     }
 
-export const  getTDAmeritradeDailyHistory=async (quote: string, daysBack: number): 
+export const  getYahooDailyHistory=async (quote: string, daysBack: number): 
     Promise<{partialHistoryDailyIntervals: IQuoteFullIntervalData[], fullYearDailyHistory: ITDAmeritradePriceHistory }> => {
 
-    const fullYearDailyHistory = await TDAmeritradeAPI.getQuoteFullYearDailyHistory(quote);
+    const fullYearDailyHistory = await YahooAPI.getQuoteFullYearDailyHistory(quote);
     const tradeDay = fullYearDailyHistory.candles[fullYearDailyHistory.candles.length - 1].datetime;
     const partialDailyHistory = quoteUtils.getPartialHistory(fullYearDailyHistory.candles, tradeDay, daysBack);
     const partialHistoryDailyIntervals = convertUtils.convertTDAmeritradeDailyIntervals(partialDailyHistory);

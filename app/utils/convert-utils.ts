@@ -141,3 +141,46 @@ export function convertDateToTDMillisecondInterval(date: string): number {
     return moment(date).unix() * 1000;
 }
 
+/**
+ * Professional Yahoo Finance data converter
+ * Handles Yahoo Finance chart data format with proper timezone conversion
+ */
+export function convertYahooFinanceIntervals(intervals: any[]): IQuoteIntervals {
+    const stockIntervals = {} as IQuoteIntervals;
+
+    intervals &&
+        intervals.forEach((interval) => {
+            // Yahoo Finance provides date objects or ISO strings
+            const nasdaqTime = moment(interval.date).tz('America/New_York');
+            const israelTime = nasdaqTime.clone().tz('Asia/Jerusalem');
+            const key = nasdaqTime.format('YYYY-MM-DD HH:mm:ss');
+            
+            stockIntervals[key] = {
+                open: interval.open || 0,
+                high: interval.high || 0,
+                low: interval.low || 0,
+                close: interval.close || 0,
+                volume: interval.volume || 0,
+                timeIsrael: new Date(israelTime.format('YYYY-MM-DD HH:mm:ss')),
+                timeNewYork: new Date(nasdaqTime.format('YYYY-MM-DD HH:mm:ss')),
+            };
+        });
+    
+    return stockIntervals;
+}
+
+/**
+ * Professional adapter function for TD Ameritrade compatible interval data
+ * Converts Yahoo Finance intervals to ITDAmeritradeIntervalData format
+ */
+export function convertYahooToTDAmeritradeFormat(yahooIntervals: any[]): ITDAmeritradeIntervalData[] {
+    return yahooIntervals.map(interval => ({
+        open: interval.open || 0,
+        high: interval.high || 0,
+        low: interval.low || 0,
+        close: interval.close || 0,
+        volume: interval.volume || 0,
+        datetime: moment(interval.date).valueOf() // Convert to milliseconds timestamp
+    }));
+}
+
