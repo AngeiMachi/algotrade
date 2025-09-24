@@ -4,7 +4,7 @@ export const Mock = {
     IsMock: true,
     startAtOpen:false,
     StartLiveSimulationAtInterval: 100,
-    MockDataDate: '2025-09-15',
+    MockDataDate: '2025-09-18',
     MockDataLiveSimulationTime:"15:30:00" ,
     intervalLapTime:"*/30 * * * * *" // "*/30 * * * * *" = every 30 seconds; "*/1 * * * *" = every 1 minute
 };

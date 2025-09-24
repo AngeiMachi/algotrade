@@ -81,7 +81,7 @@ function convertYahooToTDFormat(yahooData: any[]): ITDAmeritradeIntervalData[] {
         low: item.low || 0,
         close: item.close || 0,
         volume: item.volume || 0,
-        datetime: item.date ? moment(item.date).valueOf() : 0
+        datetime: item.date ? moment(item.date).valueOf() : (item.datetime || 0)
     }));
 }
 
@@ -96,10 +96,12 @@ function convertYahooToTDPriceHistory(yahooData: any[], symbol: string): ITDAmer
     };
 }
 
+
+
 export const getQuote5MinuteHistory = async (quote: string, specificTradeDates: string[] = []): Promise<IQuoteHistoricalIntervals> => {
     try {
         const endDate = moment().toDate();
-        const startDate = moment().subtract(30, 'days').toDate(); // Yahoo supports ~60 days, using 30 for safety
+        const startDate = moment().subtract(30, 'days').toDate(); // Get 30 days of historical data
         
         const queryOptions = {
             period1: startDate,
@@ -166,9 +168,9 @@ export const getQuote5MinuteIntraday = async (quote: string, tradeDate: string, 
     try {
         // Get recent trading days to ensure we have 5-minute data
         // Yahoo Finance provides 5-minute data for last ~60 days
-        const endDate = moment().toDate();
-        const startDate = moment().subtract(5, 'days').toDate(); // Get last 5 days to ensure we have trading data
-
+        const startDate = moment(moment.tz(tradeDate, 'America/New_York').toDate()).add(4, 'hours').toDate();
+        const endDate = moment(moment.tz(tradeDate, 'America/New_York').toDate()).add(20, 'hours').toDate() 
+        console.log("here");
         const queryOptions = {
             period1: startDate,
             period2: endDate,
@@ -192,14 +194,8 @@ export const getQuote5MinuteIntraday = async (quote: string, tradeDate: string, 
             volume: quoteData.volume || 0
         }));
 
-        // Filter for the specific trade date if provided, otherwise use most recent data
-        let filteredData = chartData;
-        if (tradeDate !== quoteUtils.getCurrentTradingDate()) {
-            const targetDate = moment.tz(tradeDate, 'America/New_York').format('YYYY-MM-DD');
-            filteredData = chartData.filter(item => 
-                moment(item.date).tz('America/New_York').format('YYYY-MM-DD') === targetDate
-            );
-        }
+        // Apply extended hours filtering
+        const filteredData = applyExtendedHoursFilter(chartData, getExtendedHours);
 
         // Convert to expected intervals format
         const intervals: IQuoteIntervals = {};
@@ -227,9 +223,9 @@ export const getQuote5MinuteIntraday = async (quote: string, tradeDate: string, 
 export const getQuote5MinuteMultipleDays = async (quote: string, tradeDate: string, daysBack: number = 0, getExtendedHours: boolean = true): Promise<IQuoteIntervals> => {
     try {
         // Limit to Yahoo's 60-day intraday window
-        const maxDaysBack = Math.min(daysBack, 59);
+        const maxDaysBack = Math.min(daysBack, 30); // Use 30 days for better performance
         const startDate = moment.tz(tradeDate, 'America/New_York').subtract(maxDaysBack, 'days').toDate();
-        const endDate = moment.tz(tradeDate, 'America/New_York').add(1, 'day').toDate();
+        const endDate = moment().toDate(); // Use current date as end
 
         const queryOptions = {
             period1: startDate,
@@ -254,7 +250,10 @@ export const getQuote5MinuteMultipleDays = async (quote: string, tradeDate: stri
             volume: quoteData.volume || 0
         }));
 
-        return convertUtils.convertYahooFinanceIntervals(chartData);
+        // Apply extended hours filtering
+        const filteredData = applyExtendedHoursFilter(chartData, getExtendedHours);
+
+        return convertUtils.convertYahooFinanceIntervals(filteredData);
     } catch (err) {
         logger.error('getQuote5MinuteMultipleDays (Yahoo) failed: ' + err);
         throw err;
@@ -289,7 +288,7 @@ export const getQuoteFullYearDailyHistory = async (quote: string): Promise<ITDAm
             volume: quoteData.volume || 0
         }));
         
-        return convertYahooToTDPriceHistory(convertUtils.convertYahooToTDAmeritradeFormat(chartData), quote);
+        return convertYahooToTDPriceHistory(chartData, quote);
     } catch (err) {
         logger.error('getQuoteFullYearDailyHistory (Yahoo) failed: ' + err);
         throw err;
@@ -324,7 +323,7 @@ export const getQuoteFullYearWeeklyHistory = async (quote: string): Promise<ITDA
             volume: quoteData.volume || 0
         }));
         
-        return convertYahooToTDPriceHistory(convertUtils.convertYahooToTDAmeritradeFormat(chartData), quote);
+        return convertYahooToTDPriceHistory(chartData, quote);
     } catch (err) {
         logger.error('getQuoteFullYearWeeklyHistory (Yahoo) failed: ' + err);
         throw err;
@@ -359,7 +358,7 @@ export const getQuoteHourlyHistory = async (quote: string): Promise<ITDAmeritrad
             volume: quoteData.volume || 0
         }));
         
-        return convertYahooToTDPriceHistory(convertUtils.convertYahooToTDAmeritradeFormat(chartData), quote);
+        return convertYahooToTDPriceHistory(chartData, quote);
     } catch (err) {
         logger.error('getQuoteHourlyHistory (Yahoo) failed: ' + err);
         throw err;
@@ -417,3 +416,27 @@ limiter.on('debug', function (message, data) {
     // Uncomment for debugging:
     // console.log('Yahoo Finance Rate Limiter:', message, data);
 });
+
+/**
+ * Filters chart data to include/exclude extended hours based on getExtendedHours parameter
+ * @param chartData - Array of chart data items with date field
+ * @param getExtendedHours - If false, filters out pre-market and after-market hours
+ * @returns Filtered chart data array
+ */
+function applyExtendedHoursFilter(chartData: any[], getExtendedHours: boolean): any[] {
+    if (getExtendedHours) {
+        // Return all data including extended hours
+        return chartData;
+    }
+    
+    // Filter to regular market hours only: 9:30 AM - 4:00 PM ET
+    return chartData.filter(item => {
+        const time = moment(item.date).tz('America/New_York');
+        const hour = time.hour();
+        const minute = time.minute();
+        const totalMinutes = hour * 60 + minute;
+        
+        // 9:30 AM = 570 minutes, 4:00 PM = 960 minutes
+        return totalMinutes >= 570 && totalMinutes < 960;
+    });
+}
