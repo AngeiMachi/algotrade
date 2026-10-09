@@ -14,6 +14,8 @@ import { IQuotes, IQuoteFullIntervalData, IQuoteIntervals } from '../models/quot
 
 let quotes: IQuotes = {};
 let quoteIndex: {[key:string]:number}={};
+let markInitialized: () => void = () => undefined;
+const initialized = new Promise<void>((resolve) => (markInitialized = resolve));
 
    
 export const initializeQuotesData = async (quoteNames: string[] ):Promise<any> => {
@@ -27,6 +29,7 @@ export const initializeQuotesData = async (quoteNames: string[] ):Promise<any> =
             otherQuotes.map((quoteName) =>
                 addNewQuote(quoteName).catch((err) => {
                     delete quotes[quoteName];
+                    premarketRace.markNoData(quoteName);
                     logger.error('error at quotes-iterator.initializeQuotesData - quote=' + quoteName + ' err=' + err);
                 })
             )
@@ -34,6 +37,8 @@ export const initializeQuotesData = async (quoteNames: string[] ):Promise<any> =
         return Promise.resolve();
     } catch (err) {
         Promise.reject(err);
+    } finally {
+        markInitialized();
     }
 }
 
@@ -73,6 +78,7 @@ export const addNewQuote = async (quoteName: string)=> {
     const quoteIntervals = await proxyService.getIntraday5Minute(quoteName);
     if (Object.keys(quoteIntervals).length==0) {
         delete quotes[quoteName];
+        premarketRace.markNoData(quoteName);
         logger.error('error at Stock-Reader.initializeQuotesData - quote=' + quoteName + ' does not Exist and being deprecated');
         return;
     }
@@ -80,6 +86,7 @@ export const addNewQuote = async (quoteName: string)=> {
     const quoteMetadata = await proxyService.getMetaDataPerDay(quoteName, quoteUtils.getCurrentTradingDate());
     if (!quoteMetadata) {
         delete quotes[quoteName];
+        premarketRace.markNoData(quoteName);
         logger.error('error at Stock-Reader.initializeQuotesData - quote=' + quoteName + ' could not load metadata and being deprecated');
         return;
     }
@@ -91,6 +98,22 @@ export const addNewQuote = async (quoteName: string)=> {
     }
 
 }
+// A newly watched stock the engine isn't following yet: load it once startup is done (the history cache is
+// still filling before that); the 5-minute loop keeps it updated after that.
+export const followQuote = async (quoteName: string) => {
+    await initialized;
+    if (quotes[quoteName]) {
+        return;
+    }
+    try {
+        await addNewQuote(quoteName);
+    } catch (err) {
+        delete quotes[quoteName];
+        premarketRace.markNoData(quoteName);
+        logger.error('error at quotes-iterator.followQuote - quote=' + quoteName + ' err=' + err);
+    }
+};
+
 export const initiateQuoteWatch=(quoteName: string)=> {
     let runCron="5 0,5,10,15,20,25,30,35,40,45,50,55  * * * *";
     if (globalConfig.Mock.IsMock && globalConfig.Mock?.intervalLapTime) {

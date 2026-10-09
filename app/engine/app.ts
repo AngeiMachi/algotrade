@@ -1,4 +1,5 @@
 const schedule = require('node-schedule');
+import * as _ from 'lodash';
 import moment from 'moment-timezone';
 import { logger } from '../config/winston.config';
 import * as globalConfig from '../config/globals.config';
@@ -7,12 +8,13 @@ import * as quotesIterator from './quotes-iterator';
 import * as quoteCache from './quotes-cache';
 import * as behaviorManager from './behavior-manager';
 import * as premarketRace from './premarket-race';
+import * as watchlist from './watchlist';
 
 
 export default async function startApp() {
     try {
 
-        const quotesTofollow = behaviorManager.getQuotes();
+        const quotesTofollow = _.uniq([...behaviorManager.getQuotes(), ...watchlist.getWatchedQuotes()]);
         
         await Promise.all([
             quoteCache.cacheQuoteList(quotesTofollow),

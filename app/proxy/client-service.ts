@@ -6,6 +6,7 @@ import express from 'express';
 import * as PushAPI from './pushed-api';
 import * as quotesIterator from '../engine/quotes-iterator';
 import * as premarketRace from '../engine/premarket-race';
+import * as watchlist from '../engine/watchlist';
 import * as globalConfig from "../config/globals.config"
 import * as TwitterAPI from './twitter-api';
 
@@ -45,6 +46,30 @@ app.get('/getAllQuotes', (req, res) => {
 
 app.get('/race', (req, res) => {
     res.json(premarketRace.getSnapshot());
+});
+
+app.get('/watchlist', (req, res) => {
+    res.json(watchlist.getWatchlist());
+});
+
+app.post('/watchlist', jsonParser, (req, res) => {
+    const quote = typeof req.body?.quote === 'string' ? req.body.quote.trim().toUpperCase() : '';
+    if (!/^[A-Z][A-Z.]{0,9}$/.test(quote)) {
+        res.status(400).json({ error: 'Enter a ticker symbol, like AAPL or BRK.B' });
+        return;
+    }
+    const next = watchlist.watch(quote);
+    ioGlobal.emit('watchlistUpdate', next);
+    quotesIterator.followQuote(quote);
+    premarketRace.refreshWatched();
+    res.json(next);
+});
+
+app.delete('/watchlist/:quote', (req, res) => {
+    const next = watchlist.unwatch(req.params.quote);
+    ioGlobal.emit('watchlistUpdate', next);
+    premarketRace.refreshWatched();
+    res.json(next);
 });
 
 app.post('/addNewQuote',jsonParser,async (req, res) => {

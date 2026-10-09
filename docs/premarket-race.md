@@ -177,6 +177,19 @@ latest price. After the bell the last pre-market hour counts as complete.
   Periods in `RaceRulesConfig.trend`. Saved in localStorage.
 - **Trending volume / MA reclaimed toggles** — show only stocks with that badge. Toggles combine (a stock must
   match every toggle that is on); each shows "matching of total". The list lives in `toggleFilters` in `RaceScreen.jsx`.
+- **Favorites (star column)** — starred stocks are pinned to the top of the table, above any sort, with a
+  divider under them. The side panel's top 3 ignores them. Saved in localStorage for one day: each star expires
+  13 hours after it was set (`race.favorites`, quote → time starred).
+- **Watching (side panel, under the top 3)** — stocks to keep an eye on across days, saved on the server in
+  `data/watchlist.json` (gitignored; `GET/POST /watchlist`, `DELETE /watchlist/:quote`, pushed live as
+  `watchlistUpdate`). Add any symbol in the free-text box, or with the eye on a table row or on the "Out for today"
+  and "Not qualifying" lists. A watch overrides the rules for display only: every watched stock is listed with its
+  state (`#rank in the race`, `Out · reason`, `Not qualifying · reason`, left out before the race with the reason,
+  `Loading…`, or `No data`), its gap and its price. The engine follows a watched symbol even if it is not in
+  `QuotesConfig`, and never deprecates it; the race rules still decide whether it ranks. A watched stock that is in
+  the standings table carries a blue **Watch** tag. The snapshot carries the list as `watched`.
+- **Column sorting** — click any column header to sort; click again to flip. Pos (the race order) is the default.
+  Sorting only reorders rows: positions, podium colours and the top 3 stay by race rank. Saved in localStorage.
 - **All / Clean / Touched** — by how the stock held the hourly SMA. Saved in localStorage.
 - **Dismiss (×)** — trader sets a stock aside for the day; it moves to "Dismissed by you" with Return /
   Return all. Saved per trade date in localStorage.

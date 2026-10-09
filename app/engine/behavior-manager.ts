@@ -4,6 +4,7 @@ import {FunctionalBehavior, QuoteGroupConfig} from '../models/miscellaneous.mode
 import { BehaviorTypes } from '../models/enums';
 import { logger } from '../config/winston.config';
 import * as PushAPI from '../proxy/pushed-api';
+import * as watchlist from './watchlist';
 
 const quotesFlat :{[key:string]: string}={};
 const quotesList : string[]=[];
@@ -28,8 +29,12 @@ export const getQuotes = ():string[] => {
 
 export const getQuoteGroup = (quoteName: string): string | undefined => quotesFlat[quoteName];
 
+// Watched stocks may come from outside the configured groups and are never deprecated.
 export const manangeAfterMetadata=(quoteName:string,metadata:IQuoteMetadata,quotes: IQuotes):void => {
     const quoteConfigGroupName = quotesFlat[quoteName];
+    if (!quoteToBeUsed[quoteConfigGroupName] || watchlist.isWatched(quoteName)) {
+        return;
+    }
     const deprecateIfNotAboveMovingAverages = quoteToBeUsed[quoteConfigGroupName].behaviors?.find((item)=>item==BehaviorTypes.DeprecateIfNotAboveMovingAverages)
     if (deprecateIfNotAboveMovingAverages !== undefined) {
         if (!(metadata.previousDay.close>metadata.SMA20.previousDay &&

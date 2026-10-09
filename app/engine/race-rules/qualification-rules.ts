@@ -6,6 +6,16 @@ import { raceWords } from './race-words';
 // Qualification rules are temporary: a stock that fails one sits on the side and can rejoin on a later candle.
 // They run in list order and the first failure decides where the stock is listed.
 
+// After the bell the open decides several rules, so a stock whose first regular-session candle hasn't arrived
+// yet (delayed data) must wait rather than pass them by default.
+export const openingPriceKnown: IQualificationRule = {
+    id: 'opening-price-known',
+    title: 'Opening price known',
+    listedAs: 'waiting',
+    describe: () => "After the bell, a stock waits here until its opening candle arrives; the open decides whether it stays.",
+    check: (facts) => (facts.isAfterBell && facts.openingPrice === null ? 'Waiting for the opening price' : null),
+};
+
 export const tradingPastPreviousExtreme: IQualificationRule = {
     id: 'trading-past-previous-extreme',
     title: "Trading past yesterday's high",
@@ -46,4 +56,4 @@ export const enoughPremarketVolume: IQualificationRule = {
     check: (facts) => (facts.premarketDollarVolume >= RaceRulesConfig.minPremarketDollarVolume ? null : 'Thin premarket volume'),
 };
 
-export const qualificationRules: IQualificationRule[] = [tradingPastPreviousExtreme, tradingPastPreviousClose, enoughPremarketVolume];
+export const qualificationRules: IQualificationRule[] = [openingPriceKnown, tradingPastPreviousExtreme, tradingPastPreviousClose, enoughPremarketVolume];

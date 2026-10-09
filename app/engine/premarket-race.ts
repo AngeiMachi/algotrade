@@ -9,6 +9,7 @@ import * as clientService from '../proxy/client-service';
 import * as AlpacaAPI from '../proxy/alpaca-api';
 import * as proxyService from '../proxy/proxy-service';
 import * as behaviorManager from './behavior-manager';
+import * as watchlist from './watchlist';
 import { IQuoteIntervals, IQuoteMetadata } from '../models/quote-data.model';
 import {
     averageTrueRangePct,
@@ -38,7 +39,7 @@ import {
 const NEW_YORK = 'America/New_York';
 const RECOMPUTE_INTERVAL_MS = 300;
 
-export type RaceStatus = 'racing' | 'at-risk' | 'waiting' | 'out';
+export type RaceStatus = 'racing' | 'at-risk' | 'waiting' | 'out' | 'not-in-race' | 'loading' | 'no-data';
 export type RacePhase = 'waiting' | 'premarket' | 'decision' | 'final';
 
 export interface IRaceEntry {
@@ -85,6 +86,7 @@ export interface IRaceSnapshot {
     standings: IRaceEntry[];
     waiting: IRaceEntry[];
     out: IRaceEntry[];
+    watched: IRaceEntry[]; // the user's watchlist, in the order it was added, whatever the rules say
     updatedAt: string;
 }
 
@@ -105,24 +107,50 @@ interface IRacer {
     lastTopThreeCandle: string;
 }
 
+interface IWatchOnly {
+    quote: string;
+    previousClose: number | null;
+    intervals: IQuoteIntervals;
+    reason: string;
+}
+
 const racers: { [key: string]: IRacer } = {};
+const watchOnly: { [key: string]: IWatchOnly } = {};
+const watchNoData = new Set<string>();
 const hourlyHistoryRequests: { [key: string]: Promise<IPriorHourlyCandle[]> } = {};
 const premarketVolumeRequests: { [key: string]: Promise<IPremarketVolumeDay[]> } = {};
 let snapshot: IRaceSnapshot | null = null;
+// After the bell, true while some stock's opening candle hasn't arrived (delayed data), so the final standings
+// keep updating until every open is known.
+let awaitingOpens = false;
 let recomputeTimer: NodeJS.Timeout | null = null;
 let currentRaceCandle = '';
 let latestRanks: { [key: string]: number } = {};
 let ranksAtPreviousCandle: { [key: string]: number } = {};
 
 export const registerQuote = async (quote: string, intervals: IQuoteIntervals, metadata: IQuoteMetadata) => {
+    watchNoData.delete(quote);
+    await addRacer(quote, intervals, metadata);
+};
+
+// A stock left out of the race stays visible when it is watched, with the reason it isn't racing.
+const leaveOutOfRace = (quote: string, intervals: IQuoteIntervals, metadata: IQuoteMetadata, reason: string) => {
+    if (watchlist.isWatched(quote)) {
+        watchOnly[quote] = { quote, previousClose: metadata.previousDay?.close ?? null, intervals, reason };
+    }
+};
+
+const addRacer = async (quote: string, intervals: IQuoteIntervals, metadata: IQuoteMetadata) => {
     const group = behaviorManager.getQuoteGroup(quote);
     if (group && globalConfig.PremarketRace.excludeGroups.includes(group)) {
+        leaveOutOfRace(quote, intervals, metadata, `Its group (${group}) is not part of the race`);
         return;
     }
 
     const averageDailyVolume = _.meanBy(_.takeRight(metadata.fullYearDailyHistory || [], RaceRulesConfig.averageVolumeDays), 'volume') || 0;
     if (averageDailyVolume < RaceRulesConfig.minAverageDailyVolume) {
         logger.info(`premarket-race dropping ${quote}: averages ${Math.round(averageDailyVolume).toLocaleString()} shares a day`);
+        leaveOutOfRace(quote, intervals, metadata, `Too thin for the race: averages ${Math.round(averageDailyVolume).toLocaleString()} shares a day`);
         return;
     }
 
@@ -131,6 +159,7 @@ export const registerQuote = async (quote: string, intervals: IQuoteIntervals, m
         priorHourlyCandles = await loadPriorHourlyCandles(quote);
     } catch (err) {
         logger.error(`premarket-race could not load hourly history for ${quote}, leaving it out of the race: ${err}`);
+        leaveOutOfRace(quote, intervals, metadata, 'Hourly history could not be loaded');
         return;
     }
     const premarketVolumeHistory = await loadPremarketVolumeHistory(quote).catch((err) => {
@@ -162,8 +191,20 @@ export const registerQuote = async (quote: string, intervals: IQuoteIntervals, m
         lapsInTopThree: 0,
         lastTopThreeCandle: '',
     };
-    scheduleRecompute();
+    delete watchOnly[quote];
+    scheduleRecompute(true);
 };
+
+// The engine tried and failed to load this stock (unknown symbol, no trades, broker error).
+export const markNoData = (quote: string) => {
+    watchNoData.add(quote);
+    if (watchlist.isWatched(quote)) {
+        scheduleRecompute(true);
+    }
+};
+
+// The watchlist changed: rebuild the snapshot even when the final standings are frozen.
+export const refreshWatched = () => scheduleRecompute(true);
 
 // Requesting every symbol at once lets the Alpaca client merge them into a few multi-symbol calls.
 export const preloadRaceHistory = async (quotes: string[]) => {
@@ -208,18 +249,20 @@ const loadPriorHourlyCandles = (quote: string): Promise<IPriorHourlyCandle[]> =>
 };
 
 export const updateQuote = (quote: string, intervals: IQuoteIntervals) => {
-    const racer = racers[quote];
-    if (!racer || !intervals) {
+    const tracked = racers[quote] || watchOnly[quote];
+    if (!tracked || !intervals) {
         return;
     }
-    racer.intervals = intervals;
+    tracked.intervals = intervals;
     scheduleRecompute();
 };
 
 export const getSnapshot = (): IRaceSnapshot | null => snapshot;
 
-const scheduleRecompute = () => {
-    if (snapshot?.phase === 'final') {
+// The final standings freeze once every open is known, except that a newly registered stock (engine started
+// after the bell) must still be added.
+const scheduleRecompute = (newRacer: boolean = false) => {
+    if (snapshot?.phase === 'final' && !awaitingOpens && !newRacer) {
         return;
     }
     // Throttle rather than debounce: with fast mock laps, updates never pause long enough for a debounce to fire.
@@ -251,6 +294,7 @@ const computeSnapshot = (): IRaceSnapshot => {
 
     const allRacers = Object.values(racers);
     const isAfterBell = allRacers.some((racer) => Object.keys(racer.intervals).some((key) => key.startsWith(tradeDate) && key >= bellKey));
+    awaitingOpens = isAfterBell && allRacers.some((racer) => premarketKeysOf(racer).length > 0 && !racer.intervals[bellKey]);
     const raceCandle = _.max(allRacers.map((racer) => _.last(premarketKeysOf(racer)) || '')) || '';
 
     if (raceCandle !== currentRaceCandle) {
@@ -324,8 +368,38 @@ const computeSnapshot = (): IRaceSnapshot => {
             [(entry) => entry.eliminatedAt === null, (entry) => entry.eliminatedAt],
             ['asc', 'asc']
         ),
+        watched: watchedEntries(_.keyBy(entries, 'quote'), tradeDate),
         updatedAt: new Date().toISOString(),
     };
+};
+
+const watchedEntries = (entriesByQuote: { [quote: string]: IRaceEntry }, tradeDate: string): IRaceEntry[] =>
+    watchlist.getWatchedQuotes().map((quote) => {
+        if (entriesByQuote[quote]) {
+            return entriesByQuote[quote];
+        }
+        if (watchOnly[quote]) {
+            return watchOnlyEntry(watchOnly[quote], tradeDate);
+        }
+        const entry = emptyEntry({ quote, previousClose: null, dailySmas: null, lapsInTopThree: 0 });
+        entry.status = watchNoData.has(quote) ? 'no-data' : 'loading';
+        entry.reason = watchNoData.has(quote) ? 'No data for this symbol today' : 'Loading its data';
+        return entry;
+    });
+
+// Stocks the race never took in: only the latest price and the gap from yesterday's close.
+const watchOnlyEntry = (tracked: IWatchOnly, tradeDate: string): IRaceEntry => {
+    const entry = emptyEntry({ quote: tracked.quote, previousClose: tracked.previousClose, dailySmas: null, lapsInTopThree: 0 });
+    const lastKey = _.max(Object.keys(tracked.intervals).filter((key) => key.startsWith(tradeDate)));
+    const price = lastKey ? tracked.intervals[lastKey].close : null;
+    Object.assign(entry, {
+        status: 'not-in-race',
+        reason: tracked.reason,
+        price,
+        gapPct: price !== null && tracked.previousClose ? ((price - tracked.previousClose) / tracked.previousClose) * 100 : null,
+        lastCandle: lastKey ? lastKey.substring(11, 16) : null,
+    });
+    return entry;
 };
 
 // Rules run in a fixed order: eliminated → not qualifying → scored. Warnings ride along with the score.
@@ -406,7 +480,7 @@ const evaluateRacer = (racer: IRacer, premarketKeys: string[], bellKey: string, 
     return entry;
 };
 
-const emptyEntry = (racer: IRacer): IRaceEntry => ({
+const emptyEntry = (racer: Pick<IRacer, 'quote' | 'previousClose' | 'dailySmas' | 'lapsInTopThree'>): IRaceEntry => ({
     quote: racer.quote,
     rank: null,
     previousRank: null,
