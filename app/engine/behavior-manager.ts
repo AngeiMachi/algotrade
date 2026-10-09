@@ -10,7 +10,7 @@ const quotesList : string[]=[];
 let quoteToBeUsed : {[key:string]:QuoteGroupConfig} = {}
 
 export const getQuotes = ():string[] => {
-    quoteToBeUsed = globalConfig.Mock.IsMock? globalConfig.QuotesConfig.testing : globalConfig.QuotesConfig.producion;
+    quoteToBeUsed = globalConfig.QuotesConfig.producion;
     for (const [key, value] of Object.entries(quoteToBeUsed)) {
         for (let name of value.names) {
             if (!quotesFlat[name]) {

@@ -1,4 +1,5 @@
 const schedule = require('node-schedule');
+import * as _ from 'lodash';
 
 import * as quoteUtils from '../utils/quote-utils';
 import * as globalConfig from '../config/globals.config';
@@ -17,10 +18,19 @@ let quoteIndex: {[key:string]:number}={};
    
 export const initializeQuotesData = async (quoteNames: string[] ):Promise<any> => {
     try {
-        for (let i = 0; i < quoteNames.length; i++) {
-            const quoteName = quoteNames[i];
+        // SPY sets the mock clock; the rest load in parallel so the Alpaca client can batch their requests.
+        const [clockQuotes, otherQuotes] = _.partition(quoteNames, (quoteName) => quoteName === 'SPY');
+        for (const quoteName of clockQuotes) {
             await addNewQuote(quoteName);
         }
+        await Promise.all(
+            otherQuotes.map((quoteName) =>
+                addNewQuote(quoteName).catch((err) => {
+                    delete quotes[quoteName];
+                    logger.error('error at quotes-iterator.initializeQuotesData - quote=' + quoteName + ' err=' + err);
+                })
+            )
+        );
         return Promise.resolve();
     } catch (err) {
         Promise.reject(err);

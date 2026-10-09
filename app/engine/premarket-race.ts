@@ -10,7 +10,7 @@ import * as behaviorManager from './behavior-manager';
 import { IQuoteFullIntervalData, IQuoteIntervals, IQuoteMetadata } from '../models/quote-data.model';
 
 const NEW_YORK = 'America/New_York';
-const RECOMPUTE_DEBOUNCE_MS = 300;
+const RECOMPUTE_INTERVAL_MS = 300;
 
 export type RaceStatus = 'racing' | 'at-risk' | 'waiting' | 'out';
 export type RacePhase = 'waiting' | 'premarket' | 'decision' | 'final';
@@ -70,6 +70,7 @@ interface IHourlyCandle {
 }
 
 const racers: { [key: string]: IRacer } = {};
+const hourlyHistoryRequests: { [key: string]: Promise<number[]> } = {};
 let snapshot: IRaceSnapshot | null = null;
 let recomputeTimer: NodeJS.Timeout | null = null;
 let currentRaceCandle = '';
@@ -84,8 +85,7 @@ export const registerQuote = async (quote: string, intervals: IQuoteIntervals, m
 
     let priorHourlyCloses: number[];
     try {
-        const hourlyHistory = await AlpacaAPI.getQuote24HourHourlyHistory(quote, quoteUtils.getCurrentTradingDate());
-        priorHourlyCloses = hourlyHistory.candles.map((candle) => candle.close);
+        priorHourlyCloses = await loadPriorHourlyCloses(quote);
     } catch (err) {
         logger.error(`premarket-race could not load hourly history for ${quote}, leaving it out of the race: ${err}`);
         return;
@@ -103,6 +103,23 @@ export const registerQuote = async (quote: string, intervals: IQuoteIntervals, m
     scheduleRecompute();
 };
 
+// Requesting every symbol at once lets the Alpaca client merge them into a few multi-symbol calls.
+export const preloadHourlyHistory = async (quotes: string[]) => {
+    await Promise.all(quotes.map((quote) => loadPriorHourlyCloses(quote).catch(() => undefined)));
+};
+
+const loadPriorHourlyCloses = (quote: string): Promise<number[]> => {
+    if (!hourlyHistoryRequests[quote]) {
+        hourlyHistoryRequests[quote] = AlpacaAPI.getQuote24HourHourlyHistory(quote, quoteUtils.getCurrentTradingDate())
+            .then((history) => history.candles.map((candle) => candle.close))
+            .catch((err) => {
+                delete hourlyHistoryRequests[quote];
+                throw err;
+            });
+    }
+    return hourlyHistoryRequests[quote];
+};
+
 export const updateQuote = (quote: string, intervals: IQuoteIntervals) => {
     const racer = racers[quote];
     if (!racer || !intervals) {
@@ -118,8 +135,9 @@ const scheduleRecompute = () => {
     if (snapshot?.phase === 'final') {
         return;
     }
+    // Throttle rather than debounce: with fast mock laps, updates never pause long enough for a debounce to fire.
     if (recomputeTimer) {
-        clearTimeout(recomputeTimer);
+        return;
     }
     recomputeTimer = setTimeout(() => {
         recomputeTimer = null;
@@ -129,7 +147,7 @@ const scheduleRecompute = () => {
         } catch (err) {
             logger.error('premarket-race recompute failed ' + err);
         }
-    }, RECOMPUTE_DEBOUNCE_MS);
+    }, RECOMPUTE_INTERVAL_MS);
 };
 
 const computeSnapshot = (): IRaceSnapshot => {

@@ -6,6 +6,7 @@ import * as globalConfig from '../config/globals.config';
 import * as quotesIterator from './quotes-iterator';
 import * as quoteCache from './quotes-cache';
 import * as behaviorManager from './behavior-manager';
+import * as premarketRace from './premarket-race';
 
 
 export default async function startApp() {
@@ -13,7 +14,10 @@ export default async function startApp() {
 
         const quotesTofollow = behaviorManager.getQuotes();
         
-        await quoteCache.cacheQuoteList(quotesTofollow);
+        await Promise.all([
+            quoteCache.cacheQuoteList(quotesTofollow),
+            premarketRace.preloadHourlyHistory(quotesTofollow),
+        ]);
 
         const initTime = calculateInitializationTime();
         logger.info(`Quote initialization is set to start at ${initTime}...`);

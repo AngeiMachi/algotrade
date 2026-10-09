@@ -72,7 +72,7 @@ export const QuotesConfig = {
             signals:[],
             names:[
                 "SPCX","MA","AAP","SKHY","AMKR","NXPI","CBRS","CRWV","NBIS","ALAB","GLW","SNDK","APLD",
-                "WOLF","ECHO","CRCL","BE","EBAY","HIMS","ASTS","IREN","USAR","TEM","RTX","NNE","OKLO","RKLB","VKTX","NET","V","RH","XYZ"
+                "WOLF","ECHO","CRCL","BE","EBAY","HIMS","ASTS","IREN","TEM","RTX","NNE","OKLO","RKLB","VKTX","NET","V","RH","XYZ"
             ],
         },
         smallcap:{
@@ -84,56 +84,14 @@ export const QuotesConfig = {
     
             ],
             names:[
-                "MMM","ZM","HUT","JNPR","SATS","NNOX","CLSK","MDT",
-                "DELL","VALE","LYFT","S","IOT","NTNX","HAL","ZI","RUN","SQ","ZIM","CSCO","KR","GPS",
-                "BABA","BIDU","PFE","MRNA","MBLY","FTNT","PTGX","LI","NCLH","PATH","SOFI","F","CHWY",
-                "SHOP","ADBE","CRM","AMAT","SBUX","PINS","CVNA","XOM","GME","MTCH","AI","NOW","DDOG","BX","ARM","PSTG" ,"TDOC",
-                "TWLO","SMCI","UPST","AFRM","ROKU","INTC","AAL","MRVL","MARA","COIN","RIOT","JOBY","NKE","DWAC","CARR",
-                "DKNG" ,"SAVA","BYND","SNOW","SPOT","FUBO","TEAM","CVX","MDB","ENPH","SEDG","PLUG","QS","LMND","ON","DAL","UAL","LUV",
-                "ABNB","DOCU","NOVA","UBER","IBM","TGT","OXY","GM","CE","HON","ASAN","HOOD","PDD","TOST","HPE","FOLD","AEHR","SE",
-                "UPS","U","RBLX","CMG","UNH","ETSY","SSYS","DASH","PLTR","WDC","IONQ","AVGO","NIO","XPEV","FSLR","CCL","PAGS",
-                "FVRR","AXSM","PYPL","CRWD","PANW","FDX","MCD","GS","JPM","MS","BAC","KEY","ROIV","WRK","TLRY","NU",
-                "HD","KO","WMT","DIS","APPS","MU","TSM","QCOM","RIVN","SNAP","BNTX","HYLN","NKLA"  
-            ],
-        },
-    },
-    testing : {
-        indexes:{
-            behaviors:[],
-            signals:[],
-            names:["SPY"],
-        },
-        leaders:{
-            behaviors:[],
-            signals:[],
-            names:[
-                // "AMZN" 
-                  "AAPL","AMZN","TSLA","MSFT","META","BA","GOOGL","AMD","NVDA","CAT","ORCL","GE","NFLX"
-            ],
-        },
-        trending:{
-            behaviors:[],
-            signals:[],
-            names:[],
-        },
-        smallcap:{
-            behaviors:[
-                //BehaviorTypes.DeprecateIfNotAboveMovingAverages
-            ],
-            signals:[
-    
-            ],
-            names:[
-                "MMM","ZM","HUT","SATS",
-                "DELL","VALE","LYFT","S","IOT","NTNX","HAL","ZI","RUN","SQ","ZIM","CSCO","KR","GPS",
-                "BABA","BIDU","PFE","MRNA","MBLY","FTNT","PTGX","LI","NCLH","PATH","SOFI","F","CHWY",
-                "SHOP","ADBE","CRM","AMAT","SBUX","PINS","CVNA","XOM","GME","MTCH","AI","NOW","DDOG","BX","ARM","PSTG" ,"TDOC",
-                "TWLO","SPLK","UPST","AFRM","ROKU","INTC","AAL","MRVL","MARA","COIN","RIOT","JOBY","NKE","DWAC","CARR",
-                "DKNG" ,"SAVA","BYND","SNOW","SPOT","FUBO","TEAM","CVX","MDB","ENPH","SEDG","PLUG","QS","LMND","ON","DAL","UAL","LUV",
-                "ABNB","DOCU","NOVA","UBER","IBM","TGT","OXY","GM","CE","HON","ASAN","HOOD","PDD","TOST","HPE","FOLD","AEHR","SE",
-                "UPS","U","RBLX","CMG","UNH","ETSY","SSYS","DASH","PLTR","WDC","IONQ","AVGO","NIO","XPEV","FSLR","CCL","PAGS",
-                "FVRR","AXSM","PYPL","CRWD","PANW","FDX","MCD","GS","JPM","MS","BAC","KEY","ROIV","WRK","TLRY","NU",
-                "HD","KO","WMT","DIS","APPS","MU","TSM","QCOM","RIVN","SNAP","BNTX","HYLN","NKLA"      
+                "MMM","ZM","HUT","JNPR","MDT",
+                "DELL","LYFT","S","IOT","NTNX","HAL","ZIM","CSCO",
+                "BABA","BIDU","PFE","MRNA","FTNT","PTGX","NCLH","SOFI","CHWY",
+                "SHOP","ADBE","CRM","AMAT","SBUX","PINS","CVNA","XOM","GME","MTCH","NOW","DDOG","BX","ARM","TWLO","SMCI","UPST","AFRM","ROKU","INTC","MRVL","COIN","RIOT","NKE","CARR",
+                "DKNG" ,"SNOW","SPOT","TEAM","CVX","MDB","ENPH","SEDG","LMND","ON","DAL","UAL","LUV",
+                "ABNB","DOCU","UBER","IBM","TGT","OXY","GM","CE","HON","HOOD","PDD","TOST","HPE","AEHR","SE",
+                "UPS","U","RBLX","CMG","UNH","ETSY","DASH","PLTR","WDC","IONQ","AVGO","FSLR","CCL","AXSM","PYPL","CRWD","PANW","FDX","MCD","GS","JPM","MS","BAC","KEY","ROIV","NU",
+                "HD","KO","WMT","DIS","MU","TSM","QCOM","BNTX"  
             ],
         },
     }
