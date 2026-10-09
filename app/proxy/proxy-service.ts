@@ -59,6 +59,22 @@ export const  getIntraday5Minute = async (quote: string, getExtendedHours: boole
     }
 }
 
+// The time the data reflects: the simulated clock in mock mode, the wall clock live.
+export const getDataClock = (): moment.Moment => (globalConfig.Mock.IsMock && mockService.getMockNow()) || moment().tz('America/New_York');
+
+// Between the decision window start and the bell, the race also counts the 5-minute candle still forming.
+export const isFormingCandleWindow = (): boolean => {
+    const now = getDataClock().format('YYYY-MM-DD HH:mm:ss');
+    const tradeDate = quoteUtils.getCurrentTradingDate();
+    const bellKey = _marketHours?.sessionHours?.regularMarket?.start || `${tradeDate} 09:30:00`;
+    return now >= `${tradeDate} ${globalConfig.PremarketRace.decisionWindowStart}:00` && now < bellKey;
+};
+
+export const getIntraday5MinuteWithFormingCandle = async (quote: string): Promise<IQuoteIntervals> =>
+    globalConfig.Mock.IsMock
+        ? mockService.serveMockIntervalsWithFormingCandle(quote)
+        : AlpacaAPI.getQuote5MinuteIntraday(quote, quoteUtils.getCurrentTradingDate(), true);
+
 export const getMarketHoursFromAPI= async (): Promise<IMarketHours> =>{
     let marketHours={} as IMarketHours;
     try {

@@ -2,12 +2,27 @@ import * as _ from 'lodash';
 import moment from 'moment-timezone';
 
 import * as globalConfig from '../config/globals.config';
+import { RaceRulesConfig } from '../config/race-rules.config';
 import { logger } from '../config/winston.config';
 import * as quoteUtils from '../utils/quote-utils';
 import * as clientService from '../proxy/client-service';
 import * as AlpacaAPI from '../proxy/alpaca-api';
+import * as proxyService from '../proxy/proxy-service';
 import * as behaviorManager from './behavior-manager';
-import { IQuoteFullIntervalData, IQuoteIntervals, IQuoteMetadata } from '../models/quote-data.model';
+import { IQuoteIntervals, IQuoteMetadata } from '../models/quote-data.model';
+import {
+    averageTrueRangePct,
+    buildRaceFacts,
+    describeRuleBook,
+    eliminationRules,
+    IElimination,
+    IRaceWarning,
+    IRuleDescription,
+    IScoreFactor,
+    qualificationRules,
+    scoreRacer,
+    warningRules,
+} from './race-rules';
 
 const NEW_YORK = 'America/New_York';
 const RECOMPUTE_INTERVAL_MS = 300;
@@ -21,14 +36,19 @@ export interface IRaceEntry {
     previousRank: number | null;
     status: RaceStatus;
     reason: string;
+    score: number | null;
+    scoreBreakdown: IScoreFactor[];
+    warnings: IRaceWarning[];
     price: number | null;
     previousClose: number | null;
     gapPct: number | null;
+    gapInAtr: number | null;
     sma: number | null;
     smaCushionPct: number | null;
+    smaStretchAtr: number | null;
     premarketVolume: number;
     premarketDollarVolume: number;
-    smaTouches: number; // premarket hourly candles whose wick crossed the SMA while the close held
+    smaTouches: number;
     lapsInTopThree: number;
     lastCandle: string | null;
     eliminatedAt: string | null;
@@ -39,12 +59,15 @@ export interface IRaceSnapshot {
     isMock: boolean;
     phase: RacePhase;
     direction: 'long' | 'short';
-    raceTimeIso: string | null;
+    raceTimeIso: string | null; // start of the latest candle in the race
+    clockIso: string | null; // the time the data reflects
+    candleForming: boolean; // the latest candle has not closed yet (decision window only)
     bellIso: string;
     lap: number;
     totalLaps: number;
     decisionLaps: number;
     rules: typeof globalConfig.PremarketRace;
+    ruleBook: IRuleDescription[];
     standings: IRaceEntry[];
     waiting: IRaceEntry[];
     out: IRaceEntry[];
@@ -54,19 +77,12 @@ export interface IRaceSnapshot {
 interface IRacer {
     quote: string;
     previousClose: number | null;
+    atrPct: number;
     priorHourlyCloses: number[];
     intervals: IQuoteIntervals;
-    elimination: { time: string; reason: string } | null;
+    elimination: IElimination | null;
     lapsInTopThree: number;
     lastTopThreeCandle: string;
-}
-
-interface IHourlyCandle {
-    hour: string;
-    low: number;
-    high: number;
-    close: number;
-    complete: boolean;
 }
 
 const racers: { [key: string]: IRacer } = {};
@@ -94,6 +110,7 @@ export const registerQuote = async (quote: string, intervals: IQuoteIntervals, m
     racers[quote] = {
         quote,
         previousClose: metadata.previousDay?.close ?? null,
+        atrPct: averageTrueRangePct(metadata.fullYearDailyHistory || [], RaceRulesConfig.atrPeriodDays),
         priorHourlyCloses,
         intervals,
         elimination: null,
@@ -163,7 +180,7 @@ const computeSnapshot = (): IRaceSnapshot => {
             .sort();
 
     const allRacers = Object.values(racers);
-    const isFinal = allRacers.some((racer) => Object.keys(racer.intervals).some((key) => key.startsWith(tradeDate) && key >= bellKey));
+    const isAfterBell = allRacers.some((racer) => Object.keys(racer.intervals).some((key) => key.startsWith(tradeDate) && key >= bellKey));
     const raceCandle = _.max(allRacers.map((racer) => _.last(premarketKeysOf(racer)) || '')) || '';
 
     if (raceCandle !== currentRaceCandle) {
@@ -171,13 +188,16 @@ const computeSnapshot = (): IRaceSnapshot => {
         currentRaceCandle = raceCandle;
     }
 
-    const raceEnd = isFinal ? toNewYork(bellKey) : raceCandle ? toNewYork(raceCandle).add(5, 'minutes') : null;
-    const entries = allRacers.map((racer) => evaluateRacer(racer, premarketKeysOf(racer), bellKey, raceEnd, isFinal));
+    const raceEnd = isAfterBell ? toNewYork(bellKey) : raceCandle ? toNewYork(raceCandle).add(5, 'minutes') : null;
+    const dataClock = proxyService.getDataClock();
+    const candleForming = !isAfterBell && !!raceEnd && raceEnd.isAfter(dataClock);
+    const clock = candleForming ? dataClock : raceEnd;
+    const entries = allRacers.map((racer) => evaluateRacer(racer, premarketKeysOf(racer), bellKey, raceEnd, isAfterBell));
 
     const contenders = _.orderBy(
         entries.filter((entry) => entry.status === 'racing' || entry.status === 'at-risk'),
-        (entry) => directional(entry.gapPct as number),
-        'desc'
+        [(entry) => entry.score, (entry) => entry.gapPct],
+        ['desc', 'desc']
     );
 
     latestRanks = {};
@@ -200,7 +220,7 @@ const computeSnapshot = (): IRaceSnapshot => {
     const lap = raceCandle ? Math.round(toNewYork(raceCandle).diff(toNewYork(premarketStartKey), 'minutes') / lapMinutes) + 1 : 0;
 
     let phase: RacePhase = 'waiting';
-    if (isFinal) {
+    if (isAfterBell) {
         phase = 'final';
     } else if (raceCandle >= decisionStartKey) {
         phase = 'decision';
@@ -214,15 +234,18 @@ const computeSnapshot = (): IRaceSnapshot => {
         phase,
         direction: settings.direction,
         raceTimeIso: raceCandle ? toNewYork(raceCandle).toISOString() : null,
+        clockIso: clock ? clock.toISOString() : null,
+        candleForming,
         bellIso: toNewYork(bellKey).toISOString(),
         lap,
         totalLaps,
         decisionLaps,
         rules: settings,
+        ruleBook: describeRuleBook(),
         standings: contenders,
         waiting: _.orderBy(
             entries.filter((entry) => entry.status === 'waiting'),
-            (entry) => (entry.gapPct === null ? -Infinity : directional(entry.gapPct)),
+            (entry) => entry.gapPct ?? -Infinity,
             'desc'
         ),
         out: _.sortBy(
@@ -233,29 +256,12 @@ const computeSnapshot = (): IRaceSnapshot => {
     };
 };
 
-const evaluateRacer = (racer: IRacer, premarketKeys: string[], bellKey: string, raceEnd: moment.Moment | null, isFinal: boolean): IRaceEntry => {
-    const settings = globalConfig.PremarketRace;
-    const entry: IRaceEntry = {
-        quote: racer.quote,
-        rank: null,
-        previousRank: null,
-        status: 'waiting',
-        reason: '',
-        price: null,
-        previousClose: racer.previousClose,
-        gapPct: null,
-        sma: null,
-        smaCushionPct: null,
-        premarketVolume: 0,
-        premarketDollarVolume: 0,
-        smaTouches: 0,
-        lapsInTopThree: racer.lapsInTopThree,
-        lastCandle: null,
-        eliminatedAt: null,
-    };
+// Rules run in a fixed order: eliminated → not qualifying → scored. Warnings ride along with the score.
+const evaluateRacer = (racer: IRacer, premarketKeys: string[], bellKey: string, raceEnd: moment.Moment | null, isAfterBell: boolean): IRaceEntry => {
+    const entry = emptyEntry(racer);
 
     if (!racer.previousClose) {
-        entry.reason = "No previous close";
+        entry.reason = 'No previous close';
         return entry;
     }
     if (premarketKeys.length === 0 || !raceEnd) {
@@ -263,84 +269,88 @@ const evaluateRacer = (racer: IRacer, premarketKeys: string[], bellKey: string, 
         return entry;
     }
 
-    const bars = premarketKeys.map((key) => racer.intervals[key]);
-    const lastBar = _.last(bars) as IQuoteFullIntervalData;
+    const facts = buildRaceFacts({
+        quote: racer.quote,
+        direction: globalConfig.PremarketRace.direction,
+        smaPeriod: globalConfig.PremarketRace.smaPeriod,
+        previousClose: racer.previousClose,
+        atrPct: racer.atrPct,
+        priorHourlyCloses: racer.priorHourlyCloses,
+        intervals: racer.intervals,
+        premarketKeys,
+        bellKey,
+        raceEnd,
+        isAfterBell,
+    });
 
-    entry.price = lastBar.close;
-    entry.lastCandle = (_.last(premarketKeys) as string).substring(11, 16);
-    entry.gapPct = ((lastBar.close - racer.previousClose) / racer.previousClose) * 100;
-    entry.premarketVolume = _.sumBy(bars, 'volume');
-    entry.premarketDollarVolume = _.sumBy(bars, (bar) => bar.volume * bar.close);
+    Object.assign(entry, {
+        price: facts.price,
+        gapPct: facts.gapPct,
+        gapInAtr: facts.gapInAtr,
+        sma: facts.sma,
+        smaCushionPct: facts.smaCushionPct,
+        smaStretchAtr: facts.smaStretchAtr,
+        premarketVolume: facts.premarketVolume,
+        premarketDollarVolume: facts.premarketDollarVolume,
+        smaTouches: facts.smaTouches,
+        lastCandle: facts.lastCandle,
+    });
 
-    const hourlyCandles = toHourlyCandles(racer.intervals, premarketKeys, raceEnd, isFinal);
-    const closedHourlyCloses = [...racer.priorHourlyCloses];
-    let sma = NaN;
-
-    for (const candle of hourlyCandles) {
-        sma = _.mean(_.takeRight([...closedHourlyCloses, candle.close], settings.smaPeriod));
-        const wickExtreme = settings.direction === 'long' ? candle.low : candle.high;
-        if (directional(wickExtreme - sma) < 0) {
-            entry.smaTouches++;
-        }
-        if (candle.complete) {
-            closedHourlyCloses.push(candle.close);
-            if (!racer.elimination && directional((candle.close - sma) / sma * 100) < -settings.smaTolerancePct) {
-                racer.elimination = {
-                    time: `${candle.hour}:00`,
-                    reason: `Hourly close ${settings.direction === 'long' ? 'below' : 'above'} the ${settings.smaPeriod} SMA`,
-                };
-            }
-        }
-    }
-
-    entry.sma = sma;
-    entry.smaCushionPct = directional(((lastBar.close - sma) / sma) * 100);
-
-    const openingBar = racer.intervals[bellKey];
-    if (!racer.elimination && isFinal && openingBar && directional(openingBar.open - racer.previousClose) <= 0) {
-        racer.elimination = {
-            time: bellKey.substring(11, 16),
-            reason: `Opened ${settings.direction === 'long' ? 'below' : 'above'} yesterday's close`,
-        };
-    }
-
+    racer.elimination = racer.elimination ?? firstResult(eliminationRules.map((rule) => () => rule.check(facts)));
     if (racer.elimination) {
         entry.status = 'out';
         entry.reason = racer.elimination.reason;
         entry.eliminatedAt = racer.elimination.time;
-    } else if (directional(entry.gapPct) <= 0) {
-        entry.reason = `Not ${settings.direction === 'long' ? 'above' : 'below'} yesterday's close`;
-    } else if (entry.premarketDollarVolume < settings.minPremarketDollarVolume) {
-        entry.reason = 'Thin premarket volume';
-    } else if (entry.smaCushionPct < -settings.smaTolerancePct) {
-        entry.status = 'at-risk';
-        entry.reason = `Trading through the ${settings.smaPeriod} SMA in the ${(_.last(hourlyCandles) as IHourlyCandle).hour}:00 candle`;
-    } else {
-        entry.status = 'racing';
+        return entry;
     }
 
+    const notQualifyingReason = firstResult(qualificationRules.map((rule) => () => rule.check(facts)));
+    if (notQualifyingReason) {
+        entry.reason = notQualifyingReason;
+        return entry;
+    }
+
+    const { score, breakdown } = scoreRacer(facts);
+    entry.score = score;
+    entry.scoreBreakdown = breakdown;
+    entry.warnings = warningRules.map((rule) => rule.check(facts)).filter((warning): warning is IRaceWarning => warning !== null);
+    entry.status = entry.warnings.some((warning) => warning.level === 'danger') ? 'at-risk' : 'racing';
+    entry.reason = entry.warnings.map((warning) => warning.message).join(' · ');
     return entry;
 };
 
-// After the bell the last premarket hour is judged as closed, even though its hourly candle runs past 09:30.
-const toHourlyCandles = (intervals: IQuoteIntervals, premarketKeys: string[], raceEnd: moment.Moment, isFinal: boolean): IHourlyCandle[] => {
-    const keysByHour = _.groupBy(premarketKeys, (key) => key.substring(11, 13));
+const emptyEntry = (racer: IRacer): IRaceEntry => ({
+    quote: racer.quote,
+    rank: null,
+    previousRank: null,
+    status: 'waiting',
+    reason: '',
+    score: null,
+    scoreBreakdown: [],
+    warnings: [],
+    price: null,
+    previousClose: racer.previousClose,
+    gapPct: null,
+    gapInAtr: null,
+    sma: null,
+    smaCushionPct: null,
+    smaStretchAtr: null,
+    premarketVolume: 0,
+    premarketDollarVolume: 0,
+    smaTouches: 0,
+    lapsInTopThree: racer.lapsInTopThree,
+    lastCandle: null,
+    eliminatedAt: null,
+});
 
-    return Object.keys(keysByHour)
-        .sort()
-        .map((hour) => {
-            const lastKey = _.last(keysByHour[hour]) as string;
-            const hourEnd = toNewYork(`${lastKey.substring(0, 10)} ${hour}:00:00`).add(1, 'hour');
-            return {
-                hour,
-                low: Math.min(...keysByHour[hour].map((key) => intervals[key].low)),
-                high: Math.max(...keysByHour[hour].map((key) => intervals[key].high)),
-                close: intervals[lastKey].close,
-                complete: isFinal || !hourEnd.isAfter(raceEnd),
-            };
-        });
+const firstResult = <T>(checks: (() => T | null)[]): T | null => {
+    for (const check of checks) {
+        const result = check();
+        if (result) {
+            return result;
+        }
+    }
+    return null;
 };
-
-const directional = (value: number) => (globalConfig.PremarketRace.direction === 'long' ? value : -value);
 
 const toNewYork = (key: string) => moment.tz(key, 'YYYY-MM-DD HH:mm:ss', NEW_YORK);

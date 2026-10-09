@@ -9,7 +9,7 @@ import * as  proxyService  from '../proxy/proxy-service';
 import { QuoteMonoRunner } from './quote-mono-reader';
 import * as behaviorManager from './behavior-manager';
 import * as premarketRace from './premarket-race';
-import { IQuotes, IQuoteFullIntervalData } from '../models/quote-data.model';
+import { IQuotes, IQuoteFullIntervalData, IQuoteIntervals } from '../models/quote-data.model';
 
 
 let quotes: IQuotes = {};
@@ -46,7 +46,27 @@ export const initiateQuotesWatch = ()=> {
     schedule.scheduleJob(runCron, async () => {
         await iterateQuotes();
     });
+
+    if (!globalConfig.Mock.IsMock) {
+        schedule.scheduleJob(`*/${globalConfig.PremarketRace.formingCandleRefreshSeconds} * * * * *`, refreshFormingCandles);
+    }
 }
+
+const refreshFormingCandles = () => {
+    if (!proxyService.isFormingCandleWindow()) {
+        return;
+    }
+    Object.keys(quotes).forEach((quoteName) => updateRace(quoteName, {}));
+};
+
+const updateRace = async (quoteName: string, completedIntervals: IQuoteIntervals) => {
+    try {
+        const intervals = proxyService.isFormingCandleWindow() ? await proxyService.getIntraday5MinuteWithFormingCandle(quoteName) : completedIntervals;
+        premarketRace.updateQuote(quoteName, intervals);
+    } catch (err) {
+        logger.error('error at quotes-iterator.updateRace - quote=' + quoteName + ' err=' + err);
+    }
+};
 
 export const addNewQuote = async (quoteName: string)=> {
     quotes[quoteName] = new QuoteMonoRunner(quoteName);
@@ -97,7 +117,7 @@ const iterateQuote =  async (quoteName: string) =>{
 
         const stockInterval: IQuoteFullIntervalData = quoteUtils.getRecentIntervalData(quoteIntervals);
         quoteStockStats.recordQuoteIntervalsIncludingMissed(quoteIntervals, true);
-        premarketRace.updateQuote(quoteName, quoteIntervals);
+        await updateRace(quoteName, quoteIntervals);
 
         clearQuoteWhenIsLastInterval(quoteName, stockInterval);
     } catch (err) {
@@ -116,7 +136,7 @@ const iterateQuotes= () => {
                 
                 if (quoteIntervals) {
                     quoteStockStats.recordQuoteIntervalsIncludingMissed(quoteIntervals, true);
-                    premarketRace.updateQuote(quoteKey, quoteIntervals);
+                    updateRace(quoteKey, quoteIntervals);
                 }
                 clearQuoteWhenIsLastInterval(quoteKey, stockInterval);
             });

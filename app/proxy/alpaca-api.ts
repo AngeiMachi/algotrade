@@ -103,6 +103,15 @@ export const getQuote5MinuteIntraday = async (quote: string, tradeDate: string, 
     }
 };
 
+// Historical only (SIP): the replay uses these to rebuild 5-minute candles minute by minute.
+export const getQuote1MinuteIntraday = async (quote: string, tradeDate: string, fromTime: string, toTime: string): Promise<IQuoteIntervals> => {
+    const symbol = quote.toUpperCase();
+    const from = nyTime(tradeDate, fromTime);
+    const to = nyTime(tradeDate, toTime);
+    const bars = await getBars(symbol, { timeframe: '1Min', start: from.toISOString(), end: to.toISOString(), feed: 'sip' });
+    return convertUtils.convertTDAmeritrade5MinuteIntervals(bars.filter((bar) => moment(bar.t).isBefore(to)).map(toCandle));
+};
+
 export const getQuote5MinuteMultipleDays = async (quote: string, tradeDate: string, daysBack: number = 0, getExtendedHours: boolean = true): Promise<IQuoteIntervals> => {
     try {
         const symbol = quote.toUpperCase();

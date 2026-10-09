@@ -19,10 +19,12 @@ export const PremarketRace = {
     direction: 'long' as 'long' | 'short',
     premarketStart: '04:00', // New York time
     decisionWindowStart: '09:15', // last three 5-minute candles before the bell
+    // Inside the decision window the board also counts the 5-minute candle still forming, refreshed this often (live only;
+    // the simulation steps one minute per lap there instead).
+    formingCandleRefreshSeconds: 20,
     smaPeriod: 20, // 24-hour hourly candles (regular + extended + overnight sessions)
-    smaTolerancePct: 0.05, // an hourly close may sit this far through the SMA and still count as holding it
-    minPremarketDollarVolume: 200000,
     excludeGroups: ['indexes'],
+    // rule thresholds and scoring weights: app/config/race-rules.config.ts
 };
 
 export const Notifications = {
