@@ -13,6 +13,10 @@ import { IQuoteIntervals, IQuoteMetadata } from '../models/quote-data.model';
 import {
     averageTrueRangePct,
     buildRaceFacts,
+    dailySmas,
+    dailyTrend,
+    IDailySmas,
+    IDailyTrend,
     describeRuleBook,
     eliminationRules,
     IElimination,
@@ -49,6 +53,7 @@ export interface IRaceEntry {
     premarketVolume: number;
     premarketDollarVolume: number;
     smaTouches: number;
+    dailyTrend: IDailyTrend | null;
     lapsInTopThree: number;
     lastCandle: string | null;
     eliminatedAt: string | null;
@@ -77,7 +82,10 @@ export interface IRaceSnapshot {
 interface IRacer {
     quote: string;
     previousClose: number | null;
+    previousHigh: number | null;
+    previousLow: number | null;
     atrPct: number;
+    dailySmas: IDailySmas | null;
     priorHourlyCloses: number[];
     intervals: IQuoteIntervals;
     elimination: IElimination | null;
@@ -110,7 +118,10 @@ export const registerQuote = async (quote: string, intervals: IQuoteIntervals, m
     racers[quote] = {
         quote,
         previousClose: metadata.previousDay?.close ?? null,
+        previousHigh: metadata.previousDay?.high ?? null,
+        previousLow: metadata.previousDay?.low ?? null,
         atrPct: averageTrueRangePct(metadata.fullYearDailyHistory || [], RaceRulesConfig.atrPeriodDays),
+        dailySmas: dailySmas(metadata.fullYearDailyHistory || [], RaceRulesConfig.trend.fastSmaDays, RaceRulesConfig.trend.slowSmaDays),
         priorHourlyCloses,
         intervals,
         elimination: null,
@@ -248,9 +259,11 @@ const computeSnapshot = (): IRaceSnapshot => {
             (entry) => entry.gapPct ?? -Infinity,
             'desc'
         ),
-        out: _.sortBy(
+        // Eliminated for good first (by time), then those out only until they trade back past yesterday's high.
+        out: _.orderBy(
             entries.filter((entry) => entry.status === 'out'),
-            (entry) => entry.eliminatedAt
+            [(entry) => entry.eliminatedAt === null, (entry) => entry.eliminatedAt],
+            ['asc', 'asc']
         ),
         updatedAt: new Date().toISOString(),
     };
@@ -274,6 +287,8 @@ const evaluateRacer = (racer: IRacer, premarketKeys: string[], bellKey: string, 
         direction: globalConfig.PremarketRace.direction,
         smaPeriod: globalConfig.PremarketRace.smaPeriod,
         previousClose: racer.previousClose,
+        previousHigh: racer.previousHigh,
+        previousLow: racer.previousLow,
         atrPct: racer.atrPct,
         priorHourlyCloses: racer.priorHourlyCloses,
         intervals: racer.intervals,
@@ -293,6 +308,7 @@ const evaluateRacer = (racer: IRacer, premarketKeys: string[], bellKey: string, 
         premarketVolume: facts.premarketVolume,
         premarketDollarVolume: facts.premarketDollarVolume,
         smaTouches: facts.smaTouches,
+        dailyTrend: dailyTrend(racer.dailySmas, facts.openingPrice ?? facts.price),
         lastCandle: facts.lastCandle,
     });
 
@@ -304,9 +320,15 @@ const evaluateRacer = (racer: IRacer, premarketKeys: string[], bellKey: string, 
         return entry;
     }
 
-    const notQualifyingReason = firstResult(qualificationRules.map((rule) => () => rule.check(facts)));
-    if (notQualifyingReason) {
-        entry.reason = notQualifyingReason;
+    const failedQualification = firstResult(
+        qualificationRules.map((rule) => () => {
+            const reason = rule.check(facts);
+            return reason ? { reason, listedAs: rule.listedAs } : null;
+        })
+    );
+    if (failedQualification) {
+        entry.reason = failedQualification.reason;
+        entry.status = failedQualification.listedAs;
         return entry;
     }
 
@@ -338,6 +360,7 @@ const emptyEntry = (racer: IRacer): IRaceEntry => ({
     premarketVolume: 0,
     premarketDollarVolume: 0,
     smaTouches: 0,
+    dailyTrend: dailyTrend(racer.dailySmas, null),
     lapsInTopThree: racer.lapsInTopThree,
     lastCandle: null,
     eliminatedAt: null,

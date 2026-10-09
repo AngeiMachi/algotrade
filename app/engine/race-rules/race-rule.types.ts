@@ -18,6 +18,8 @@ export interface IRaceFacts {
     bellTime: string; // "09:30"
 
     previousClose: number;
+    previousExtreme: number | null; // yesterday's high for long, low for short
+    previousExtremeCushionPct: number | null; // price vs that level
     price: number;
     gapPct: number;
     gapInAtr: number; // gap measured in daily ATRs, so a 3% gap on a calm stock outweighs 3% on a wild one
@@ -32,7 +34,9 @@ export interface IRaceFacts {
     hourlyCandles: IHourlyCandleFacts[];
     smaTouches: number;
 
+    openingPrice: number | null; // first regular-session bar's open, once the bell rang
     openingGapPct: number | null; // first regular-session bar's open vs yesterday's close, once the bell rang
+    openingVsPreviousExtremePct: number | null; // that open vs yesterday's high (long) / low (short)
 }
 
 export interface IElimination {
@@ -66,7 +70,9 @@ export interface IEliminationRule extends IRaceRule {
 }
 
 // Temporary: a stock that fails a qualification rule can come back on a later candle.
+// listedAs decides where it waits: 'out' (Out for today) or 'waiting' (Not qualifying).
 export interface IQualificationRule extends IRaceRule {
+    listedAs: 'out' | 'waiting';
     check: (facts: IRaceFacts) => string | null;
 }
 

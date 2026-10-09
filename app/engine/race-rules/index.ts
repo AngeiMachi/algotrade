@@ -13,7 +13,7 @@ export { eliminationRules } from './elimination-rules';
 export { qualificationRules } from './qualification-rules';
 export { scoringRules, scoreRacer } from './scoring-rules';
 export { warningRules } from './warning-rules';
-export { buildRaceFacts, averageTrueRangePct } from './race-facts';
+export { buildRaceFacts, averageTrueRangePct, dailySmas, dailyTrend, IDailySmas, IDailyTrend } from './race-facts';
 export * from './race-rule.types';
 
 export const describeRuleBook = (): IRuleDescription[] => [

@@ -25,19 +25,24 @@ export const hourlyCloseThroughSma: IEliminationRule = {
     },
 };
 
-export const openedThroughPreviousClose: IEliminationRule = {
-    id: 'opened-through-previous-close',
-    title: "Opened on the wrong side of yesterday's close",
-    describe: () => `At the bell, a stock that opens ${raceWords(globalConfig.PremarketRace.direction).badSide} (or at) yesterday's close is out.`,
+// Opening past yesterday's high (long) also means opening past yesterday's close, so this covers both.
+export const openedInsidePreviousRange: IEliminationRule = {
+    id: 'opened-inside-previous-range',
+    title: "Opened inside yesterday's range",
+    describe: () => {
+        const words = raceWords(globalConfig.PremarketRace.direction);
+        return `At the bell, a stock must open ${words.goodSide} ${words.previousExtreme}. Opening ${words.badSide} (or at) it is out.`;
+    },
     check: (facts) => {
-        if (!facts.isAfterBell || facts.openingGapPct === null || facts.openingGapPct > 0) {
+        if (!facts.isAfterBell || facts.openingVsPreviousExtremePct === null || facts.openingVsPreviousExtremePct > 0) {
             return null;
         }
+        const words = raceWords(facts.direction);
         return {
             time: facts.bellTime,
-            reason: `Opened ${raceWords(facts.direction).badSide} yesterday's close`,
+            reason: `Opened ${words.badSide} ${words.previousExtreme}`,
         };
     },
 };
 
-export const eliminationRules: IEliminationRule[] = [hourlyCloseThroughSma, openedThroughPreviousClose];
+export const eliminationRules: IEliminationRule[] = [hourlyCloseThroughSma, openedInsidePreviousRange];

@@ -12,6 +12,8 @@ export interface IRaceFactsInput {
     direction: RaceDirection;
     smaPeriod: number;
     previousClose: number;
+    previousHigh: number | null;
+    previousLow: number | null;
     atrPct: number;
     priorHourlyCloses: number[]; // 24-hour hourly closes before today's pre-market
     intervals: IQuoteIntervals; // 5-minute bars keyed by New York time
@@ -39,6 +41,7 @@ export const buildRaceFacts = (input: IRaceFactsInput): IRaceFacts => {
     const atrPct = input.atrPct > 0 ? input.atrPct : RaceRulesConfig.fallbackAtrPct;
 
     const openingBar = input.isAfterBell ? intervals[input.bellKey] : undefined;
+    const previousExtreme = direction === 'long' ? input.previousHigh : input.previousLow;
 
     return {
         quote: input.quote,
@@ -47,6 +50,8 @@ export const buildRaceFacts = (input: IRaceFactsInput): IRaceFacts => {
         bellTime: input.bellKey.substring(11, 16),
 
         previousClose,
+        previousExtreme,
+        previousExtremeCushionPct: previousExtreme ? toDirectional(pctFrom(price, previousExtreme)) : null,
         price,
         gapPct,
         gapInAtr: input.atrPct > 0 ? gapPct / input.atrPct : 0,
@@ -61,7 +66,9 @@ export const buildRaceFacts = (input: IRaceFactsInput): IRaceFacts => {
         hourlyCandles,
         smaTouches: hourlyCandles.filter((candle) => candle.wickVsSmaPct < 0).length,
 
+        openingPrice: openingBar ? openingBar.open : null,
         openingGapPct: openingBar ? toDirectional(pctFrom(openingBar.open, previousClose)) : null,
+        openingVsPreviousExtremePct: openingBar && previousExtreme ? toDirectional(pctFrom(openingBar.open, previousExtreme)) : null,
     };
 };
 
@@ -98,6 +105,38 @@ const buildHourlyCandles = (input: IRaceFactsInput, toDirectional: (value: numbe
 };
 
 const completedCloses = (candles: IHourlyCandleFacts[]) => candles.filter((candle) => candle.complete).map((candle) => candle.close);
+
+export interface IDailySmas {
+    fastSma: number;
+    slowSma: number;
+}
+
+export interface IDailyTrend extends IDailySmas {
+    fastAboveSlow: boolean;
+    priceAboveSlow: boolean;
+    isUptrend: boolean;
+}
+
+// Daily fast and slow SMA of closes before today. Null when there is not enough history for the slow one.
+export const dailySmas = (dailyCandles: { close: number }[], fastDays: number, slowDays: number): IDailySmas | null => {
+    if (dailyCandles.length < slowDays) {
+        return null;
+    }
+    return {
+        fastSma: _.meanBy(_.takeRight(dailyCandles, fastDays), 'close'),
+        slowSma: _.meanBy(_.takeRight(dailyCandles, slowDays), 'close'),
+    };
+};
+
+// Uptrend when the fast daily SMA is above the slow one, or today's price (the open, once the bell rings) is above the slow one.
+export const dailyTrend = (smas: IDailySmas | null, price: number | null): IDailyTrend | null => {
+    if (!smas) {
+        return null;
+    }
+    const fastAboveSlow = smas.fastSma > smas.slowSma;
+    const priceAboveSlow = price !== null && price > smas.slowSma;
+    return { ...smas, fastAboveSlow, priceAboveSlow, isUptrend: fastAboveSlow || priceAboveSlow };
+};
 
 // Average True Range over the last `period` daily candles, as a percent of the latest close.
 export const averageTrueRangePct = (dailyCandles: { high: number; low: number; close: number }[], period: number): number => {

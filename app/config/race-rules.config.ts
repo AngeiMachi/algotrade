@@ -18,6 +18,13 @@ export const RaceRulesConfig = {
 
     atrPeriodDays: 14,
 
+    // "Uptrend" filter on the board: the fast daily SMA is above the slow one, or today's price (the open, after the bell)
+    // is above the slow one. SMAs use closes before today.
+    trend: {
+        fastSmaDays: 10,
+        slowSmaDays: 20,
+    },
+
     // ATR used for the SMA distance when a stock has no daily history yet.
     fallbackAtrPct: 3,
 
