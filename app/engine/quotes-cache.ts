@@ -1,6 +1,6 @@
 import { TimeFrame } from '../models/enums';
 import { ICacheHistoricalData, ITDAmeritradePriceHistory } from '../models/quote-data.model';
-import * as TDAmeritradeAPI from '../proxy/td-ameritrade-api';
+import * as AlpacaAPI from '../proxy/alpaca-api';
 import { logger } from '../config/winston.config';
 export let cacheState = {} as ICacheHistoricalData;
 
@@ -47,31 +47,33 @@ export const getQuoteFromCache = ((quoteName:string,timeFrame:TimeFrame): ITDAme
     return null;
 });
 
-export const cacheQuoteFromTDAmeritradeAPI = async (quoteName:string) => {
+export const cacheQuoteFromAPI = async (quoteName:string) => {
     if (!cacheState[quoteName]) {
         addNewQuoteToCache(quoteName);
-        const quoteFullYearDailyHistory = await TDAmeritradeAPI.getQuoteFullYearDailyHistory(quoteName);
+        const [quoteFullYearDailyHistory, quoteFullYearWeeklyHistory, quoteHourlyHistory] = await Promise.all([
+            AlpacaAPI.getQuoteFullYearDailyHistory(quoteName),
+            AlpacaAPI.getQuoteFullYearWeeklyHistory(quoteName),
+            AlpacaAPI.getQuoteHourlyHistory(quoteName),
+        ]);
         cacheQuote(quoteName,quoteFullYearDailyHistory,TimeFrame.Daily);
-        const quoteFullYearWeeklyHistory = await TDAmeritradeAPI.getQuoteFullYearWeeklyHistory(quoteName);
         cacheQuote(quoteName,quoteFullYearWeeklyHistory,TimeFrame.Weekly); 
-        const quoteHourlyHistory = await TDAmeritradeAPI.getQuoteHourlyHistory(quoteName);
         cacheQuote(quoteName,quoteHourlyHistory,TimeFrame.Hourly); 
     }
 }
 
-export const cacheQuoteListFromTDAmeritradeAPI = async (quoteListNames:string[]) => {
-    try {
-        logger.info("Initiating Quote caching...");
-        for (let quoteName of quoteListNames) {
-            await cacheQuoteFromTDAmeritradeAPI(quoteName);
+// all quotes are requested together so alpaca-api can batch them into multi-symbol calls
+export const cacheQuoteList = async (quoteListNames:string[]) => {
+    logger.info("Initiating Quote caching...");
+    await Promise.all(quoteListNames.map(async (quoteName) => {
+        try {
+            await cacheQuoteFromAPI(quoteName);
             logger.info(`${quoteName} has been cached`);
+        } catch (err) {
+            deleteCache(quoteName);
+            logger.error(`cacheQuoteList failed for ${quoteName} ` + err);
         }
-        logger.info("All Quotes have been cached succesfully");
-    }
-    catch (err) {
-        logger.error('cacheQuoteListFromTDAmeritradeAPI failed ' + err);
-    }
-    
+    }));
+    logger.info("All Quotes have been cached");
 }
 
 export const deleteCache = (quoteName:string) => {

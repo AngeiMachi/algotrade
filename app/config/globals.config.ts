@@ -9,10 +9,24 @@ export const Mock = {
     intervalLapTime:"*/30 * * * * *" // "*/30 * * * * *" = every 30 seconds; "*/1 * * * *" = every 1 minute
 };
 
-export const ShouldUsePushNotifications = true;
+export const ShouldUsePushNotifications = false;
+
+export const ShowStarRating = false;
+
+export const RunSignals = false;
+
+export const PremarketRace = {
+    direction: 'long' as 'long' | 'short',
+    premarketStart: '04:00', // New York time
+    decisionWindowStart: '09:15', // last three 5-minute candles before the bell
+    smaPeriod: 20, // 24-hour hourly candles (regular + extended + overnight sessions)
+    smaTolerancePct: 0.05, // an hourly close may sit this far through the SMA and still count as holding it
+    minPremarketDollarVolume: 200000,
+    excludeGroups: ['indexes'],
+};
 
 export const Notifications = {
-    usePush :true,
+    usePush :false,
     allowedNotifications: {
         groupTypes: [
             // SignalGroupType.BULLISH_VOLUME,
@@ -56,7 +70,10 @@ export const QuotesConfig = {
         trending:{
             behaviors:[],
             signals:[],
-            names:[],
+            names:[
+                "SPCX","MA","AAP","SKHY","AMKR","NXPI","CBRS","CRWV","NBIS","ALAB","GLW","SNDK","APLD",
+                "WOLF","ECHO","CRCL","BE","EBAY","HIMS","ASTS","IREN","USAR","TEM","RTX","NNE","OKLO","RKLB","VKTX","NET","V","RH","XYZ"
+            ],
         },
         smallcap:{
             behaviors:[

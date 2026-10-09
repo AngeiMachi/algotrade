@@ -111,30 +111,24 @@ export function convertTDAmeritradeDailyIntervals(intervals: ITDAmeritradeInterv
     return convertedQuoteIntervalsData;
 }
 
-export function converTDAmeritradeMarketHours(marketHoursTD: any): IMarketHours {
-    const marketHours = {} as IMarketHours;
+export function convertAlpacaMarketHours(alpacaCalendar: any[], tradeDate: string): IMarketHours {
+    const tradingDay = alpacaCalendar.find((day) => day.date === tradeDate);
+    if (!tradingDay) {
+        throw `market is closed on ${tradeDate}`;
+    }
 
-    const mrkpreS = marketHoursTD.equity.EQ.sessionHours.preMarket[0].start;
-    const mrkpreE = marketHoursTD.equity.EQ.sessionHours.preMarket[0].end;
-    const mrkS = marketHoursTD.equity.EQ.sessionHours.regularMarket[0].start;
-    const mrkE = marketHoursTD.equity.EQ.sessionHours.regularMarket[0].end;
-    const mrkpostS = marketHoursTD.equity.EQ.sessionHours.postMarket[0].start;
-    const mrkpostE = marketHoursTD.equity.EQ.sessionHours.postMarket[0].end;
+    // Alpaca returns "09:30" for open/close and "2000" for session_close
+    const toDateTime = (time: string) => `${tradingDay.date} ${time.replace(':', '').replace(/^(\d{2})(\d{2})$/, '$1:$2')}:00`;
 
-    marketHours.date = marketHoursTD.equity.EQ.date;
-    marketHours.isApiMarketHours = true;
-
-    marketHours.sessionHours = { ...SessionHoursDefault };
-
-    marketHours.sessionHours.preMarket.start = moment(mrkpreS.substr(0, mrkpreS.lastIndexOf('-'))).format('YYYY-MM-DD HH:mm:ss');
-    marketHours.sessionHours.preMarket.end = moment(mrkpreE.substr(0, mrkpreE.lastIndexOf('-'))).format('YYYY-MM-DD HH:mm:ss');
-    marketHours.sessionHours.regularMarket.start = moment(mrkS.substr(0, mrkS.lastIndexOf('-'))).format('YYYY-MM-DD HH:mm:ss');
-    marketHours.sessionHours.postMarket.start = moment(marketHoursTD.equity.EQ.sessionHours.postMarket.start).format('YYYY-MM-DD HH:mm:ss');
-    marketHours.sessionHours.regularMarket.end = moment(mrkE.substr(0, mrkE.lastIndexOf('-'))).format('YYYY-MM-DD HH:mm:ss');
-    marketHours.sessionHours.postMarket.start = moment(mrkpostS.substr(0, mrkpostS.lastIndexOf('-'))).format('YYYY-MM-DD HH:mm:ss');
-    marketHours.sessionHours.postMarket.end = moment(mrkpostE.substr(0, mrkpostE.lastIndexOf('-'))).format('YYYY-MM-DD HH:mm:ss');
-
-    return marketHours;
+    return {
+        date: tradingDay.date,
+        isApiMarketHours: true,
+        sessionHours: {
+            preMarket: { start: toDateTime('04:00'), end: toDateTime(tradingDay.open) },
+            regularMarket: { start: toDateTime(tradingDay.open), end: toDateTime(tradingDay.close) },
+            postMarket: { start: toDateTime(tradingDay.close), end: toDateTime(tradingDay.session_close) },
+        },
+    };
 }
 
 export function convertDateToTDMillisecondInterval(date: string): number {

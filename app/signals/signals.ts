@@ -4,6 +4,7 @@ import { QuoteStatistics } from '../engine/quote-statistics';
 import { QuoteState } from '../models/state.model';
 import * as quoteState from '../engine/state';
 import * as generalUtils from '../utils/general';
+import * as globalConfig from '../config/globals.config';
 
 export abstract class Signals {
     protected quoteStats: QuoteStatistics;
@@ -17,6 +18,9 @@ export abstract class Signals {
     public abstract monitor(_signals?:SignalModel[]): SignalModel[];
 
     getBullishIndicator():string {
+        if (!globalConfig.ShowStarRating) {
+            return '';
+        }
         let is20MAAbove50MAHourly = false;
         const percentageDiff = generalUtils.getPercentageDifference(this.quoteStats.hourlyMA20Last,this.quoteStats.hourlyMA50Last);
         if (this.quoteStats.hourlyMA20Last>this.quoteStats.hourlyMA50Last && percentageDiff>0.8) {
@@ -31,6 +35,9 @@ export abstract class Signals {
     }
     
     getBearishIndicator():string {
+        if (!globalConfig.ShowStarRating) {
+            return '';
+        }
         let is20MABelow50MAHourly = false;
         const percentageDiff = generalUtils.getPercentageDifference(this.quoteStats.hourlyMA20Last,this.quoteStats.hourlyMA50Last);
         if (this.quoteStats.hourlyMA20Last<this.quoteStats.hourlyMA50Last && percentageDiff>0.8) {

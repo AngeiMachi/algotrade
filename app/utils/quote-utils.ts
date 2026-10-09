@@ -357,7 +357,7 @@ export function generateDefaultMarketHours() {
     marketHours.isApiMarketHours = false;
     marketHours.sessionHours = { ...SessionHoursDefault };
 
-    marketHours.sessionHours.preMarket.start = date + ' 07:00:00';
+    marketHours.sessionHours.preMarket.start = date + ' 04:00:00';
     marketHours.sessionHours.preMarket.end = date + ' 09:30:00';
     marketHours.sessionHours.regularMarket.start = date + ' 09:30:00';
     marketHours.sessionHours.regularMarket.end = date + ' 16:00:00';

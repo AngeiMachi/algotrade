@@ -13,7 +13,7 @@ export default async function startApp() {
 
         const quotesTofollow = behaviorManager.getQuotes();
         
-        await quoteCache.cacheQuoteListFromTDAmeritradeAPI(quotesTofollow);
+        await quoteCache.cacheQuoteList(quotesTofollow);
 
         const initTime = calculateInitializationTime();
         logger.info(`Quote initialization is set to start at ${initTime}...`);

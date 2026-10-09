@@ -7,6 +7,7 @@ import { logger } from '../config/winston.config';
 import * as  proxyService  from '../proxy/proxy-service';
 import { QuoteMonoRunner } from './quote-mono-reader';
 import * as behaviorManager from './behavior-manager';
+import * as premarketRace from './premarket-race';
 import { IQuotes, IQuoteFullIntervalData } from '../models/quote-data.model';
 
 
@@ -39,7 +40,7 @@ export const initiateQuotesWatch = ()=> {
 
 export const addNewQuote = async (quoteName: string)=> {
     quotes[quoteName] = new QuoteMonoRunner(quoteName);
-    const quoteIntervals = await proxyService.getTDAmeritradeIntraday(quoteName);
+    const quoteIntervals = await proxyService.getIntraday5Minute(quoteName);
     if (Object.keys(quoteIntervals).length==0) {
         delete quotes[quoteName];
         logger.error('error at Stock-Reader.initializeQuotesData - quote=' + quoteName + ' does not Exist and being deprecated');
@@ -56,6 +57,7 @@ export const addNewQuote = async (quoteName: string)=> {
     behaviorManager.manangeAfterMetadata(quoteName,quoteMetadata,quotes);
     if (quotes[quoteName]) {
         quotes[quoteName].initializeStockData(quoteIntervals, quoteMetadata);
+        premarketRace.registerQuote(quoteName, quoteIntervals, quoteMetadata);
     }
 
 }
@@ -81,10 +83,11 @@ const iterateQuote =  async (quoteName: string) =>{
 
         const quoteStockStats: QuoteMonoRunner = quotes[quoteName];
 
-        const quoteIntervals = await proxyService.getTDAmeritradeIntraday(quoteName, true);
+        const quoteIntervals = await proxyService.getIntraday5Minute(quoteName, true);
 
         const stockInterval: IQuoteFullIntervalData = quoteUtils.getRecentIntervalData(quoteIntervals);
         quoteStockStats.recordQuoteIntervalsIncludingMissed(quoteIntervals, true);
+        premarketRace.updateQuote(quoteName, quoteIntervals);
 
         clearQuoteWhenIsLastInterval(quoteName, stockInterval);
     } catch (err) {
@@ -98,11 +101,12 @@ const iterateQuotes= () => {
             const quoteStockStats: QuoteMonoRunner = quotes[quoteKey];
 
             
-            proxyService.getTDAmeritradeIntraday(quoteKey, true).then(quoteIntervals=>{
+            proxyService.getIntraday5Minute(quoteKey, true).then(quoteIntervals=>{
                 const stockInterval: IQuoteFullIntervalData = quoteUtils.getRecentIntervalData(quoteIntervals);
                 
                 if (quoteIntervals) {
                     quoteStockStats.recordQuoteIntervalsIncludingMissed(quoteIntervals, true);
+                    premarketRace.updateQuote(quoteKey, quoteIntervals);
                 }
                 clearQuoteWhenIsLastInterval(quoteKey, stockInterval);
             });

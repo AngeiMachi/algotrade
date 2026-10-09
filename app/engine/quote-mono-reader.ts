@@ -2,6 +2,7 @@ import * as _ from 'lodash';
 
 import * as quoteUtils from '../utils/quote-utils';
 import * as generalUtils from '../utils/general'
+import * as globalConfig from '../config/globals.config';
 import * as quoteState from './state';
 import {  IQuoteFullIntervalData, IQuoteIntervals, IQuoteMetadata } from '../models/quote-data.model';
 import { logger } from '../config/winston.config';
@@ -126,6 +127,10 @@ export class QuoteMonoRunner {
         const quoteInterval: IQuoteFullIntervalData = quoteUtils.getRecentIntervalData(quoteIntervals);
         if(this.quoteStats?.lastInterval?.timeNewYork && quoteInterval?.timeNewYork ) {
             const timeDiff =generalUtils.minuteDifference(quoteInterval.timeNewYork,this.quoteStats.lastInterval.timeNewYork);
+            // thin symbols often have no live IEX bar for the latest 5 minutes
+            if (timeDiff <= 0) {
+                return;
+            }
             this.recordNewStockInterval(quoteInterval,isLive);
             shouldIterateMoreThanOnce = timeDiff>5;   
         } 
@@ -153,6 +158,10 @@ export class QuoteMonoRunner {
     public recordNewStockInterval(quoteInterval: IQuoteFullIntervalData, isLive: boolean = false): number {
         this.quoteStats.addNewInterval(quoteInterval, isLive);
         this.quoteStats.composeAndPrintCurrentIntervalStats(quoteInterval, isLive);
+
+        if (!globalConfig.RunSignals) {
+            return 0;
+        }
 
         this.signals = [
             // ...this.bearishMoveSequenceSignal.monitor(),

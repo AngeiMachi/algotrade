@@ -26,6 +26,8 @@ export const getQuotes = ():string[] => {
     return quotesList;
 }
 
+export const getQuoteGroup = (quoteName: string): string | undefined => quotesFlat[quoteName];
+
 export const manangeAfterMetadata=(quoteName:string,metadata:IQuoteMetadata,quotes: IQuotes):void => {
     const quoteConfigGroupName = quotesFlat[quoteName];
     const deprecateIfNotAboveMovingAverages = quoteToBeUsed[quoteConfigGroupName].behaviors?.find((item)=>item==BehaviorTypes.DeprecateIfNotAboveMovingAverages)

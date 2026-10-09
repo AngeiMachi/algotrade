@@ -5,6 +5,7 @@ import * as state from '../engine/state';
 import express from 'express';
 import * as PushAPI from './pushed-api';
 import * as quotesIterator from '../engine/quotes-iterator';
+import * as premarketRace from '../engine/premarket-race';
 import * as globalConfig from "../config/globals.config"
 import * as TwitterAPI from './twitter-api';
 
@@ -40,6 +41,10 @@ app.use(function (req, res, next) {
 
 app.get('/getAllQuotes', (req, res) => {
     res.json(getState());
+});
+
+app.get('/race', (req, res) => {
+    res.json(premarketRace.getSnapshot());
 });
 
 app.post('/addNewQuote',jsonParser,async (req, res) => {
@@ -86,6 +91,10 @@ export const updateQuote = (quote: QuoteState,shouldSendPush:boolean) => {
     }
 
     ioGlobal.emit('updateQuote', quoteToUpdate);
+};
+
+export const emitRaceUpdate = (snapshot: premarketRace.IRaceSnapshot) => {
+    ioGlobal.emit('raceUpdate', snapshot);
 };
 
 const SignalToClients = async (quote: QuoteState) => {

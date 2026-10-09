@@ -2,7 +2,7 @@ import { logger } from '../config/winston.config';
 import * as globalConfig from '../config/globals.config';
 import * as quoteUtils from '../utils/quote-utils';
 import * as AlphaVantage from './alpha-vantage-api';
-import * as TDAmeritrade from './td-ameritrade-api';
+import * as AlpacaAPI from './alpaca-api';
 
 import {
     IAlphaVantageIntervals,
@@ -85,42 +85,36 @@ export async function serveMockDataAlphaVantage(quote: string): Promise<any> {
     });
 }
 
-export async function prepareMockDataTDAmeritrade(quote: string, _marketHours: IMarketHours): Promise<any> {
+export async function prepareMockData5Minute(quote: string, _marketHours: IMarketHours): Promise<any> {
     marketHours = _marketHours;
 
     let mockData = {} as IQuoteIntervals;
     const mockQuote = (mockQuotes[quote] = mockQuotesFactory(quote));
 
     try {
-        mockData = await TDAmeritrade.getQuote5MinuteIntraday(quote, mockQuote.mockDataDate);
+        mockData = await AlpacaAPI.getQuote5MinuteIntraday(quote, mockQuote.mockDataDate);
 
         mockQuote.mockDataResponseValues = Object.values(mockData);
         mockQuote.mockDataResponseKeys = Object.keys(mockData);
 
-        let i = 0;
-        
-        
-        if  (mockQuotes["SPY"]?.isMockLoaded ) {
-            while (new Date(mockQuote.mockDataResponseKeys[mockQuote.currentInterval])<new Date(mockQuotes["SPY"].mockDataResponseKeys[mockQuotes["SPY"].currentInterval-1])) {
+        const hasMoreIntervals = () => mockQuote.currentInterval < mockQuote.mockDataResponseKeys.length;
+
+        if (!hasMoreIntervals()) {
+            logger.error('prepareMockData5Minute ' + quote + ' - no mock data for ' + mockQuote.mockDataDate);
+        } else if  (mockQuotes["SPY"]?.isMockLoaded ) {
+            while (hasMoreIntervals() && new Date(mockQuote.mockDataResponseKeys[mockQuote.currentInterval])<new Date(mockQuotes["SPY"].mockDataResponseKeys[mockQuotes["SPY"].currentInterval-1])) {
                 (mockQuote.mockDataResponse as any)[mockQuote.mockDataResponseKeys[mockQuote.currentInterval]] = mockQuote.mockDataResponseValues[mockQuote.currentInterval];
                 mockQuote.currentInterval++;
-    
-                if (mockQuote.currentInterval > 400) {
-                    logger.error('prepareMockDataTDAmeritrade ' + quote + '- mock data corrupted');
-                }
             } 
 
         }  else {
             do {
                 (mockQuote.mockDataResponse as any)[mockQuote.mockDataResponseKeys[mockQuote.currentInterval]] = mockQuote.mockDataResponseValues[mockQuote.currentInterval];
                 mockQuote.currentInterval++;
-    
-                if (mockQuote.currentInterval > 400) {
-                    logger.error('prepareMockDataTDAmeritrade ' + quote + '- mock data corrupted');
-                }
             } 
-            while ((mockQuote.mockDataResponseKeys[mockQuote.currentInterval] !== marketHours.sessionHours.regularMarket.start && globalConfig.Mock.startAtOpen) || 
-            (!mockQuote.mockDataResponseKeys[mockQuote.currentInterval].includes(marketHours.date+' '+globalConfig.Mock.MockDataLiveSimulationTime) && !globalConfig.Mock.startAtOpen));
+            while (hasMoreIntervals() && (
+            (mockQuote.mockDataResponseKeys[mockQuote.currentInterval] !== marketHours.sessionHours.regularMarket.start && globalConfig.Mock.startAtOpen) || 
+            (!mockQuote.mockDataResponseKeys[mockQuote.currentInterval].includes(marketHours.date+' '+globalConfig.Mock.MockDataLiveSimulationTime) && !globalConfig.Mock.startAtOpen)));
         }
         
         mockQuote.isMockLoaded = true;
@@ -132,7 +126,7 @@ export async function prepareMockDataTDAmeritrade(quote: string, _marketHours: I
     }
 }
 
-export async function serveMockDataTDAmeritrade(quote: string): Promise<any> {
+export async function serveMockData5Minute(quote: string): Promise<any> {
     const mockQuote = mockQuotes[quote];
     return new Promise((resolve, reject) => {
         try {
