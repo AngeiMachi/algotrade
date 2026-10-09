@@ -34,6 +34,10 @@ export interface IRaceFacts {
     hourlyCandles: IHourlyCandleFacts[];
     smaTouches: number;
 
+    reclaimSma: number | null; // hourly SMA used by the reclaim highlight (200 by default)
+    reclaimSmaCushionPct: number | null; // price (the open, after the bell) vs that SMA
+    reclaimedYesterday: { openedAt: number; smaAtOpen: number; reachedAtHour: string } | null;
+
     openingPrice: number | null; // first regular-session bar's open, once the bell rang
     openingGapPct: number | null; // first regular-session bar's open vs yesterday's close, once the bell rang
     openingVsPreviousExtremePct: number | null; // that open vs yesterday's high (long) / low (short)
@@ -87,8 +91,19 @@ export interface IWarningRule extends IRaceRule {
     check: (facts: IRaceFacts) => IRaceWarning | null;
 }
 
+// Something good worth pointing out. Highlights do not change the score.
+export interface IRaceHighlight {
+    id: string;
+    label: string;
+    message: string;
+}
+
+export interface IHighlightRule extends IRaceRule {
+    check: (facts: IRaceFacts) => IRaceHighlight | null;
+}
+
 export interface IRuleDescription {
-    kind: 'elimination' | 'qualification' | 'scoring' | 'warning';
+    kind: 'elimination' | 'qualification' | 'scoring' | 'warning' | 'highlight';
     title: string;
     description: string;
 }

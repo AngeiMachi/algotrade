@@ -18,6 +18,17 @@ export const RaceRulesConfig = {
 
     atrPeriodDays: 14,
 
+    // Stocks averaging fewer shares a day than this (over the last averageVolumeDays sessions) are dropped
+    // before the race starts and never appear on the board.
+    minAverageDailyVolume: 3000000,
+    averageVolumeDays: 20,
+
+    // "MA reclaimed" highlight: yesterday opened below this hourly SMA (24-hour candles) and climbed to it during
+    // the regular session; today the price (the open, after the bell) is above it.
+    reclaim: {
+        smaPeriod: 200,
+    },
+
     // "Uptrend" filter on the board: the fast daily SMA is above the slow one, or today's price (the open, after the bell)
     // is above the slow one. SMAs use closes before today.
     trend: {

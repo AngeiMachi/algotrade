@@ -16,6 +16,8 @@ export interface IRaceFactsInput {
     previousLow: number | null;
     atrPct: number;
     priorHourlyCloses: number[]; // 24-hour hourly closes before today's pre-market
+    reclaimSmaPeriod: number;
+    reclaimedYesterday: IYesterdayReclaim | null;
     intervals: IQuoteIntervals; // 5-minute bars keyed by New York time
     premarketKeys: string[]; // today's pre-market bar keys, sorted
     bellKey: string;
@@ -35,8 +37,9 @@ export const buildRaceFacts = (input: IRaceFactsInput): IRaceFacts => {
 
     const hourlyCandles = buildHourlyCandles(input, toDirectional);
     const currentCandle = _.last(hourlyCandles) as IHourlyCandleFacts;
-    const smaWindow = _.takeRight([...input.priorHourlyCloses, ...completedCloses(hourlyCandles.slice(0, -1)), currentCandle.close], input.smaPeriod);
-    const sma = _.mean(smaWindow);
+    const closesSoFar = [...input.priorHourlyCloses, ...completedCloses(hourlyCandles.slice(0, -1)), currentCandle.close];
+    const sma = _.mean(_.takeRight(closesSoFar, input.smaPeriod));
+    const reclaimSma = closesSoFar.length >= input.reclaimSmaPeriod ? _.mean(_.takeRight(closesSoFar, input.reclaimSmaPeriod)) : null;
     const smaCushionPct = toDirectional(pctFrom(price, sma));
     const atrPct = input.atrPct > 0 ? input.atrPct : RaceRulesConfig.fallbackAtrPct;
 
@@ -65,6 +68,10 @@ export const buildRaceFacts = (input: IRaceFactsInput): IRaceFacts => {
         smaStretchAtr: smaCushionPct / atrPct,
         hourlyCandles,
         smaTouches: hourlyCandles.filter((candle) => candle.wickVsSmaPct < 0).length,
+
+        reclaimSma,
+        reclaimSmaCushionPct: reclaimSma ? toDirectional(pctFrom(openingBar ? openingBar.open : price, reclaimSma)) : null,
+        reclaimedYesterday: input.reclaimedYesterday,
 
         openingPrice: openingBar ? openingBar.open : null,
         openingGapPct: openingBar ? toDirectional(pctFrom(openingBar.open, previousClose)) : null,
@@ -105,6 +112,51 @@ const buildHourlyCandles = (input: IRaceFactsInput, toDirectional: (value: numbe
 };
 
 const completedCloses = (candles: IHourlyCandleFacts[]) => candles.filter((candle) => candle.complete).map((candle) => candle.close);
+
+export interface IPriorHourlyCandle {
+    key: string; // New York 'YYYY-MM-DD HH:mm:ss', candle start
+    high: number;
+    low: number;
+    close: number;
+}
+
+export interface IYesterdayReclaim {
+    openedAt: number; // yesterday's regular-session open
+    smaAtOpen: number;
+    reachedAtHour: string; // "13" for the 13:00 candle that touched the SMA
+}
+
+// Yesterday opened on the wrong side of the hourly SMA and climbed (long) / fell (short) back to it during the
+// regular session. The SMA at the open is the line entering the 09:00 candle; a candle "reaches" it when its
+// high (long) / low (short) touches the SMA including that candle.
+export const yesterdayReclaim = (
+    candles: IPriorHourlyCandle[],
+    yesterday: string,
+    yesterdayOpen: number | null,
+    period: number,
+    direction: RaceDirection
+): IYesterdayReclaim | null => {
+    const openIndex = candles.findIndex((candle) => candle.key >= `${yesterday} 09:00:00`);
+    if (!yesterdayOpen || openIndex < period || !candles[openIndex].key.startsWith(yesterday)) {
+        return null;
+    }
+    const smaAt = (endIndex: number) => _.meanBy(candles.slice(endIndex - period + 1, endIndex + 1), 'close');
+    const isLong = direction === 'long';
+
+    const smaAtOpen = smaAt(openIndex - 1);
+    if (isLong ? yesterdayOpen >= smaAtOpen : yesterdayOpen <= smaAtOpen) {
+        return null;
+    }
+
+    for (let index = openIndex; index < candles.length && candles[index].key < `${yesterday} 16:00:00`; index++) {
+        const candle = candles[index];
+        const sma = smaAt(index);
+        if (isLong ? candle.high >= sma : candle.low <= sma) {
+            return { openedAt: yesterdayOpen, smaAtOpen, reachedAtHour: candle.key.substring(11, 13) };
+        }
+    }
+    return null;
+};
 
 export interface IDailySmas {
     fastSma: number;

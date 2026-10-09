@@ -1,19 +1,32 @@
 // The pre-market race rule book. To add a rule: write it in the matching file and add it to that file's list.
 //   elimination-rules   → out for the day (permanent)
-//   qualification-rules → waiting on the side (temporary)
+//   qualification-rules → listed aside (temporary)
 //   scoring-rules       → factors multiplied into the 0-100 score that ranks the race
-//   warning-rules       → flags shown to the trader
+//   warning-rules       → risks shown to the trader
+//   highlight-rules     → good setups shown to the trader
 import { eliminationRules } from './elimination-rules';
 import { qualificationRules } from './qualification-rules';
 import { scoringRules } from './scoring-rules';
 import { warningRules } from './warning-rules';
+import { highlightRules } from './highlight-rules';
 import { IRuleDescription } from './race-rule.types';
 
 export { eliminationRules } from './elimination-rules';
 export { qualificationRules } from './qualification-rules';
 export { scoringRules, scoreRacer } from './scoring-rules';
 export { warningRules } from './warning-rules';
-export { buildRaceFacts, averageTrueRangePct, dailySmas, dailyTrend, IDailySmas, IDailyTrend } from './race-facts';
+export { highlightRules } from './highlight-rules';
+export {
+    buildRaceFacts,
+    averageTrueRangePct,
+    dailySmas,
+    dailyTrend,
+    yesterdayReclaim,
+    IDailySmas,
+    IDailyTrend,
+    IPriorHourlyCandle,
+    IYesterdayReclaim,
+} from './race-facts';
 export * from './race-rule.types';
 
 export const describeRuleBook = (): IRuleDescription[] => [
@@ -21,4 +34,5 @@ export const describeRuleBook = (): IRuleDescription[] => [
     ...qualificationRules.map((rule) => ({ kind: 'qualification' as const, title: rule.title, description: rule.describe() })),
     ...scoringRules.map((rule) => ({ kind: 'scoring' as const, title: rule.title, description: rule.describe() })),
     ...warningRules.map((rule) => ({ kind: 'warning' as const, title: rule.title, description: rule.describe() })),
+    ...highlightRules.map((rule) => ({ kind: 'highlight' as const, title: rule.title, description: rule.describe() })),
 ];

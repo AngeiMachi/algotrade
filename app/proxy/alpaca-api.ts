@@ -189,12 +189,13 @@ export const getQuoteHourlyHistory = async (quote: string): Promise<ITDAmeritrad
 };
 
 // Round-the-clock hourly candles that end where tradeDate's premarket begins, matching a 24-hour broker chart.
-export const getQuote24HourHourlyHistory = async (quote: string, tradeDate: string): Promise<ITDAmeritradePriceHistory> => {
+// ~24 candles per weekday, so 21 calendar days comfortably covers a 200-hour SMA.
+export const getQuote24HourHourlyHistory = async (quote: string, tradeDate: string, calendarDaysBack: number = 21): Promise<ITDAmeritradePriceHistory> => {
     try {
         const symbol = quote.toUpperCase();
         const query = {
             timeframe: '1Hour',
-            start: moment.tz(tradeDate, NEW_YORK).subtract(7, 'days').toISOString(),
+            start: moment.tz(tradeDate, NEW_YORK).subtract(calendarDaysBack, 'days').toISOString(),
             end: nyTime(tradeDate, EXTENDED_SESSION_START).subtract(1, 'second').toISOString(),
         };
 

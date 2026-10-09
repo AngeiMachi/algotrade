@@ -15,8 +15,13 @@ import {
     buildRaceFacts,
     dailySmas,
     dailyTrend,
+    highlightRules,
     IDailySmas,
     IDailyTrend,
+    IPriorHourlyCandle,
+    IRaceHighlight,
+    IYesterdayReclaim,
+    yesterdayReclaim,
     describeRuleBook,
     eliminationRules,
     IElimination,
@@ -43,6 +48,7 @@ export interface IRaceEntry {
     score: number | null;
     scoreBreakdown: IScoreFactor[];
     warnings: IRaceWarning[];
+    highlights: IRaceHighlight[];
     price: number | null;
     previousClose: number | null;
     gapPct: number | null;
@@ -87,6 +93,7 @@ interface IRacer {
     atrPct: number;
     dailySmas: IDailySmas | null;
     priorHourlyCloses: number[];
+    reclaimedYesterday: IYesterdayReclaim | null;
     intervals: IQuoteIntervals;
     elimination: IElimination | null;
     lapsInTopThree: number;
@@ -94,7 +101,7 @@ interface IRacer {
 }
 
 const racers: { [key: string]: IRacer } = {};
-const hourlyHistoryRequests: { [key: string]: Promise<number[]> } = {};
+const hourlyHistoryRequests: { [key: string]: Promise<IPriorHourlyCandle[]> } = {};
 let snapshot: IRaceSnapshot | null = null;
 let recomputeTimer: NodeJS.Timeout | null = null;
 let currentRaceCandle = '';
@@ -107,9 +114,15 @@ export const registerQuote = async (quote: string, intervals: IQuoteIntervals, m
         return;
     }
 
-    let priorHourlyCloses: number[];
+    const averageDailyVolume = _.meanBy(_.takeRight(metadata.fullYearDailyHistory || [], RaceRulesConfig.averageVolumeDays), 'volume') || 0;
+    if (averageDailyVolume < RaceRulesConfig.minAverageDailyVolume) {
+        logger.info(`premarket-race dropping ${quote}: averages ${Math.round(averageDailyVolume).toLocaleString()} shares a day`);
+        return;
+    }
+
+    let priorHourlyCandles: IPriorHourlyCandle[];
     try {
-        priorHourlyCloses = await loadPriorHourlyCloses(quote);
+        priorHourlyCandles = await loadPriorHourlyCandles(quote);
     } catch (err) {
         logger.error(`premarket-race could not load hourly history for ${quote}, leaving it out of the race: ${err}`);
         return;
@@ -122,7 +135,16 @@ export const registerQuote = async (quote: string, intervals: IQuoteIntervals, m
         previousLow: metadata.previousDay?.low ?? null,
         atrPct: averageTrueRangePct(metadata.fullYearDailyHistory || [], RaceRulesConfig.atrPeriodDays),
         dailySmas: dailySmas(metadata.fullYearDailyHistory || [], RaceRulesConfig.trend.fastSmaDays, RaceRulesConfig.trend.slowSmaDays),
-        priorHourlyCloses,
+        priorHourlyCloses: priorHourlyCandles.map((candle) => candle.close),
+        reclaimedYesterday: yesterdayReclaim(
+            priorHourlyCandles,
+            metadata.previousDay?.timeNewYork
+                ? moment(metadata.previousDay.timeNewYork).format('YYYY-MM-DD')
+                : (quoteUtils.getPreviousTradingDate(quoteUtils.getCurrentTradingDate()) as string),
+            metadata.previousDay?.open ?? null,
+            RaceRulesConfig.reclaim.smaPeriod,
+            globalConfig.PremarketRace.direction
+        ),
         intervals,
         elimination: null,
         lapsInTopThree: 0,
@@ -133,13 +155,20 @@ export const registerQuote = async (quote: string, intervals: IQuoteIntervals, m
 
 // Requesting every symbol at once lets the Alpaca client merge them into a few multi-symbol calls.
 export const preloadHourlyHistory = async (quotes: string[]) => {
-    await Promise.all(quotes.map((quote) => loadPriorHourlyCloses(quote).catch(() => undefined)));
+    await Promise.all(quotes.map((quote) => loadPriorHourlyCandles(quote).catch(() => undefined)));
 };
 
-const loadPriorHourlyCloses = (quote: string): Promise<number[]> => {
+const loadPriorHourlyCandles = (quote: string): Promise<IPriorHourlyCandle[]> => {
     if (!hourlyHistoryRequests[quote]) {
         hourlyHistoryRequests[quote] = AlpacaAPI.getQuote24HourHourlyHistory(quote, quoteUtils.getCurrentTradingDate())
-            .then((history) => history.candles.map((candle) => candle.close))
+            .then((history) =>
+                history.candles.map((candle) => ({
+                    key: moment(candle.datetime).tz(NEW_YORK).format('YYYY-MM-DD HH:mm:ss'),
+                    high: candle.high,
+                    low: candle.low,
+                    close: candle.close,
+                }))
+            )
             .catch((err) => {
                 delete hourlyHistoryRequests[quote];
                 throw err;
@@ -291,6 +320,8 @@ const evaluateRacer = (racer: IRacer, premarketKeys: string[], bellKey: string, 
         previousLow: racer.previousLow,
         atrPct: racer.atrPct,
         priorHourlyCloses: racer.priorHourlyCloses,
+        reclaimSmaPeriod: RaceRulesConfig.reclaim.smaPeriod,
+        reclaimedYesterday: racer.reclaimedYesterday,
         intervals: racer.intervals,
         premarketKeys,
         bellKey,
@@ -336,6 +367,7 @@ const evaluateRacer = (racer: IRacer, premarketKeys: string[], bellKey: string, 
     entry.score = score;
     entry.scoreBreakdown = breakdown;
     entry.warnings = warningRules.map((rule) => rule.check(facts)).filter((warning): warning is IRaceWarning => warning !== null);
+    entry.highlights = highlightRules.map((rule) => rule.check(facts)).filter((highlight): highlight is IRaceHighlight => highlight !== null);
     entry.status = entry.warnings.some((warning) => warning.level === 'danger') ? 'at-risk' : 'racing';
     entry.reason = entry.warnings.map((warning) => warning.message).join(' · ');
     return entry;
@@ -350,6 +382,7 @@ const emptyEntry = (racer: IRacer): IRaceEntry => ({
     score: null,
     scoreBreakdown: [],
     warnings: [],
+    highlights: [],
     price: null,
     previousClose: racer.previousClose,
     gapPct: null,

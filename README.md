@@ -1,19 +1,15 @@
-to make this work i twicked the tdameritrade api lib locally 
+# algotrade — Opening Bell Race
 
-go to getAuthentication.js
+Pre-market stock race: ranks the watchlist from 04:00 New York until the bell, using Alpaca market data,
+and shows it live in the browser.
 
-Define a limiter in the head of the page 
+- [Strategy, rules and scoring](docs/premarket-race.md)
+- [Running, simulation, market data and code map](docs/running-and-data.md)
 
-const limiter = new Bottleneck({
-    reservoir: 1, // initial value
-    reservoirRefreshAmount: 1,
-    reservoirRefreshInterval: 1800*500,
-    maxConcurrent: 1,
-    minTime: 0,
-});
+Quick start:
 
-change line in  222getAuthentication function to :
-
-return limiter.schedule(() => refreshAuthentication(authConfig, config.verbose));
-
-this will preven reauthentication every call 
+```
+npm run dev                     # engine on :11111 (needs ALPACA_KEY_ID / ALPACA_SECRET_KEY in .env)
+cd trade && npm start           # board on http://localhost:3000
+npx ts-node scripts/mock-run.ts 2026-10-06 3 07:30   # replay a past day instead of live
+```

@@ -93,7 +93,7 @@ export const QuotesConfig = {
                 "DKNG" ,"SNOW","SPOT","TEAM","CVX","MDB","ENPH","SEDG","LMND","ON","DAL","UAL","LUV",
                 "ABNB","DOCU","UBER","IBM","TGT","OXY","GM","CE","HON","HOOD","PDD","TOST","HPE","AEHR","SE",
                 "UPS","U","RBLX","CMG","UNH","ETSY","DASH","PLTR","WDC","IONQ","AVGO","FSLR","CCL","AXSM","PYPL","CRWD","PANW","FDX","MCD","GS","JPM","MS","BAC","KEY","ROIV","NU",
-                "HD","KO","WMT","DIS","MU","TSM","QCOM","BNTX"  
+                "HD","KO","WMT","DIS","MU","TSM","QCOM"  
             ],
         },
     }
