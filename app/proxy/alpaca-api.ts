@@ -209,11 +209,41 @@ export const getQuote24HourHourlyHistory = async (quote: string, tradeDate: stri
             't'
         ).map(toCandle);
 
-        return toPriceHistory(symbol, candles);
+        const tradingDates = new Set([...sipBars.map(nyDate), tradeDate]);
+        return toPriceHistory(symbol, fillEmptyHours(candles, tradingDates));
     } catch (err) {
         logger.error('getQuote24HourHourlyHistory failed ' + err);
         throw err;
     }
+};
+
+// The broker chart has a candle for every hour of the 24-hour session, carrying the last close through hours with
+// no trades (common overnight for thinner stocks). Without them a 200-hour SMA reaches days further back and drifts
+// from the chart. The 20:00-04:00 overnight belongs to the next trading day, so weekends and holidays stay empty.
+const fillEmptyHours = (candles: ITDAmeritradeIntervalData[], tradingDates: Set<string>): ITDAmeritradeIntervalData[] => {
+    if (candles.length === 0) {
+        return candles;
+    }
+    const byHour = new Map(candles.map((candle) => [candle.datetime, candle] as [number, ITDAmeritradeIntervalData]));
+    const filled: ITDAmeritradeIntervalData[] = [];
+    let previous = candles[0];
+
+    for (let hour = moment(candles[0].datetime); !hour.isAfter(moment(candles[candles.length - 1].datetime)); hour.add(1, 'hour')) {
+        const candle = byHour.get(hour.valueOf());
+        if (candle) {
+            filled.push(candle);
+            previous = candle;
+        } else if (tradingDates.has(sessionDateOf(hour))) {
+            const { close } = previous;
+            filled.push({ open: close, high: close, low: close, close, volume: 0, datetime: hour.valueOf() });
+        }
+    }
+    return filled;
+};
+
+const sessionDateOf = (hour: moment.Moment) => {
+    const newYork = hour.clone().tz(NEW_YORK);
+    return (newYork.format('HH:mm') >= EXTENDED_SESSION_END ? newYork.add(1, 'day') : newYork).format('YYYY-MM-DD');
 };
 
 export const getMarketHours = async (tradeDate: string): Promise<any> => {

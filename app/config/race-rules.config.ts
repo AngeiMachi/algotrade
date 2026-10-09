@@ -66,7 +66,9 @@ export const RaceRulesConfig = {
 
     warnings: {
         // Distance from the 20 SMA, in daily ATRs, that triggers the "stretched" warnings.
-        stretchedAtr: 1,
-        extremeAtr: 1.5,
+        // Calibrated on the trader's calls: ALAB Oct 6 at 0.48 ATR was "not extended";
+        // XOM 0.61, OXY 0.64 and PLTR 0.74 on Oct 8 were.
+        stretchedAtr: 0.55,
+        extremeAtr: 1,
     },
 };

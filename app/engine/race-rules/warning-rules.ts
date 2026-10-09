@@ -18,7 +18,7 @@ export const stretchedFromSma: IWarningRule = {
                 id: 'stretched-from-sma',
                 level: 'alert',
                 label: 'Very stretched',
-                message: `Very stretched: ${formatPct(facts.smaCushionPct)} from the 20 SMA (${facts.smaStretchAtr.toFixed(1)} ATR) — high pullback risk`,
+                message: `Very stretched: ${formatPct(facts.smaCushionPct)} from the 20 SMA (${facts.smaStretchAtr.toFixed(2)} ATR) — high pullback risk`,
             };
         }
         if (facts.smaStretchAtr >= stretchedAtr) {
@@ -26,7 +26,7 @@ export const stretchedFromSma: IWarningRule = {
                 id: 'stretched-from-sma',
                 level: 'caution',
                 label: 'Stretched',
-                message: `Stretched: ${formatPct(facts.smaCushionPct)} from the 20 SMA (${facts.smaStretchAtr.toFixed(1)} ATR) — pullback risk`,
+                message: `Stretched: ${formatPct(facts.smaCushionPct)} from the 20 SMA (${facts.smaStretchAtr.toFixed(2)} ATR) — pullback risk`,
             };
         }
         return null;

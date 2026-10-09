@@ -99,7 +99,9 @@ overnight session the stdev collapses, so a normal breakout looked "3σ stretche
 Warnings don't change the score (the score already prices the risk); they tell the trader what to look at.
 Levels: `caution` (amber), `alert` (orange, row tinted), `danger` (marks the stock `at-risk`).
 
-- **Stretched from the 20 SMA** — `caution` at ≥ 1 ATR ("Stretched"), `alert` at ≥ 1.5 ATR ("Very stretched").
+- **Stretched from the 20 SMA** — `caution` at ≥ 0.55 ATR ("Stretched"), `alert` at ≥ 1 ATR ("Very stretched").
+  Calibrated on the trader's calls: ALAB Oct 6 at 0.48 ATR was not extended; XOM 0.61, OXY 0.64 and PLTR 0.74
+  on Oct 8 were.
   Shown as a badge next to the ticker and as a tinted "Above 20 SMA" cell with the ATR distance.
 - **Trading through the 20 SMA** — `danger` while below the SMA inside an open hourly candle.
 
@@ -120,6 +122,15 @@ the ticker; the tooltip explains the numbers.
 The hourly 20 SMA is computed on **24-hour hourly candles**: SIP bars for 04:00–20:00 plus the `boats` feed
 (Blue Ocean ATS overnight session) for 20:00–04:00. That is what the trader's broker chart shows (its
 Bollinger "MidLine" is the 20 SMA). Regular-hours-only or extended-only candles give a different SMA.
+
+**Empty hours are filled.** The broker draws a candle for every hour of a trading session, even when nothing
+traded (common overnight); the empty candle repeats the previous close. Skipping those hours makes the SMA
+window reach further back in time, which is how TEAM was wrongly flagged "MA reclaimed" (its 200 SMA came out
+above its Oct 5 open). The overnight 20:00–04:00 belongs to the next trading day, so weekends and holidays
+stay empty. With filling, TEAM's 20 SMA is 196.62 vs 196.64 on the chart; the 200 SMA is ~0.4% off (the broker
+likely has overnight trades Alpaca doesn't), so borderline reclaims (e.g. NOW, 0.07% away) can still differ.
+
+The trader's chart shows **Israel time** (New York + 7h): the "16:00" candle there is the 09:00 New York candle.
 
 During the race, each new pre-market hour joins the SMA window once it completes; the current hour uses its
 latest price. After the bell the last pre-market hour counts as complete.

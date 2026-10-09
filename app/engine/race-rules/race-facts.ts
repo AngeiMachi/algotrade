@@ -80,19 +80,31 @@ export const buildRaceFacts = (input: IRaceFactsInput): IRaceFacts => {
 };
 
 // Today's pre-market 5-minute bars grouped into hourly candles, each with the 20 SMA as it stood at that candle.
+// Hours without trades carry the previous close, like the broker chart (see fillEmptyHours in alpaca-api).
 // After the bell the last pre-market hour counts as closed, even though its hourly candle runs past 09:30.
 const buildHourlyCandles = (input: IRaceFactsInput, toDirectional: (value: number) => number): IHourlyCandleFacts[] => {
     const { intervals, premarketKeys, raceEnd, isAfterBell, smaPeriod, direction } = input;
     const keysByHour = _.groupBy(premarketKeys, (key) => key.substring(11, 13));
     const closes = [...input.priorHourlyCloses];
+    const date = premarketKeys[0].substring(0, 10);
+    const firstHour = Math.min(Number(premarketKeys[0].substring(11, 13)), 4);
+    const lastHour = Math.min(Number(input.bellKey.substring(11, 13)), raceEnd.clone().subtract(1, 'minute').tz(NEW_YORK).hour());
+    const hours = _.range(firstHour, lastHour + 1).map((hour) => String(hour).padStart(2, '0'));
+    let previousClose = _.last(closes) ?? intervals[premarketKeys[0]].open;
 
-    return Object.keys(keysByHour)
-        .sort()
+    return hours
+        .filter((hour) => keysByHour[hour] || closes.length > 0)
         .map((hour) => {
-            const keys = keysByHour[hour];
-            const close = intervals[_.last(keys) as string].close;
-            const wick = direction === 'long' ? Math.min(...keys.map((key) => intervals[key].low)) : Math.max(...keys.map((key) => intervals[key].high));
-            const hourEnd = moment.tz(`${keys[0].substring(0, 10)} ${hour}:00:00`, 'YYYY-MM-DD HH:mm:ss', NEW_YORK).add(1, 'hour');
+            const keys = keysByHour[hour] || [];
+            const close = keys.length > 0 ? intervals[_.last(keys) as string].close : previousClose;
+            const wick =
+                keys.length === 0
+                    ? close
+                    : direction === 'long'
+                    ? Math.min(...keys.map((key) => intervals[key].low))
+                    : Math.max(...keys.map((key) => intervals[key].high));
+            previousClose = close;
+            const hourEnd = moment.tz(`${date} ${hour}:00:00`, 'YYYY-MM-DD HH:mm:ss', NEW_YORK).add(1, 'hour');
             const complete = isAfterBell || !hourEnd.isAfter(raceEnd);
 
             const sma = _.mean(_.takeRight([...closes, close], smaPeriod));
