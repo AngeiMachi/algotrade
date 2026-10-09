@@ -52,6 +52,11 @@ facts; they never touch bars. All percentages are "directional": positive = good
   below = out.")
 - **Opened inside yesterday's range.** At the bell, the open must be **above yesterday's high** (long).
   Opening at or below it = out. This replaced "opened below yesterday's close", which it covers.
+  **Exception — reclaimers:** a stock with "MA reclaimed" (reclaimed the hourly 200 SMA on the open) may stay
+  even though it opened below yesterday's high, as long as every other rule passes. It carries a red
+  `danger` warning, "Opens below" ("Below high" before the bell), from `belowPreviousExtreme` in
+  `warning-rules.ts`. The same exception applies to the pre-market "Trading past yesterday's high" rule.
+  Only `tradingThroughSma` marks a stock at risk; other `danger` warnings just show red.
 
 ### 2. Qualification — temporary (`qualification-rules.ts`)
 
@@ -111,11 +116,14 @@ Good setups worth pointing out. Like warnings, they don't change the score. Show
 the ticker; the tooltip explains the numbers.
 
 - **MA reclaimed** — yesterday the stock opened below the hourly 200 SMA (24-hour candles, the orange line on
-  the trader's chart) and climbed to it during the regular session; today it trades above it (after the bell:
-  opened above it). Details: "opened below" compares yesterday's daily open with the SMA entering the 09:00
-  candle; "climbed to it" means a 09:00–15:00 hourly candle's high reached the SMA including that candle.
-  Period in `RaceRulesConfig.reclaim.smaPeriod`. Reference case: ALAB, Oct 5 → Oct 6.
-  The 24-hour hourly history is loaded 21 calendar days back so 200 candles are available.
+  the trader's chart); today it opens above it (before the bell: trades above it). Trader's definition: reclaiming
+  is about *opening* above it the next day, not touching it — whether yesterday crossed it during the session or
+  stayed below all day doesn't matter. "Opened below" compares yesterday's open with the SMA entering the 09:00
+  candle. Period in `RaceRulesConfig.reclaim.smaPeriod`.
+  **Both SMA readings must agree** (see below): yesterday's open below the lower reading, today's price above the
+  higher one. Reference cases: ALAB Oct 6 yes; TEAM Oct 6 no (opened above the line on Oct 5); EBAY Oct 7 no
+  (opened 107.76, under the chart's 108.3 — the filled reading alone said 106.8 and wrongly flagged it).
+  The hourly history is loaded 45 calendar days back so 200 traded-only candles are available.
 - **Trending volume** — pre-market volume so far is ≥ 1.5× (RVOL; 1.5 rather than 2 so ALAB's busy Oct 6 at 1.6× counts) the average of the last 10 sessions *up to the
   same 5-minute candle* (an 08:40 reading is compared with past 08:40 readings, because pre-market volume piles
   up toward the bell). Ignored before 05:00, when the numbers are too small. Only given to stocks that also pass
@@ -135,6 +143,18 @@ window reach further back in time, which is how TEAM was wrongly flagged "MA rec
 above its Oct 5 open). The overnight 20:00–04:00 belongs to the next trading day, so weekends and holidays
 stay empty. With filling, TEAM's 20 SMA is 196.62 vs 196.64 on the chart; the 200 SMA is ~0.4% off (the broker
 likely has overnight trades Alpaca doesn't), so borderline reclaims (e.g. NOW, 0.07% away) can still differ.
+The filling runs right up to the race (04:00), so a stock with no overnight trades still gets those hours.
+
+**The 200 SMA can't be matched exactly.** The broker seems to skip hours with no trades, but its overnight data is
+richer than Alpaca's `boats` feed. So the chart's 200 SMA lands between two readings of our data:
+
+| Stock / time | Chart | Empty hours filled | Traded hours only |
+|---|---|---|---|
+| TEAM Oct 6 13:00 | 187.23 | 186.40 | 188.94 |
+| EBAY Oct 7 02:00 | 108.29 | 106.88 | 108.21 |
+
+The race keeps the filled candles for the 20 SMA (it matches the chart: TEAM 196.62 vs 196.64, EBAY 106.78 vs
+106.84). "MA reclaimed" uses both 200 SMA readings and only counts a side of the line when both agree.
 
 The trader's chart shows **Israel time** (New York + 7h): the "16:00" candle there is the 09:00 New York candle.
 
@@ -155,6 +175,8 @@ latest price. After the bell the last pre-market hour counts as complete.
 - **Uptrend toggle** — daily trend filter. A stock is in an uptrend if the daily 10 SMA > daily 20 SMA
   **or** today's price is above the daily 20 SMA (the open, after the bell). SMAs use closes before today.
   Periods in `RaceRulesConfig.trend`. Saved in localStorage.
+- **Trending volume / MA reclaimed toggles** — show only stocks with that badge. Toggles combine (a stock must
+  match every toggle that is on); each shows "matching of total". The list lives in `toggleFilters` in `RaceScreen.jsx`.
 - **All / Clean / Touched** — by how the stock held the hourly SMA. Saved in localStorage.
 - **Dismiss (×)** — trader sets a stock aside for the day; it moves to "Dismissed by you" with Return /
   Return all. Saved per trade date in localStorage.

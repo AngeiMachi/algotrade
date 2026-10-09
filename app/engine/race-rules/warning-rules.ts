@@ -3,7 +3,8 @@ import * as globalConfig from '../../config/globals.config';
 import { IWarningRule } from './race-rule.types';
 import { formatPct, raceWords } from './race-words';
 
-// Warnings do not change the score; they tell the trader what to look at. "danger" marks the stock at risk.
+// Warnings do not change the score; they tell the trader what to look at. "danger" shows red;
+// tradingThroughSma also marks the stock at risk.
 
 const { stretchedAtr, extremeAtr } = RaceRulesConfig.warnings;
 
@@ -49,4 +50,27 @@ export const tradingThroughSma: IWarningRule = {
             : null,
 };
 
-export const warningRules: IWarningRule[] = [stretchedFromSma, tradingThroughSma];
+// Only reclaimers can be in the race on the bad side of yesterday's high (see openedInsidePreviousRange).
+export const belowPreviousExtreme: IWarningRule = {
+    id: 'below-previous-extreme',
+    title: "Below yesterday's high",
+    describe: () => {
+        const words = raceWords(globalConfig.PremarketRace.direction);
+        return `A stock that reclaimed the hourly ${RaceRulesConfig.reclaim.smaPeriod} SMA may race while ${words.badSide} ${words.previousExtreme}; it is marked "Opens below" (before the bell: "Below high").`;
+    },
+    check: (facts) => {
+        const pastPct = facts.isAfterBell ? facts.openingVsPreviousExtremePct : facts.previousExtremeCushionPct;
+        if (pastPct === null || pastPct > 0 || facts.previousExtreme === null) {
+            return null;
+        }
+        const words = raceWords(facts.direction);
+        return {
+            id: 'below-previous-extreme',
+            level: 'danger',
+            label: facts.isAfterBell ? 'Opens below' : 'Below high',
+            message: `${facts.isAfterBell ? 'Opened' : 'Trading'} ${formatPct(pastPct)} vs ${words.previousExtreme} (${facts.previousExtreme.toFixed(2)}) — in the race only because it reclaimed the hourly ${RaceRulesConfig.reclaim.smaPeriod} SMA`,
+        };
+    },
+};
+
+export const warningRules: IWarningRule[] = [stretchedFromSma, tradingThroughSma, belowPreviousExtreme];

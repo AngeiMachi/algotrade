@@ -190,8 +190,8 @@ export const getQuoteHourlyHistory = async (quote: string): Promise<ITDAmeritrad
 };
 
 // Round-the-clock hourly candles that end where tradeDate's premarket begins, matching a 24-hour broker chart.
-// ~24 candles per weekday, so 21 calendar days comfortably covers a 200-hour SMA.
-export const getQuote24HourHourlyHistory = async (quote: string, tradeDate: string, calendarDaysBack: number = 21): Promise<ITDAmeritradePriceHistory> => {
+// 45 calendar days so a 200-hour SMA fits even when counting only hours that traded (~10 a day for some stocks).
+export const getQuote24HourHourlyHistory = async (quote: string, tradeDate: string, calendarDaysBack: number = 45): Promise<ITDAmeritradePriceHistory> => {
     try {
         const symbol = quote.toUpperCase();
         const query = {
@@ -211,7 +211,7 @@ export const getQuote24HourHourlyHistory = async (quote: string, tradeDate: stri
         ).map(toCandle);
 
         const tradingDates = new Set([...sipBars.map(nyDate), tradeDate]);
-        return toPriceHistory(symbol, fillEmptyHours(candles, tradingDates));
+        return toPriceHistory(symbol, fillEmptyHours(candles, tradingDates, nyTime(tradeDate, EXTENDED_SESSION_START)));
     } catch (err) {
         logger.error('getQuote24HourHourlyHistory failed ' + err);
         throw err;
@@ -245,7 +245,8 @@ export const getPremarketVolumeHistory = async (quote: string, tradeDate: string
 // The broker chart has a candle for every hour of the 24-hour session, carrying the last close through hours with
 // no trades (common overnight for thinner stocks). Without them a 200-hour SMA reaches days further back and drifts
 // from the chart. The 20:00-04:00 overnight belongs to the next trading day, so weekends and holidays stay empty.
-const fillEmptyHours = (candles: ITDAmeritradeIntervalData[], tradingDates: Set<string>): ITDAmeritradeIntervalData[] => {
+// Fills up to (not including) `until`, so a quiet overnight right before the race still gets its candles.
+const fillEmptyHours = (candles: ITDAmeritradeIntervalData[], tradingDates: Set<string>, until: moment.Moment): ITDAmeritradeIntervalData[] => {
     if (candles.length === 0) {
         return candles;
     }
@@ -253,7 +254,7 @@ const fillEmptyHours = (candles: ITDAmeritradeIntervalData[], tradingDates: Set<
     const filled: ITDAmeritradeIntervalData[] = [];
     let previous = candles[0];
 
-    for (let hour = moment(candles[0].datetime); !hour.isAfter(moment(candles[candles.length - 1].datetime)); hour.add(1, 'hour')) {
+    for (let hour = moment(candles[0].datetime); hour.isBefore(until); hour.add(1, 'hour')) {
         const candle = byHour.get(hour.valueOf());
         if (candle) {
             filled.push(candle);

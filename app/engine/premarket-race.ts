@@ -21,8 +21,8 @@ import {
     IPremarketVolumeDay,
     IPriorHourlyCandle,
     IRaceHighlight,
-    IYesterdayReclaim,
-    yesterdayReclaim,
+    IYesterdayBelowSma,
+    yesterdayOpenedBelowSma,
     describeRuleBook,
     eliminationRules,
     IElimination,
@@ -31,6 +31,7 @@ import {
     IScoreFactor,
     qualificationRules,
     scoreRacer,
+    tradingThroughSma,
     warningRules,
 } from './race-rules';
 
@@ -95,7 +96,8 @@ interface IRacer {
     atrPct: number;
     dailySmas: IDailySmas | null;
     priorHourlyCloses: number[];
-    reclaimedYesterday: IYesterdayReclaim | null;
+    priorTradedHourlyCloses: number[];
+    yesterdayBelowReclaimSma: IYesterdayBelowSma | null;
     premarketVolumeHistory: IPremarketVolumeDay[];
     intervals: IQuoteIntervals;
     elimination: IElimination | null;
@@ -144,7 +146,8 @@ export const registerQuote = async (quote: string, intervals: IQuoteIntervals, m
         atrPct: averageTrueRangePct(metadata.fullYearDailyHistory || [], RaceRulesConfig.atrPeriodDays),
         dailySmas: dailySmas(metadata.fullYearDailyHistory || [], RaceRulesConfig.trend.fastSmaDays, RaceRulesConfig.trend.slowSmaDays),
         priorHourlyCloses: priorHourlyCandles.map((candle) => candle.close),
-        reclaimedYesterday: yesterdayReclaim(
+        priorTradedHourlyCloses: priorHourlyCandles.filter((candle) => candle.traded).map((candle) => candle.close),
+        yesterdayBelowReclaimSma: yesterdayOpenedBelowSma(
             priorHourlyCandles,
             metadata.previousDay?.timeNewYork
                 ? moment(metadata.previousDay.timeNewYork).format('YYYY-MM-DD')
@@ -193,6 +196,7 @@ const loadPriorHourlyCandles = (quote: string): Promise<IPriorHourlyCandle[]> =>
                     high: candle.high,
                     low: candle.low,
                     close: candle.close,
+                    traded: candle.volume > 0,
                 }))
             )
             .catch((err) => {
@@ -346,8 +350,9 @@ const evaluateRacer = (racer: IRacer, premarketKeys: string[], bellKey: string, 
         previousLow: racer.previousLow,
         atrPct: racer.atrPct,
         priorHourlyCloses: racer.priorHourlyCloses,
+        priorTradedHourlyCloses: racer.priorTradedHourlyCloses,
         reclaimSmaPeriod: RaceRulesConfig.reclaim.smaPeriod,
-        reclaimedYesterday: racer.reclaimedYesterday,
+        yesterdayBelowReclaimSma: racer.yesterdayBelowReclaimSma,
         premarketVolumeHistory: racer.premarketVolumeHistory,
         intervals: racer.intervals,
         premarketKeys,
@@ -396,7 +401,7 @@ const evaluateRacer = (racer: IRacer, premarketKeys: string[], bellKey: string, 
     entry.scoreBreakdown = breakdown;
     entry.warnings = warningRules.map((rule) => rule.check(facts)).filter((warning): warning is IRaceWarning => warning !== null);
     entry.highlights = highlightRules.map((rule) => rule.check(facts)).filter((highlight): highlight is IRaceHighlight => highlight !== null);
-    entry.status = entry.warnings.some((warning) => warning.level === 'danger') ? 'at-risk' : 'racing';
+    entry.status = entry.warnings.some((warning) => warning.id === tradingThroughSma.id) ? 'at-risk' : 'racing';
     entry.reason = entry.warnings.map((warning) => warning.message).join(' · ');
     return entry;
 };

@@ -14,18 +14,18 @@ import { IRuleDescription } from './race-rule.types';
 export { eliminationRules } from './elimination-rules';
 export { qualificationRules } from './qualification-rules';
 export { scoringRules, scoreRacer } from './scoring-rules';
-export { warningRules } from './warning-rules';
+export { warningRules, tradingThroughSma } from './warning-rules';
 export { highlightRules } from './highlight-rules';
 export {
     buildRaceFacts,
     averageTrueRangePct,
     dailySmas,
     dailyTrend,
-    yesterdayReclaim,
+    yesterdayOpenedBelowSma,
     IDailySmas,
     IDailyTrend,
     IPriorHourlyCandle,
-    IYesterdayReclaim,
+    IYesterdayBelowSma,
 } from './race-facts';
 export * from './race-rule.types';
 

@@ -26,15 +26,16 @@ export const hourlyCloseThroughSma: IEliminationRule = {
 };
 
 // Opening past yesterday's high (long) also means opening past yesterday's close, so this covers both.
+// Exception: a stock that reclaims the hourly 200 SMA on the open stays (with the "Opens below" warning).
 export const openedInsidePreviousRange: IEliminationRule = {
     id: 'opened-inside-previous-range',
     title: "Opened inside yesterday's range",
     describe: () => {
         const words = raceWords(globalConfig.PremarketRace.direction);
-        return `At the bell, a stock must open ${words.goodSide} ${words.previousExtreme}. Opening ${words.badSide} (or at) it is out.`;
+        return `At the bell, a stock must open ${words.goodSide} ${words.previousExtreme}. Opening ${words.badSide} (or at) it is out — unless it reclaimed the hourly ${RaceRulesConfig.reclaim.smaPeriod} SMA on the open.`;
     },
     check: (facts) => {
-        if (!facts.isAfterBell || facts.openingVsPreviousExtremePct === null || facts.openingVsPreviousExtremePct > 0) {
+        if (!facts.isAfterBell || facts.openingVsPreviousExtremePct === null || facts.openingVsPreviousExtremePct > 0 || facts.reclaimedSma) {
             return null;
         }
         const words = raceWords(facts.direction);

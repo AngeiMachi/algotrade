@@ -12,11 +12,17 @@ export const tradingPastPreviousExtreme: IQualificationRule = {
     listedAs: 'out',
     describe: () => {
         const words = raceWords(globalConfig.PremarketRace.direction);
-        return `Before the bell, a stock ${words.badSide} ${words.previousExtreme} is listed as out. It comes back if it trades ${words.goodSide} it, and at the bell it must open ${words.goodSide} it to stay.`;
+        return `Before the bell, a stock ${words.badSide} ${words.previousExtreme} is listed as out. It comes back if it trades ${words.goodSide} it, and at the bell it must open ${words.goodSide} it to stay. Exception: a stock reclaiming the hourly ${RaceRulesConfig.reclaim.smaPeriod} SMA stays in, marked "Below high".`;
     },
     check: (facts) => {
         // After the bell the opening price decides, in elimination-rules (openedInsidePreviousRange).
-        if (facts.isAfterBell || facts.previousExtreme === null || facts.previousExtremeCushionPct === null || facts.previousExtremeCushionPct > 0) {
+        if (
+            facts.isAfterBell ||
+            facts.previousExtreme === null ||
+            facts.previousExtremeCushionPct === null ||
+            facts.previousExtremeCushionPct > 0 ||
+            facts.reclaimedSma
+        ) {
             return null;
         }
         const words = raceWords(facts.direction);

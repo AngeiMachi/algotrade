@@ -23,8 +23,8 @@ export const RaceRulesConfig = {
     minAverageDailyVolume: 3000000,
     averageVolumeDays: 20,
 
-    // "MA reclaimed" highlight: yesterday opened below this hourly SMA (24-hour candles) and climbed to it during
-    // the regular session; today the price (the open, after the bell) is above it.
+    // "MA reclaimed" highlight: yesterday opened below this hourly SMA (24-hour candles); today the price (the open,
+    // after the bell) is above it. Both sides must hold with empty hours filled and with traded hours only.
     reclaim: {
         smaPeriod: 200,
     },

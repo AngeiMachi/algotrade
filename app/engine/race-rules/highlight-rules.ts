@@ -12,20 +12,20 @@ export const maReclaimed: IHighlightRule = {
     title: `Reclaimed the hourly ${RaceRulesConfig.reclaim.smaPeriod} SMA`,
     describe: () => {
         const words = raceWords(globalConfig.PremarketRace.direction);
-        return `Yesterday the stock opened ${words.badSide} the hourly ${period()} SMA and climbed back to it during the session; today it trades (after the bell: opened) ${words.goodSide} it.`;
+        return `Yesterday the stock opened ${words.badSide} the hourly ${period()} SMA; today it opens (before the bell: trades) ${words.goodSide} it. Whether it crossed during yesterday's session doesn't matter. Counted only when our two SMA readings agree (see docs).`;
     },
     check: (facts) => {
-        if (!facts.reclaimedYesterday || facts.reclaimSma === null || facts.reclaimSmaCushionPct === null || facts.reclaimSmaCushionPct <= 0) {
+        if (!facts.reclaimedSma || !facts.yesterdayBelowReclaimSma || facts.reclaimSma === null || facts.reclaimSmaCushionPct === null) {
             return null;
         }
         const words = raceWords(facts.direction);
-        const { openedAt, smaAtOpen, reachedAtHour } = facts.reclaimedYesterday;
+        const { openedAt, smaAtOpen } = facts.yesterdayBelowReclaimSma;
         return {
             id: 'ma-reclaimed',
             label: 'MA reclaimed',
             message:
-                `Yesterday opened at ${openedAt.toFixed(2)}, ${words.badSide} the hourly ${period()} SMA (${smaAtOpen.toFixed(2)}), and reached it in the ${reachedAtHour}:00 candle. ` +
-                `Today ${formatPct(facts.reclaimSmaCushionPct)} ${words.goodSide} it (${facts.reclaimSma.toFixed(2)}).`,
+                `Yesterday opened at ${openedAt.toFixed(2)}, ${words.badSide} the hourly ${period()} SMA (${smaAtOpen.toFixed(2)}). ` +
+                `Today ${facts.isAfterBell ? 'opened' : 'trading'} ${formatPct(facts.reclaimSmaCushionPct)} ${words.goodSide} it (${facts.reclaimSma.toFixed(2)}).`,
         };
     },
 };

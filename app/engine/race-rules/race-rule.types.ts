@@ -7,6 +7,7 @@ export interface IHourlyCandleFacts {
     close: number;
     sma: number;
     complete: boolean;
+    traded: boolean; // false for an hour without trades, filled with the previous close
     closeVsSmaPct: number;
     wickVsSmaPct: number; // the wick on the SMA side: low for long, high for short
 }
@@ -41,9 +42,10 @@ export interface IRaceFacts {
     hourlyCandles: IHourlyCandleFacts[];
     smaTouches: number;
 
-    reclaimSma: number | null; // hourly SMA used by the reclaim highlight (200 by default)
+    reclaimSma: number | null; // hourly SMA used by the reclaim highlight (200 by default), the stricter of two readings
     reclaimSmaCushionPct: number | null; // price (the open, after the bell) vs that SMA
-    reclaimedYesterday: { openedAt: number; smaAtOpen: number; reachedAtHour: string } | null;
+    yesterdayBelowReclaimSma: { openedAt: number; smaAtOpen: number } | null; // yesterday opened on the bad side of it
+    reclaimedSma: boolean; // "MA reclaimed": yesterday opened on the bad side of the reclaim SMA, today on the good side
 
     openingPrice: number | null; // first regular-session bar's open, once the bell rang
     openingGapPct: number | null; // first regular-session bar's open vs yesterday's close, once the bell rang

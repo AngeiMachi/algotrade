@@ -16,8 +16,9 @@ export interface IRaceFactsInput {
     previousLow: number | null;
     atrPct: number;
     priorHourlyCloses: number[]; // 24-hour hourly closes before today's pre-market
+    priorTradedHourlyCloses: number[]; // the same, skipping hours without trades
     reclaimSmaPeriod: number;
-    reclaimedYesterday: IYesterdayReclaim | null;
+    yesterdayBelowReclaimSma: IYesterdayBelowSma | null;
     premarketVolumeHistory: IPremarketVolumeDay[]; // recent sessions' pre-market 5-minute volume
     intervals: IQuoteIntervals; // 5-minute bars keyed by New York time
     premarketKeys: string[]; // today's pre-market bar keys, sorted
@@ -40,12 +41,21 @@ export const buildRaceFacts = (input: IRaceFactsInput): IRaceFacts => {
     const currentCandle = _.last(hourlyCandles) as IHourlyCandleFacts;
     const closesSoFar = [...input.priorHourlyCloses, ...completedCloses(hourlyCandles.slice(0, -1)), currentCandle.close];
     const sma = _.mean(_.takeRight(closesSoFar, input.smaPeriod));
-    const reclaimSma = closesSoFar.length >= input.reclaimSmaPeriod ? _.mean(_.takeRight(closesSoFar, input.reclaimSmaPeriod)) : null;
+    const tradedClosesSoFar = [
+        ...input.priorTradedHourlyCloses,
+        ...completedCloses(hourlyCandles.slice(0, -1).filter((candle) => candle.traded)),
+        currentCandle.close,
+    ];
+    const reclaimSmaOf = (list: number[]) => (list.length >= input.reclaimSmaPeriod ? _.mean(_.takeRight(list, input.reclaimSmaPeriod)) : null);
+    const reclaimReadings = [reclaimSmaOf(closesSoFar), reclaimSmaOf(tradedClosesSoFar)];
+    const reclaimSma = reclaimReadings.every((reading) => reading !== null) ? stricterSma(reclaimReadings as number[], direction) : null;
     const smaCushionPct = toDirectional(pctFrom(price, sma));
     const atrPct = input.atrPct > 0 ? input.atrPct : RaceRulesConfig.fallbackAtrPct;
 
     const openingBar = input.isAfterBell ? intervals[input.bellKey] : undefined;
     const previousExtreme = direction === 'long' ? input.previousHigh : input.previousLow;
+
+    const reclaimSmaCushionPct = reclaimSma ? toDirectional(pctFrom(openingBar ? openingBar.open : price, reclaimSma)) : null;
 
     const premarketVolume = _.sumBy(bars, 'volume');
     const lastCandle = (_.last(premarketKeys) as string).substring(11, 16);
@@ -77,8 +87,9 @@ export const buildRaceFacts = (input: IRaceFactsInput): IRaceFacts => {
         smaTouches: hourlyCandles.filter((candle) => candle.wickVsSmaPct < 0).length,
 
         reclaimSma,
-        reclaimSmaCushionPct: reclaimSma ? toDirectional(pctFrom(openingBar ? openingBar.open : price, reclaimSma)) : null,
-        reclaimedYesterday: input.reclaimedYesterday,
+        reclaimSmaCushionPct,
+        yesterdayBelowReclaimSma: input.yesterdayBelowReclaimSma,
+        reclaimedSma: !!input.yesterdayBelowReclaimSma && reclaimSmaCushionPct !== null && reclaimSmaCushionPct > 0,
 
         openingPrice: openingBar ? openingBar.open : null,
         openingGapPct: openingBar ? toDirectional(pctFrom(openingBar.open, previousClose)) : null,
@@ -133,6 +144,7 @@ const buildHourlyCandles = (input: IRaceFactsInput, toDirectional: (value: numbe
                 close,
                 sma,
                 complete,
+                traded: keys.length > 0,
                 closeVsSmaPct: toDirectional(((close - sma) / sma) * 100),
                 wickVsSmaPct: toDirectional(((wick - sma) / sma) * 100),
             };
@@ -146,44 +158,44 @@ export interface IPriorHourlyCandle {
     high: number;
     low: number;
     close: number;
+    traded: boolean; // false for hours filled with the previous close
 }
 
-export interface IYesterdayReclaim {
+export interface IYesterdayBelowSma {
     openedAt: number; // yesterday's regular-session open
     smaAtOpen: number;
-    reachedAtHour: string; // "13" for the 13:00 candle that touched the SMA
 }
 
-// Yesterday opened on the wrong side of the hourly SMA and climbed (long) / fell (short) back to it during the
-// regular session. The SMA at the open is the line entering the 09:00 candle; a candle "reaches" it when its
-// high (long) / low (short) touches the SMA including that candle.
-export const yesterdayReclaim = (
+// The broker chart's hourly 200 SMA sits between two readings of our data: with empty hours filled, and with
+// traded hours only (the broker skips empty hours but has overnight trades Alpaca lacks). Neither matches every
+// chart, so "MA reclaimed" only counts a side of the SMA when both readings agree. `stricterSma` picks the reading
+// that is harder to be on the good side of.
+export const stricterSma = (readings: number[], direction: RaceDirection) => (direction === 'long' ? Math.max(...readings) : Math.min(...readings));
+const looserSma = (readings: number[], direction: RaceDirection) => (direction === 'long' ? Math.min(...readings) : Math.max(...readings));
+
+// Yesterday opened on the bad side of the hourly SMA (below for long, above for short) in both readings.
+// The SMA at the open is the line entering the 09:00 candle.
+export const yesterdayOpenedBelowSma = (
     candles: IPriorHourlyCandle[],
     yesterday: string,
     yesterdayOpen: number | null,
     period: number,
     direction: RaceDirection
-): IYesterdayReclaim | null => {
-    const openIndex = candles.findIndex((candle) => candle.key >= `${yesterday} 09:00:00`);
-    if (!yesterdayOpen || openIndex < period || !candles[openIndex].key.startsWith(yesterday)) {
+): IYesterdayBelowSma | null => {
+    if (!yesterdayOpen) {
         return null;
     }
-    const smaAt = (endIndex: number) => _.meanBy(candles.slice(endIndex - period + 1, endIndex + 1), 'close');
-    const isLong = direction === 'long';
-
-    const smaAtOpen = smaAt(openIndex - 1);
-    if (isLong ? yesterdayOpen >= smaAtOpen : yesterdayOpen <= smaAtOpen) {
+    const smaBeforeOpen = (list: IPriorHourlyCandle[]) => {
+        const end = _.findLastIndex(list, (candle) => candle.key < `${yesterday} 09:00:00`);
+        return end + 1 >= period ? _.meanBy(list.slice(end - period + 1, end + 1), 'close') : null;
+    };
+    const readings = [smaBeforeOpen(candles), smaBeforeOpen(candles.filter((candle) => candle.traded))];
+    if (readings.some((reading) => reading === null)) {
         return null;
     }
-
-    for (let index = openIndex; index < candles.length && candles[index].key < `${yesterday} 16:00:00`; index++) {
-        const candle = candles[index];
-        const sma = smaAt(index);
-        if (isLong ? candle.high >= sma : candle.low <= sma) {
-            return { openedAt: yesterdayOpen, smaAtOpen, reachedAtHour: candle.key.substring(11, 13) };
-        }
-    }
-    return null;
+    const smaAtOpen = looserSma(readings as number[], direction);
+    const openedBelow = direction === 'long' ? yesterdayOpen < smaAtOpen : yesterdayOpen > smaAtOpen;
+    return openedBelow ? { openedAt: yesterdayOpen, smaAtOpen } : null;
 };
 
 export interface IDailySmas {
