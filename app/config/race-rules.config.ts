@@ -45,6 +45,14 @@ export const RaceRulesConfig = {
         fromTime: '05:00',
     },
 
+    // "Above upper BB" highlight: the price (the open, after the bell) is above the daily upper Bollinger band.
+    // The band is drawn the way the daily chart shows it at the open: the last `periodDays − 1` daily closes plus
+    // today's price, mean + `stdDevs` population standard deviations.
+    bollinger: {
+        periodDays: 20,
+        stdDevs: 2,
+    },
+
     // ATR used for the SMA distance when a stock has no daily history yet.
     fallbackAtrPct: 3,
 

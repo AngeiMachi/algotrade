@@ -20,6 +20,7 @@ export interface IRaceFactsInput {
     reclaimSmaPeriod: number;
     yesterdayBelowReclaimSma: IYesterdayBelowSma | null;
     premarketVolumeHistory: IPremarketVolumeDay[]; // recent sessions' pre-market 5-minute volume
+    priorDailyCloses: number[]; // daily closes before today, oldest first
     intervals: IQuoteIntervals; // 5-minute bars keyed by New York time
     premarketKeys: string[]; // today's pre-market bar keys, sorted
     bellKey: string;
@@ -57,6 +58,10 @@ export const buildRaceFacts = (input: IRaceFactsInput): IRaceFacts => {
 
     const reclaimSmaCushionPct = reclaimSma ? toDirectional(pctFrom(openingBar ? openingBar.open : price, reclaimSma)) : null;
 
+    const bandPrice = openingBar ? openingBar.open : price;
+    const bollingerBand = dailyBollingerBand(input.priorDailyCloses, bandPrice, direction);
+    const bollingerCushionPct = bollingerBand ? toDirectional(pctFrom(bandPrice, bollingerBand)) : null;
+
     const premarketVolume = _.sumBy(bars, 'volume');
     const lastCandle = (_.last(premarketKeys) as string).substring(11, 16);
     const averagePremarketVolume = averageVolumeUntil(input.premarketVolumeHistory, lastCandle);
@@ -90,6 +95,9 @@ export const buildRaceFacts = (input: IRaceFactsInput): IRaceFacts => {
         reclaimSmaCushionPct,
         yesterdayBelowReclaimSma: input.yesterdayBelowReclaimSma,
         reclaimedSma: !!input.yesterdayBelowReclaimSma && reclaimSmaCushionPct !== null && reclaimSmaCushionPct > 0,
+
+        bollingerBand,
+        bollingerCushionPct,
 
         openingPrice: openingBar ? openingBar.open : null,
         openingGapPct: openingBar ? toDirectional(pctFrom(openingBar.open, previousClose)) : null,
@@ -149,6 +157,18 @@ const buildHourlyCandles = (input: IRaceFactsInput, toDirectional: (value: numbe
                 wickVsSmaPct: toDirectional(((wick - sma) / sma) * 100),
             };
         });
+};
+
+// Daily Bollinger band on the good side (upper for long, lower for short), with `price` standing in for today's close.
+const dailyBollingerBand = (priorCloses: number[], price: number, direction: RaceDirection): number | null => {
+    const { periodDays, stdDevs } = RaceRulesConfig.bollinger;
+    if (priorCloses.length < periodDays - 1) {
+        return null;
+    }
+    const closes = [..._.takeRight(priorCloses, periodDays - 1), price];
+    const mean = _.mean(closes);
+    const deviation = Math.sqrt(_.meanBy(closes, (close) => (close - mean) ** 2));
+    return direction === 'long' ? mean + stdDevs * deviation : mean - stdDevs * deviation;
 };
 
 const completedCloses = (candles: IHourlyCandleFacts[]) => candles.filter((candle) => candle.complete).map((candle) => candle.close);

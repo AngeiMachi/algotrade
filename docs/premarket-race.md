@@ -130,6 +130,10 @@ the ticker; the tooltip explains the numbers.
   the gap (above yesterday's close and yesterday's high). Violet badge, unlike the blue "MA reclaimed". The RVOL column shows the ratio for
   every stock. History is SIP 5-minute bars, so replays are exact; live, today's volume is scaled IEX and the ratio
   is approximate. Settings in `RaceRulesConfig.relativeVolume`.
+- **Above upper BB** — the price (the open, after the bell) is above the daily upper Bollinger band (20 days,
+  2σ, population σ). The band is drawn as the daily chart shows it at the open: the last 19 daily closes plus
+  today's price as the 20th. Before the bell it means the stock is set to open outside the band. Pink badge.
+  Settings in `RaceRulesConfig.bollinger`.
 
 ## The 20 SMA must match the trader's chart
 

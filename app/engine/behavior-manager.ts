@@ -11,7 +11,7 @@ const quotesList : string[]=[];
 let quoteToBeUsed : {[key:string]:QuoteGroupConfig} = {}
 
 export const getQuotes = ():string[] => {
-    quoteToBeUsed = globalConfig.QuotesConfig.producion;
+    quoteToBeUsed = globalConfig.QuotesConfig[globalConfig.ActiveQuotesList];
     for (const [key, value] of Object.entries(quoteToBeUsed)) {
         for (let name of value.names) {
             if (!quotesFlat[name]) {

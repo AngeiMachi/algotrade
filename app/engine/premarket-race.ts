@@ -97,6 +97,7 @@ interface IRacer {
     previousLow: number | null;
     atrPct: number;
     dailySmas: IDailySmas | null;
+    priorDailyCloses: number[];
     priorHourlyCloses: number[];
     priorTradedHourlyCloses: number[];
     yesterdayBelowReclaimSma: IYesterdayBelowSma | null;
@@ -174,6 +175,12 @@ const addRacer = async (quote: string, intervals: IQuoteIntervals, metadata: IQu
         previousLow: metadata.previousDay?.low ?? null,
         atrPct: averageTrueRangePct(metadata.fullYearDailyHistory || [], RaceRulesConfig.atrPeriodDays),
         dailySmas: dailySmas(metadata.fullYearDailyHistory || [], RaceRulesConfig.trend.fastSmaDays, RaceRulesConfig.trend.slowSmaDays),
+        priorDailyCloses: _.takeRight(
+            (metadata.fullYearDailyHistory || []).filter(
+                (candle) => moment(candle.datetime).tz(NEW_YORK).format('YYYY-MM-DD') < quoteUtils.getCurrentTradingDate()
+            ),
+            RaceRulesConfig.bollinger.periodDays
+        ).map((candle) => candle.close),
         priorHourlyCloses: priorHourlyCandles.map((candle) => candle.close),
         priorTradedHourlyCloses: priorHourlyCandles.filter((candle) => candle.traded).map((candle) => candle.close),
         yesterdayBelowReclaimSma: yesterdayOpenedBelowSma(
@@ -428,6 +435,7 @@ const evaluateRacer = (racer: IRacer, premarketKeys: string[], bellKey: string, 
         reclaimSmaPeriod: RaceRulesConfig.reclaim.smaPeriod,
         yesterdayBelowReclaimSma: racer.yesterdayBelowReclaimSma,
         premarketVolumeHistory: racer.premarketVolumeHistory,
+        priorDailyCloses: racer.priorDailyCloses,
         intervals: racer.intervals,
         premarketKeys,
         bellKey,

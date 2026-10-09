@@ -55,7 +55,23 @@ export const Notifications = {
     }
 };
 
+// Which list in QuotesConfig the engine follows. 'development' is a handful of stocks so restarts load fast.
+export const ActiveQuotesList: keyof typeof QuotesConfig = 'development';
+
 export const QuotesConfig = {
+    development: {
+        // SPY sets the clock in mock runs; the indexes group is kept out of the race.
+        indexes: {
+            behaviors: [],
+            signals: [],
+            names: ["SPY"],
+        },
+        development: {
+            behaviors: [],
+            signals: [],
+            names: ["AFRM", "TSLA", "AAPL", "MSFT", "CRCL"],
+        },
+    },
     producion: {
         indexes:{
             behaviors:[],

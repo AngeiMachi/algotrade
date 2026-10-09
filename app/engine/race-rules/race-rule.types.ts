@@ -47,6 +47,9 @@ export interface IRaceFacts {
     yesterdayBelowReclaimSma: { openedAt: number; smaAtOpen: number } | null; // yesterday opened on the bad side of it
     reclaimedSma: boolean; // "MA reclaimed": yesterday opened on the bad side of the reclaim SMA, today on the good side
 
+    bollingerBand: number | null; // daily upper band for long (lower for short), with today's price as the latest close
+    bollingerCushionPct: number | null; // price (the open, after the bell) vs that band; positive = outside it
+
     openingPrice: number | null; // first regular-session bar's open, once the bell rang
     openingGapPct: number | null; // first regular-session bar's open vs yesterday's close, once the bell rang
     openingVsPreviousExtremePct: number | null; // that open vs yesterday's high (long) / low (short)

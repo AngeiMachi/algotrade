@@ -42,8 +42,11 @@ All in `app/proxy/alpaca-api.ts`.
 
 ## Watchlist
 
-`app/config/globals.config.ts` → `QuotesConfig.producion` (sic), grouped into indexes, leaders, trending,
-smallcap. The `indexes` group (ETFs) loads but is excluded from the race (`PremarketRace.excludeGroups`).
+`app/config/globals.config.ts` → `QuotesConfig`. `ActiveQuotesList` picks the list the engine follows:
+`producion` (sic; the trading list, grouped into indexes, leaders, trending, smallcap) or `development` (SPY plus
+AFRM, TSLA, AAPL, MSFT, CRCL, so restarts load in a minute or two). The `indexes` group (ETFs) loads but is
+excluded from the race (`PremarketRace.excludeGroups`). Symbols on the board's Watching list are followed on top
+of the active list.
 
 Housekeeping done so far: dead tickers removed (ZI, GPS, DWAC), KR removed, and every ticker under $15
 removed. Unconfirmed with the trader: "amkt" (AMKR?) and "aap" (AAP vs AAPL).

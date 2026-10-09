@@ -57,4 +57,30 @@ export const trendingVolume: IHighlightRule = {
     },
 };
 
-export const highlightRules: IHighlightRule[] = [maReclaimed, trendingVolume];
+export const aboveBollinger: IHighlightRule = {
+    id: 'above-bollinger',
+    title: 'Opens outside the daily Bollinger band',
+    describe: () => {
+        const { periodDays, stdDevs } = RaceRulesConfig.bollinger;
+        const band = globalConfig.PremarketRace.direction === 'long' ? 'upper' : 'lower';
+        const words = raceWords(globalConfig.PremarketRace.direction);
+        return `The price (the open, after the bell) is ${words.goodSide} the daily ${band} Bollinger band (${periodDays} days, ${stdDevs}σ), drawn with today's price as the latest close, as the daily chart shows it at the open.`;
+    },
+    check: (facts) => {
+        if (facts.bollingerBand === null || facts.bollingerCushionPct === null || facts.bollingerCushionPct <= 0) {
+            return null;
+        }
+        const { periodDays, stdDevs } = RaceRulesConfig.bollinger;
+        const words = raceWords(facts.direction);
+        const band = facts.direction === 'long' ? 'upper' : 'lower';
+        return {
+            id: 'above-bollinger',
+            label: facts.direction === 'long' ? 'Above upper BB' : 'Below lower BB',
+            message:
+                `${facts.isAfterBell ? 'Opened' : 'Trading'} ${formatPct(facts.bollingerCushionPct)} ${words.goodSide} the daily ${band} Bollinger band ` +
+                `(${facts.bollingerBand.toFixed(2)}; ${periodDays} days, ${stdDevs}σ)${facts.isAfterBell ? '' : ': it is set to open outside the band'}.`,
+        };
+    },
+};
+
+export const highlightRules: IHighlightRule[] = [maReclaimed, trendingVolume, aboveBollinger];
