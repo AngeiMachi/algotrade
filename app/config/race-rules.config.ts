@@ -36,6 +36,15 @@ export const RaceRulesConfig = {
         slowSmaDays: 20,
     },
 
+    // "Trending volume" highlight: pre-market volume so far vs the average of the last `days` sessions up to the
+    // same 5-minute candle (RVOL). Before `fromTime` the early-morning numbers are too small to mean much.
+    relativeVolume: {
+        days: 10,
+        // 1.5 so a heavily traded stock having a busy morning counts (ALAB Oct 6: 1.6×); the gap rule keeps it selective.
+        trendingAt: 1.5,
+        fromTime: '05:00',
+    },
+
     // ATR used for the SMA distance when a stock has no daily history yet.
     fallbackAtrPct: 3,
 

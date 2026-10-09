@@ -11,6 +11,11 @@ export interface IHourlyCandleFacts {
     wickVsSmaPct: number; // the wick on the SMA side: low for long, high for short
 }
 
+export interface IPremarketVolumeDay {
+    date: string; // New York 'YYYY-MM-DD'
+    bars: { time: string; volume: number }[]; // 5-minute pre-market bars, 'HH:mm' New York, sorted
+}
+
 export interface IRaceFacts {
     quote: string;
     direction: RaceDirection;
@@ -26,6 +31,8 @@ export interface IRaceFacts {
     atrPct: number;
     premarketVolume: number;
     premarketDollarVolume: number;
+    averagePremarketVolume: number | null; // recent sessions' average volume from 04:00 to the same candle
+    relativeVolume: number | null; // premarketVolume ÷ averagePremarketVolume (RVOL)
     lastCandle: string; // "09:20"
 
     sma: number;

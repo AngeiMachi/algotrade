@@ -116,6 +116,12 @@ the ticker; the tooltip explains the numbers.
   candle; "climbed to it" means a 09:00–15:00 hourly candle's high reached the SMA including that candle.
   Period in `RaceRulesConfig.reclaim.smaPeriod`. Reference case: ALAB, Oct 5 → Oct 6.
   The 24-hour hourly history is loaded 21 calendar days back so 200 candles are available.
+- **Trending volume** — pre-market volume so far is ≥ 1.5× (RVOL; 1.5 rather than 2 so ALAB's busy Oct 6 at 1.6× counts) the average of the last 10 sessions *up to the
+  same 5-minute candle* (an 08:40 reading is compared with past 08:40 readings, because pre-market volume piles
+  up toward the bell). Ignored before 05:00, when the numbers are too small. Only given to stocks that also pass
+  the gap (above yesterday's close and yesterday's high). Violet badge, unlike the blue "MA reclaimed". The RVOL column shows the ratio for
+  every stock. History is SIP 5-minute bars, so replays are exact; live, today's volume is scaled IEX and the ratio
+  is approximate. Settings in `RaceRulesConfig.relativeVolume`.
 
 ## The 20 SMA must match the trader's chart
 

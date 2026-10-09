@@ -18,6 +18,7 @@ import {
     highlightRules,
     IDailySmas,
     IDailyTrend,
+    IPremarketVolumeDay,
     IPriorHourlyCandle,
     IRaceHighlight,
     IYesterdayReclaim,
@@ -58,6 +59,7 @@ export interface IRaceEntry {
     smaStretchAtr: number | null;
     premarketVolume: number;
     premarketDollarVolume: number;
+    relativeVolume: number | null;
     smaTouches: number;
     dailyTrend: IDailyTrend | null;
     lapsInTopThree: number;
@@ -94,6 +96,7 @@ interface IRacer {
     dailySmas: IDailySmas | null;
     priorHourlyCloses: number[];
     reclaimedYesterday: IYesterdayReclaim | null;
+    premarketVolumeHistory: IPremarketVolumeDay[];
     intervals: IQuoteIntervals;
     elimination: IElimination | null;
     lapsInTopThree: number;
@@ -102,6 +105,7 @@ interface IRacer {
 
 const racers: { [key: string]: IRacer } = {};
 const hourlyHistoryRequests: { [key: string]: Promise<IPriorHourlyCandle[]> } = {};
+const premarketVolumeRequests: { [key: string]: Promise<IPremarketVolumeDay[]> } = {};
 let snapshot: IRaceSnapshot | null = null;
 let recomputeTimer: NodeJS.Timeout | null = null;
 let currentRaceCandle = '';
@@ -127,6 +131,10 @@ export const registerQuote = async (quote: string, intervals: IQuoteIntervals, m
         logger.error(`premarket-race could not load hourly history for ${quote}, leaving it out of the race: ${err}`);
         return;
     }
+    const premarketVolumeHistory = await loadPremarketVolumeHistory(quote).catch((err) => {
+        logger.error(`premarket-race could not load pre-market volume history for ${quote}, racing without RVOL: ${err}`);
+        return [] as IPremarketVolumeDay[];
+    });
 
     racers[quote] = {
         quote,
@@ -145,6 +153,7 @@ export const registerQuote = async (quote: string, intervals: IQuoteIntervals, m
             RaceRulesConfig.reclaim.smaPeriod,
             globalConfig.PremarketRace.direction
         ),
+        premarketVolumeHistory,
         intervals,
         elimination: null,
         lapsInTopThree: 0,
@@ -154,8 +163,25 @@ export const registerQuote = async (quote: string, intervals: IQuoteIntervals, m
 };
 
 // Requesting every symbol at once lets the Alpaca client merge them into a few multi-symbol calls.
-export const preloadHourlyHistory = async (quotes: string[]) => {
-    await Promise.all(quotes.map((quote) => loadPriorHourlyCandles(quote).catch(() => undefined)));
+export const preloadRaceHistory = async (quotes: string[]) => {
+    await Promise.all<unknown>([
+        ...quotes.map((quote) => loadPriorHourlyCandles(quote).catch(() => undefined)),
+        ...quotes.map((quote) => loadPremarketVolumeHistory(quote).catch(() => undefined)),
+    ]);
+};
+
+const loadPremarketVolumeHistory = (quote: string): Promise<IPremarketVolumeDay[]> => {
+    if (!premarketVolumeRequests[quote]) {
+        premarketVolumeRequests[quote] = AlpacaAPI.getPremarketVolumeHistory(
+            quote,
+            quoteUtils.getCurrentTradingDate(),
+            RaceRulesConfig.relativeVolume.days
+        ).catch((err) => {
+            delete premarketVolumeRequests[quote];
+            throw err;
+        });
+    }
+    return premarketVolumeRequests[quote];
 };
 
 const loadPriorHourlyCandles = (quote: string): Promise<IPriorHourlyCandle[]> => {
@@ -322,6 +348,7 @@ const evaluateRacer = (racer: IRacer, premarketKeys: string[], bellKey: string, 
         priorHourlyCloses: racer.priorHourlyCloses,
         reclaimSmaPeriod: RaceRulesConfig.reclaim.smaPeriod,
         reclaimedYesterday: racer.reclaimedYesterday,
+        premarketVolumeHistory: racer.premarketVolumeHistory,
         intervals: racer.intervals,
         premarketKeys,
         bellKey,
@@ -338,6 +365,7 @@ const evaluateRacer = (racer: IRacer, premarketKeys: string[], bellKey: string, 
         smaStretchAtr: facts.smaStretchAtr,
         premarketVolume: facts.premarketVolume,
         premarketDollarVolume: facts.premarketDollarVolume,
+        relativeVolume: facts.relativeVolume,
         smaTouches: facts.smaTouches,
         dailyTrend: dailyTrend(racer.dailySmas, facts.openingPrice ?? facts.price),
         lastCandle: facts.lastCandle,
@@ -392,6 +420,7 @@ const emptyEntry = (racer: IRacer): IRaceEntry => ({
     smaStretchAtr: null,
     premarketVolume: 0,
     premarketDollarVolume: 0,
+    relativeVolume: null,
     smaTouches: 0,
     dailyTrend: dailyTrend(racer.dailySmas, null),
     lapsInTopThree: racer.lapsInTopThree,

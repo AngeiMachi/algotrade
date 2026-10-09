@@ -11,6 +11,7 @@ import * as convertUtils from '../utils/convert-utils';
 import * as quoteUtils from '../utils/quote-utils';
 
 import { IQuoteHistoricalIntervals, IQuoteIntervals, ITDAmeritradeIntervalData, ITDAmeritradePriceHistory } from '../models/quote-data.model';
+import { IPremarketVolumeDay } from '../engine/race-rules/race-rule.types';
 
 const NEW_YORK = 'America/New_York';
 const EXTENDED_SESSION_START = '04:00';
@@ -213,6 +214,30 @@ export const getQuote24HourHourlyHistory = async (quote: string, tradeDate: stri
         return toPriceHistory(symbol, fillEmptyHours(candles, tradingDates));
     } catch (err) {
         logger.error('getQuote24HourHourlyHistory failed ' + err);
+        throw err;
+    }
+};
+
+// Pre-market (04:00 to the bell) 5-minute volume for the last `days` sessions before tradeDate.
+export const getPremarketVolumeHistory = async (quote: string, tradeDate: string, days: number): Promise<IPremarketVolumeDay[]> => {
+    try {
+        const bars = await getBars(quote.toUpperCase(), {
+            timeframe: '5Min',
+            start: moment.tz(tradeDate, NEW_YORK).subtract(days * 2 + 7, 'days').toISOString(),
+            end: nyTime(tradeDate, EXTENDED_SESSION_START).subtract(1, 'second').toISOString(),
+            feed: 'sip',
+        });
+        const premarketBars = bars.filter((bar) => {
+            const time = moment(bar.t).tz(NEW_YORK).format('HH:mm');
+            return time >= EXTENDED_SESSION_START && time < REGULAR_SESSION_START;
+        });
+        const byDate = _.groupBy(premarketBars, nyDate);
+        return _.takeRight(Object.keys(byDate).sort(), days).map((date) => ({
+            date,
+            bars: _.sortBy(byDate[date], 't').map((bar) => ({ time: moment(bar.t).tz(NEW_YORK).format('HH:mm'), volume: bar.v })),
+        }));
+    } catch (err) {
+        logger.error('getPremarketVolumeHistory failed ' + err);
         throw err;
     }
 };

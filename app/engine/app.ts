@@ -16,7 +16,7 @@ export default async function startApp() {
         
         await Promise.all([
             quoteCache.cacheQuoteList(quotesTofollow),
-            premarketRace.preloadHourlyHistory(quotesTofollow),
+            premarketRace.preloadRaceHistory(quotesTofollow),
         ]);
 
         const initTime = calculateInitializationTime();

@@ -30,4 +30,31 @@ export const maReclaimed: IHighlightRule = {
     },
 };
 
-export const highlightRules: IHighlightRule[] = [maReclaimed];
+export const trendingVolume: IHighlightRule = {
+    id: 'trending-volume',
+    title: 'Trending volume',
+    describe: () => {
+        const { days, trendingAt, fromTime } = RaceRulesConfig.relativeVolume;
+        const words = raceWords(globalConfig.PremarketRace.direction);
+        return `Pre-market volume so far is at least ${trendingAt}× the average of the last ${days} sessions up to the same time of morning (from ${fromTime}), on a stock that also passes the gap: ${words.goodSide} yesterday's close and ${words.previousExtreme}.`;
+    },
+    check: (facts) => {
+        const { days, trendingAt, fromTime } = RaceRulesConfig.relativeVolume;
+        if (facts.relativeVolume === null || facts.relativeVolume < trendingAt || facts.lastCandle < fromTime) {
+            return null;
+        }
+        const pastPreviousExtremePct = facts.isAfterBell ? facts.openingVsPreviousExtremePct : facts.previousExtremeCushionPct;
+        if (facts.gapPct <= 0 || pastPreviousExtremePct === null || pastPreviousExtremePct <= 0) {
+            return null;
+        }
+        return {
+            id: 'trending-volume',
+            label: 'Trending volume',
+            message:
+                `${facts.relativeVolume.toFixed(1)}× normal pre-market volume: ${Math.round(facts.premarketVolume).toLocaleString()} shares by ${facts.lastCandle}, ` +
+                `vs ${Math.round(facts.averagePremarketVolume as number).toLocaleString()} on an average morning (last ${days} sessions).`,
+        };
+    },
+};
+
+export const highlightRules: IHighlightRule[] = [maReclaimed, trendingVolume];

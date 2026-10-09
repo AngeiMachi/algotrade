@@ -3,7 +3,7 @@ import moment from 'moment-timezone';
 
 import { RaceRulesConfig } from '../../config/race-rules.config';
 import { IQuoteIntervals } from '../../models/quote-data.model';
-import { IHourlyCandleFacts, IRaceFacts, RaceDirection } from './race-rule.types';
+import { IHourlyCandleFacts, IPremarketVolumeDay, IRaceFacts, RaceDirection } from './race-rule.types';
 
 const NEW_YORK = 'America/New_York';
 
@@ -18,6 +18,7 @@ export interface IRaceFactsInput {
     priorHourlyCloses: number[]; // 24-hour hourly closes before today's pre-market
     reclaimSmaPeriod: number;
     reclaimedYesterday: IYesterdayReclaim | null;
+    premarketVolumeHistory: IPremarketVolumeDay[]; // recent sessions' pre-market 5-minute volume
     intervals: IQuoteIntervals; // 5-minute bars keyed by New York time
     premarketKeys: string[]; // today's pre-market bar keys, sorted
     bellKey: string;
@@ -46,6 +47,10 @@ export const buildRaceFacts = (input: IRaceFactsInput): IRaceFacts => {
     const openingBar = input.isAfterBell ? intervals[input.bellKey] : undefined;
     const previousExtreme = direction === 'long' ? input.previousHigh : input.previousLow;
 
+    const premarketVolume = _.sumBy(bars, 'volume');
+    const lastCandle = (_.last(premarketKeys) as string).substring(11, 16);
+    const averagePremarketVolume = averageVolumeUntil(input.premarketVolumeHistory, lastCandle);
+
     return {
         quote: input.quote,
         direction,
@@ -59,9 +64,11 @@ export const buildRaceFacts = (input: IRaceFactsInput): IRaceFacts => {
         gapPct,
         gapInAtr: input.atrPct > 0 ? gapPct / input.atrPct : 0,
         atrPct: input.atrPct,
-        premarketVolume: _.sumBy(bars, 'volume'),
+        premarketVolume,
         premarketDollarVolume: _.sumBy(bars, (bar) => bar.volume * bar.close),
-        lastCandle: (_.last(premarketKeys) as string).substring(11, 16),
+        averagePremarketVolume,
+        relativeVolume: averagePremarketVolume ? premarketVolume / averagePremarketVolume : null,
+        lastCandle,
 
         sma,
         smaCushionPct,
@@ -77,6 +84,15 @@ export const buildRaceFacts = (input: IRaceFactsInput): IRaceFacts => {
         openingGapPct: openingBar ? toDirectional(pctFrom(openingBar.open, previousClose)) : null,
         openingVsPreviousExtremePct: openingBar && previousExtreme ? toDirectional(pctFrom(openingBar.open, previousExtreme)) : null,
     };
+};
+
+// Average pre-market volume of past sessions from 04:00 up to and including the `lastCandle` 5-minute bar, so an
+// 08:40 reading is compared with past 08:40 readings (pre-market volume piles up toward the bell).
+const averageVolumeUntil = (history: IPremarketVolumeDay[], lastCandle: string): number | null => {
+    if (history.length === 0) {
+        return null;
+    }
+    return _.meanBy(history, (day) => _.sumBy(day.bars.filter((bar) => bar.time <= lastCandle), 'volume')) || null;
 };
 
 // Today's pre-market 5-minute bars grouped into hourly candles, each with the 20 SMA as it stood at that candle.
