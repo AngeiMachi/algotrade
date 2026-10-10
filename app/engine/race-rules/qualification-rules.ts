@@ -2,6 +2,7 @@ import { RaceRulesConfig } from '../../config/race-rules.config';
 import * as globalConfig from '../../config/globals.config';
 import { IQualificationRule } from './race-rule.types';
 import { raceWords } from './race-words';
+import { nearPreviousExtreme } from './near-previous-extreme';
 
 // Qualification rules are temporary: a stock that fails one sits on the side and can rejoin on a later candle.
 // They run in list order and the first failure decides where the stock is listed.
@@ -22,7 +23,7 @@ export const tradingPastPreviousExtreme: IQualificationRule = {
     listedAs: 'out',
     describe: () => {
         const words = raceWords(globalConfig.PremarketRace.direction);
-        return `Before the bell, a stock ${words.badSide} ${words.previousExtreme} is listed as out. It comes back if it trades ${words.goodSide} it, and at the bell it must open ${words.goodSide} it to stay. Exception: a stock reclaiming the hourly ${RaceRulesConfig.reclaim.smaPeriod} SMA stays in, marked "Below high".`;
+        return `Before the bell, a stock ${words.badSide} ${words.previousExtreme} is listed as out. It comes back if it trades ${words.goodSide} it, and at the bell it must open ${words.goodSide} it to stay. Exceptions: a stock reclaiming the hourly ${RaceRulesConfig.reclaim.smaPeriod} SMA ("Below high"), and a healthy stock just under it with conviction ("Near high").`;
     },
     check: (facts) => {
         // After the bell the opening price decides, in elimination-rules (openedInsidePreviousRange).
@@ -31,7 +32,8 @@ export const tradingPastPreviousExtreme: IQualificationRule = {
             facts.previousExtreme === null ||
             facts.previousExtremeCushionPct === null ||
             facts.previousExtremeCushionPct > 0 ||
-            facts.reclaimedSma
+            facts.reclaimedSma ||
+            nearPreviousExtreme(facts)
         ) {
             return null;
         }

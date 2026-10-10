@@ -57,6 +57,15 @@ facts; they never touch bars. All percentages are "directional": positive = good
   `danger` warning, "Opens below" ("Below high" before the bell), from `belowPreviousExtreme` in
   `warning-rules.ts`. The same exception applies to the pre-market "Trading past yesterday's high" rule.
   Only `tradingThroughSma` marks a stock at risk; other `danger` warnings just show red.
+  **Exception — near high** (`near-previous-extreme.ts`, settings `RaceRulesConfig.nearPreviousExtreme`): a
+  stock at most **0.1 daily ATR** under yesterday's high stays eligible when it holds the hourly 20 SMA and shows
+  conviction: at least **0.25 ATR** above yesterday's close, or unusual volume (RVOL ≥ 1.5×). Amber "Near high"
+  badge. Measured in ATRs so calm and wild stocks get the same allowance (ATR 2% → 0.2% under / +0.5% gap; ATR
+  5% → 0.5% / +1.25%). Why 0.1 ATR: one 5-minute candle typically ranges ATR ÷ √78 ≈ 0.11 ATR, so less than that
+  under the high is noise. Checked on daily candles of the trading list, Sep 28 – Oct 9 (open→close, in ATRs):
+  opens above yesterday's high −0.058 avg / 43% green (234); near-high exception −0.059 / 42% (33, about 3 a day);
+  0.1–0.5 ATR under with the same gap −0.120 / 37% (97). The exception group behaves like the eligible group;
+  farther under is clearly worse, so the line sits at 0.1 ATR.
 
 ### 2. Qualification — temporary (`qualification-rules.ts`)
 
@@ -72,7 +81,7 @@ Each rule has `listedAs: 'out' | 'waiting'`, which decides which side list the s
 ### 3. Score — ranks the race (`scoring-rules.ts`)
 
 ```
-score = 100 × gapStrength × smaDistance × holdQuality × underSmaNow      (each factor 0..1)
+score = 100 × gapStrength × smaDistance × smaSlope × underLongSma × holdQuality × underSmaNow      (each factor 0..1)
 ```
 
 Multiplying (not adding) means one bad trait drags the score down however strong the rest is.
@@ -81,6 +90,8 @@ Multiplying (not adding) means one bad trait drags the score down however strong
 |---|---|---|
 | Gap strength | `tanh(gapInAtr ÷ 1)`, where `gapInAtr = gap% ÷ daily ATR14%` | Gap measured in the stock's own volatility. Rises fast for the first ATR, then flattens: a huge gap is not automatically better (big gaps fade more often) |
 | Distance from the 20 SMA | `1` within 0.5 ATR, then `exp(−½((d − 0.5) ÷ 0.5)²)`, where `d = (price − SMA20₁ₕ)% ÷ ATR14%` | Close to the SMA is healthy; far from it tends to pull back. 1 ATR keeps 61%, 1.5 ATR keeps 14% |
+| Angle of the 20 SMA | `0.25 + 0.75 × ½(1 + tanh((s − 0.1) ÷ 0.1))`, where `s = SMA20₁ₕ change over the last 10 completed hours ÷ ATR14%` | Which way the SMA points going into the open. Over 10 hours its change compares the last 10 hourly closes with those 20-30 hours back, so it reads the day before into the pre-market. Rising 0.3 ATR+ keeps ~100%, 0.2 → 91%, 0.1 → 63%, flat → 34%, falling → 25%. Oct 9: AFRM +0.51, SNOW +0.36, TSLA +0.24 (up), META +0.06 (flat, 48%) |
+| Under the hourly 200 SMA | `0.5` when the price (the open, after the bell) is under the hourly 200 SMA in both readings | Outweighs the angle: a gently rising 20 SMA above the 200 (0.1 ATR → 0.63) beats a steep one under it (1 × 0.5) |
 | Clean hold | `0.85 ^ touches` | Each pre-market hourly wick that dipped below the SMA costs 15%. Clean (never touched) is best |
 | Under SMA right now | `0.5` while trading below the SMA in an open hourly candle | Live danger before the candle decides |
 
@@ -180,8 +191,8 @@ not knock it out (SNOW Oct 9: 0.16% under at 09:25, while the hourly candle clos
 ## Board controls
 
 - **Search** (main table and each side list). Filters the table only; ranks stay overall. Esc clears.
-- **Uptrend toggle** — daily trend filter. A stock is in an uptrend if the daily 10 SMA > daily 20 SMA
-  **or** today's price is above the daily 20 SMA (the open, after the bell). SMAs use closes before today.
+- **Uptrend / Strong uptrend toggles** — daily trend filters. Uptrend: today's price (the open, after the bell) is
+  above the daily 10 SMA and the daily 20 SMA. Strong uptrend: also the 10 SMA above the 20 SMA. SMAs use closes before today.
   Periods in `RaceRulesConfig.trend`. Saved in localStorage.
 - **Trending volume / MA reclaimed toggles** — show only stocks with that badge. Toggles combine (a stock must
   match every toggle that is on); each shows "matching of total". The list lives in `toggleFilters` in `RaceScreen.jsx`.

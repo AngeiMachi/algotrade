@@ -39,11 +39,14 @@ export interface IRaceFacts {
     sma: number;
     smaCushionPct: number;
     smaStretchAtr: number; // distance from the 20 SMA in daily ATRs (Keltner-style units)
+    smaSlopePct: number | null; // how far the 20 SMA moved over the last scoring.smaSlope.lookbackHours completed hours
+    smaSlopeAtr: number | null; // the same in daily ATRs; positive = pointing the good way (up for long)
     hourlyCandles: IHourlyCandleFacts[];
     smaTouches: number;
 
     reclaimSma: number | null; // hourly SMA used by the reclaim highlight (200 by default), the stricter of two readings
     reclaimSmaCushionPct: number | null; // price (the open, after the bell) vs that SMA
+    belowReclaimSma: boolean | null; // the price is on the bad side of that SMA in both readings
     yesterdayBelowReclaimSma: { openedAt: number; smaAtOpen: number } | null; // yesterday opened on the bad side of it
     reclaimedSma: boolean; // "MA reclaimed": yesterday opened on the bad side of the reclaim SMA, today on the good side
 

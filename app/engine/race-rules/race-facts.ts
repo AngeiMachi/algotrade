@@ -52,9 +52,15 @@ export const buildRaceFacts = (input: IRaceFactsInput): IRaceFacts => {
     ];
     const reclaimSmaOf = (list: number[]) => (list.length >= input.reclaimSmaPeriod ? _.mean(_.takeRight(list, input.reclaimSmaPeriod)) : null);
     const reclaimReadings = [reclaimSmaOf(closesSoFar), reclaimSmaOf(tradedClosesSoFar)];
-    const reclaimSma = reclaimReadings.every((reading) => reading !== null) ? stricterSma(reclaimReadings as number[], direction) : null;
+    const hasReclaimReadings = reclaimReadings.every((reading) => reading !== null);
+    const reclaimSma = hasReclaimReadings ? stricterSma(reclaimReadings as number[], direction) : null;
+    // Under the reclaim SMA only when both readings agree (the looser one is also above the price).
+    const belowReclaimSma = hasReclaimReadings ? toDirectional(pctFrom(price, looserSma(reclaimReadings as number[], direction))) < 0 : null;
     const smaCushionPct = toDirectional(pctFrom(price, sma));
     const atrPct = input.atrPct > 0 ? input.atrPct : RaceRulesConfig.fallbackAtrPct;
+    const completedClosesSoFar = [...input.priorHourlyCloses, ...completedCloses(hourlyCandles)];
+    const rawSlopePct = smaChangePct(completedClosesSoFar, input.smaPeriod, RaceRulesConfig.scoring.smaSlope.lookbackHours);
+    const smaSlopePct = rawSlopePct === null ? null : toDirectional(rawSlopePct);
 
     const previousExtreme = direction === 'long' ? input.previousHigh : input.previousLow;
 
@@ -89,11 +95,14 @@ export const buildRaceFacts = (input: IRaceFactsInput): IRaceFacts => {
         sma,
         smaCushionPct,
         smaStretchAtr: smaCushionPct / atrPct,
+        smaSlopePct,
+        smaSlopeAtr: smaSlopePct === null ? null : smaSlopePct / atrPct,
         hourlyCandles,
         smaTouches: hourlyCandles.filter((candle) => candle.wickVsSmaPct < 0).length,
 
         reclaimSma,
         reclaimSmaCushionPct,
+        belowReclaimSma,
         yesterdayBelowReclaimSma: input.yesterdayBelowReclaimSma,
         reclaimedSma: !!input.yesterdayBelowReclaimSma && reclaimSmaCushionPct !== null && reclaimSmaCushionPct > 0,
 
@@ -175,6 +184,17 @@ const dailyBollingerBand = (priorCloses: number[], price: number, direction: Rac
 
 const completedCloses = (candles: IHourlyCandleFacts[]) => candles.filter((candle) => candle.complete).map((candle) => candle.close);
 
+// Percent change of the `period` SMA over the last `lookback` closes. Null without enough history.
+const smaChangePct = (closes: number[], period: number, lookback: number): number | null => {
+    if (closes.length < period + lookback) {
+        return null;
+    }
+    const smaEndingAt = (end: number) => _.mean(closes.slice(end - period, end));
+    const now = smaEndingAt(closes.length);
+    const before = smaEndingAt(closes.length - lookback);
+    return ((now - before) / before) * 100;
+};
+
 export interface IPriorHourlyCandle {
     key: string; // New York 'YYYY-MM-DD HH:mm:ss', candle start
     high: number;
@@ -226,9 +246,12 @@ export interface IDailySmas {
 }
 
 export interface IDailyTrend extends IDailySmas {
-    fastAboveSlow: boolean;
+    priceAboveFast: boolean;
     priceAboveSlow: boolean;
+    fastAboveSlow: boolean;
     isUptrend: boolean;
+    isStrongUptrend: boolean;
+    isDowntrend: boolean;
 }
 
 // Daily fast and slow SMA of closes before today. Null when there is not enough history for the slow one.
@@ -242,14 +265,26 @@ export const dailySmas = (dailyCandles: { close: number }[], fastDays: number, s
     };
 };
 
-// Uptrend when the fast daily SMA is above the slow one, or today's price (the open, once the bell rings) is above the slow one.
+// Uptrend: today's price (the open, once the bell rings) is above both daily SMAs.
+// Strong uptrend: an uptrend where the fast daily SMA is also above the slow one.
+// Downtrend: the price is below both. Between the two SMAs it is neither.
 export const dailyTrend = (smas: IDailySmas | null, price: number | null): IDailyTrend | null => {
-    if (!smas) {
+    if (!smas || price === null) {
         return null;
     }
+    const priceAboveFast = price > smas.fastSma;
+    const priceAboveSlow = price > smas.slowSma;
     const fastAboveSlow = smas.fastSma > smas.slowSma;
-    const priceAboveSlow = price !== null && price > smas.slowSma;
-    return { ...smas, fastAboveSlow, priceAboveSlow, isUptrend: fastAboveSlow || priceAboveSlow };
+    const isUptrend = priceAboveFast && priceAboveSlow;
+    return {
+        ...smas,
+        priceAboveFast,
+        priceAboveSlow,
+        fastAboveSlow,
+        isUptrend,
+        isStrongUptrend: isUptrend && fastAboveSlow,
+        isDowntrend: !priceAboveFast && !priceAboveSlow,
+    };
 };
 
 // Average True Range over the last `period` daily candles, as a percent of the latest close.

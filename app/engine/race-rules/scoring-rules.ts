@@ -32,6 +32,44 @@ export const smaDistance: IScoringRule = {
     },
 };
 
+export const smaSlope: IScoringRule = {
+    id: 'sma-slope',
+    title: 'Angle of the 20 SMA',
+    describe: () => {
+        const { lookbackHours } = config.smaSlope;
+        const up = globalConfig.PremarketRace.direction === 'long' ? 'up' : 'down';
+        return `Which way the hourly 20 SMA points going into the open: how far it moved over the last ${lookbackHours} completed hours, in daily ATRs. Pointing ${up} 0.3 ATR or more keeps full marks, barely moving keeps about 60%, flat about a third, pointing the wrong way a quarter.`;
+    },
+    factor: (facts) => {
+        if (facts.smaSlopeAtr === null || facts.smaSlopePct === null) {
+            return { factor: 1, note: 'Not enough hourly history to measure' };
+        }
+        const { midpointAtr, widthAtr, floor } = config.smaSlope;
+        const rising = (1 + Math.tanh((facts.smaSlopeAtr - midpointAtr) / widthAtr)) / 2;
+        return {
+            factor: floor + (1 - floor) * rising,
+            note: `${formatPct(facts.smaSlopePct)} over ${config.smaSlope.lookbackHours}h = ${facts.smaSlopeAtr >= 0 ? '+' : ''}${facts.smaSlopeAtr.toFixed(2)} ATR`,
+        };
+    },
+};
+
+export const underLongSma: IScoringRule = {
+    id: 'under-long-sma',
+    title: `Under the hourly ${RaceRulesConfig.reclaim.smaPeriod} SMA`,
+    describe: () =>
+        `If the price is ${raceWords(globalConfig.PremarketRace.direction).badSide} the hourly ${RaceRulesConfig.reclaim.smaPeriod} SMA, the score is multiplied by ${config.underLongSma.factor}. This weighs more than the angle of the 20 SMA: a gentle rise above the ${RaceRulesConfig.reclaim.smaPeriod} beats a steep one under it.`,
+    factor: (facts) => {
+        if (facts.belowReclaimSma === null || facts.reclaimSma === null) {
+            return { factor: 1, note: 'Not enough hourly history to measure' };
+        }
+        const side = raceWords(facts.direction);
+        const cushion = `${formatPct(facts.reclaimSmaCushionPct as number)} vs ${facts.reclaimSma.toFixed(2)}`;
+        return facts.belowReclaimSma
+            ? { factor: config.underLongSma.factor, note: `Price ${side.badSide} it (${cushion})` }
+            : { factor: 1, note: `Price ${side.goodSide} it (${cushion})` };
+    },
+};
+
 export const holdQuality: IScoringRule = {
     id: 'hold-quality',
     title: 'Clean hold of the 20 SMA',
@@ -54,7 +92,7 @@ export const underSmaNow: IScoringRule = {
             : { factor: 1, note: 'Holding the SMA' },
 };
 
-export const scoringRules: IScoringRule[] = [gapStrength, smaDistance, holdQuality, underSmaNow];
+export const scoringRules: IScoringRule[] = [gapStrength, smaDistance, smaSlope, underLongSma, holdQuality, underSmaNow];
 
 export const scoreRacer = (facts: IRaceFacts): { score: number; breakdown: IScoreFactor[] } => {
     const breakdown = scoringRules.map((rule) => ({ rule: rule.title, ...rule.factor(facts) }));
