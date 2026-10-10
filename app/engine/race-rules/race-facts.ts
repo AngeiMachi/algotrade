@@ -35,7 +35,10 @@ export const buildRaceFacts = (input: IRaceFactsInput): IRaceFacts => {
     const pctFrom = (value: number, base: number) => ((value - base) / base) * 100;
 
     const bars = premarketKeys.map((key) => intervals[key]);
-    const price = (_.last(bars) as { close: number }).close;
+    const openingBar = input.isAfterBell ? intervals[input.bellKey] : undefined;
+    // After the bell the final board is judged on the open (SNOW Oct 9: last pre-market print exactly at
+    // yesterday's close, then opened above yesterday's high).
+    const price = openingBar ? openingBar.open : (_.last(bars) as { close: number }).close;
     const gapPct = toDirectional(pctFrom(price, previousClose));
 
     const hourlyCandles = buildHourlyCandles(input, toDirectional);
@@ -53,14 +56,12 @@ export const buildRaceFacts = (input: IRaceFactsInput): IRaceFacts => {
     const smaCushionPct = toDirectional(pctFrom(price, sma));
     const atrPct = input.atrPct > 0 ? input.atrPct : RaceRulesConfig.fallbackAtrPct;
 
-    const openingBar = input.isAfterBell ? intervals[input.bellKey] : undefined;
     const previousExtreme = direction === 'long' ? input.previousHigh : input.previousLow;
 
-    const reclaimSmaCushionPct = reclaimSma ? toDirectional(pctFrom(openingBar ? openingBar.open : price, reclaimSma)) : null;
+    const reclaimSmaCushionPct = reclaimSma ? toDirectional(pctFrom(price, reclaimSma)) : null;
 
-    const bandPrice = openingBar ? openingBar.open : price;
-    const bollingerBand = dailyBollingerBand(input.priorDailyCloses, bandPrice, direction);
-    const bollingerCushionPct = bollingerBand ? toDirectional(pctFrom(bandPrice, bollingerBand)) : null;
+    const bollingerBand = dailyBollingerBand(input.priorDailyCloses, price, direction);
+    const bollingerCushionPct = bollingerBand ? toDirectional(pctFrom(price, bollingerBand)) : null;
 
     const premarketVolume = _.sumBy(bars, 'volume');
     const lastCandle = (_.last(premarketKeys) as string).substring(11, 16);
@@ -116,9 +117,10 @@ const averageVolumeUntil = (history: IPremarketVolumeDay[], lastCandle: string):
 
 // Today's pre-market 5-minute bars grouped into hourly candles, each with the 20 SMA as it stood at that candle.
 // Hours without trades carry the previous close, like the broker chart (see fillEmptyHours in alpaca-api).
-// After the bell the last pre-market hour counts as closed, even though its hourly candle runs past 09:30.
+// The 09:00 candle is still forming at the bell: on the chart it runs to 10:00, so a dip under the SMA in its
+// pre-market half is not an hourly close (SNOW Oct 9: under at 09:25, the hourly candle closed far above).
 const buildHourlyCandles = (input: IRaceFactsInput, toDirectional: (value: number) => number): IHourlyCandleFacts[] => {
-    const { intervals, premarketKeys, raceEnd, isAfterBell, smaPeriod, direction } = input;
+    const { intervals, premarketKeys, raceEnd, smaPeriod, direction } = input;
     const keysByHour = _.groupBy(premarketKeys, (key) => key.substring(11, 13));
     const closes = [...input.priorHourlyCloses];
     const date = premarketKeys[0].substring(0, 10);
@@ -140,7 +142,7 @@ const buildHourlyCandles = (input: IRaceFactsInput, toDirectional: (value: numbe
                     : Math.max(...keys.map((key) => intervals[key].high));
             previousClose = close;
             const hourEnd = moment.tz(`${date} ${hour}:00:00`, 'YYYY-MM-DD HH:mm:ss', NEW_YORK).add(1, 'hour');
-            const complete = isAfterBell || !hourEnd.isAfter(raceEnd);
+            const complete = !hourEnd.isAfter(raceEnd);
 
             const sma = _.mean(_.takeRight([...closes, close], smaPeriod));
             if (complete) {

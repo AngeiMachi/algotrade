@@ -44,7 +44,8 @@ export const tradingPastPreviousClose: IQualificationRule = {
     id: 'trading-past-previous-close',
     title: "Trading past yesterday's close",
     listedAs: 'waiting',
-    describe: () => `Only stocks trading ${raceWords(globalConfig.PremarketRace.direction).goodSide} yesterday's close are in the race.`,
+    describe: () =>
+        `Only stocks trading ${raceWords(globalConfig.PremarketRace.direction).goodSide} yesterday's close are in the race. After the bell the open decides.`,
     check: (facts) => (facts.gapPct > 0 ? null : `Not ${raceWords(facts.direction).goodSide} yesterday's close`),
 };
 

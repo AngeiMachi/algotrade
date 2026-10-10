@@ -45,7 +45,9 @@ export const tradingThroughSma: IWarningRule = {
                   id: 'trading-through-sma',
                   level: 'danger',
                   label: 'Under SMA',
-                  message: `Trading ${raceWords(facts.direction).badSide} the 20 SMA in the ${facts.hourlyCandles[facts.hourlyCandles.length - 1].hour}:00 candle — out if it closes there`,
+                  message: facts.isAfterBell
+                      ? `Opened ${raceWords(facts.direction).badSide} the 20 SMA, inside the ${facts.hourlyCandles[facts.hourlyCandles.length - 1].hour}:00 hourly candle (still forming; not an hourly close)`
+                      : `Trading ${raceWords(facts.direction).badSide} the 20 SMA in the ${facts.hourlyCandles[facts.hourlyCandles.length - 1].hour}:00 candle — out if it closes there`,
               }
             : null,
 };

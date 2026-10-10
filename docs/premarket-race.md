@@ -163,7 +163,11 @@ The race keeps the filled candles for the 20 SMA (it matches the chart: TEAM 196
 The trader's chart shows **Israel time** (New York + 7h): the "16:00" candle there is the 09:00 New York candle.
 
 During the race, each new pre-market hour joins the SMA window once it completes; the current hour uses its
-latest price. After the bell the last pre-market hour counts as complete.
+latest price. After the bell every price-based number (gap, score, SMA distance, warnings, badges) uses the
+opening price instead of the last pre-market print, and the "Last" column shows the open (SNOW Oct 9: last
+pre-market print exactly at yesterday's close, then opened above yesterday's high). The 09:00 candle is still forming at the bell (on the chart it runs to 10:00), so a dip under the
+SMA in its pre-market half is not an hourly close: it marks the stock "Under SMA" and halves its score, but does
+not knock it out (SNOW Oct 9: 0.16% under at 09:25, while the hourly candle closed far above).
 
 ## Ranking display
 

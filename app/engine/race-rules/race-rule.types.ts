@@ -26,7 +26,7 @@ export interface IRaceFacts {
     previousClose: number;
     previousExtreme: number | null; // yesterday's high for long, low for short
     previousExtremeCushionPct: number | null; // price vs that level
-    price: number;
+    price: number; // latest pre-market close; the open once the bell rang (every price-based number follows it)
     gapPct: number;
     gapInAtr: number; // gap measured in daily ATRs, so a 3% gap on a calm stock outweighs 3% on a wild one
     atrPct: number;
