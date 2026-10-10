@@ -123,8 +123,24 @@ Levels: `caution` (amber), `alert` (orange, row tinted), `danger` (marks the sto
 
 ### 5. Highlights (`highlight-rules.ts`)
 
-Good setups worth pointing out. Like warnings, they don't change the score. Shown as a blue badge next to
+Good setups worth pointing out. Like warnings, they don't change the score. Shown as a badge next to
 the ticker; the tooltip explains the numbers.
+
+### Badges
+
+Every badge has its own color and icon, and a tooltip above it: the badge name, what it means in general
+(`trade/src/race/badges.js`), then this stock's numbers. Colors are the `badge--<id>` classes in `race.css`.
+A solid fill is the strong form of a hue.
+
+| Badge | Color | Icon |
+|---|---|---|
+| Strong uptrend / Uptrend / Downtrend (daily) | solid bright green / green / red | double arrow up / trending up / trending down |
+| Clean / Touched N× | very light blue / grey outline | check circle / target dot |
+| Under 20 SMA | solid red | arrow to bottom line |
+| Opened below high (reclaimer) / Near high | orange / cyan | down arrow / arrow to top line |
+| Stretched / Very stretched | yellow / solid yellow | warning |
+| MA reclaimed / Trending volume / Above upper BB | violet / fuchsia / pink | graph / bar chart / expand |
+| Watch | white dashed outline | eye |
 
 - **MA reclaimed** — yesterday the stock opened below the hourly 200 SMA (24-hour candles, the orange line on
   the trader's chart); today it opens above it (before the bell: trades above it). Trader's definition: reclaiming
@@ -191,9 +207,11 @@ not knock it out (SNOW Oct 9: 0.16% under at 09:25, while the hourly candle clos
 ## Board controls
 
 - **Search** (main table and each side list). Filters the table only; ranks stay overall. Esc clears.
-- **Uptrend / Strong uptrend toggles** — daily trend filters. Uptrend: today's price (the open, after the bell) is
-  above the daily 10 SMA and the daily 20 SMA. Strong uptrend: also the 10 SMA above the 20 SMA. SMAs use closes before today.
-  Periods in `RaceRulesConfig.trend`. Saved in localStorage.
+- **Trend switch** (All trends / Strong uptrend / Uptrend / Downtrend) — daily trend. Uptrend: today's price (the
+  open, after the bell) is above the daily 10 SMA and the daily 20 SMA (includes strong ones). Strong uptrend: also
+  the 10 SMA above the 20 SMA. Downtrend: the price is below both. Between the two SMAs a stock is neither. SMAs use
+  closes before today. Periods in `RaceRulesConfig.trend`. Combines with the Clean/Touched switch; the podium title
+  follows ("Top 3 clean strong uptrend"). Saved in localStorage.
 - **Trending volume / MA reclaimed toggles** — show only stocks with that badge. Toggles combine (a stock must
   match every toggle that is on); each shows "matching of total". The list lives in `toggleFilters` in `RaceScreen.jsx`.
 - **Favorites (star column)** — starred stocks are pinned to the top of the table, above any sort, with a

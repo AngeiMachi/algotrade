@@ -10,17 +10,23 @@
 ## Simulation (replay a past day)
 
 ```
-npx ts-node scripts/mock-run.ts [YYYY-MM-DD] [seconds per candle, default 3] [NY start HH:mm, default 07:30]
-npx ts-node scripts/mock-run.ts 2026-10-06 3 07:30
+npx ts-node scripts/mock-run.ts [YYYY-MM-DD] [seconds per candle, default 3] [NY start HH:mm, default 08:30] [quotes]
+npx ts-node scripts/mock-run.ts 2026-10-09 3 08:30 producion        # "full run": every stock
+npx ts-node scripts/mock-run.ts 2026-10-09 3 08:30 TSLA,AFRM,SNOW   # a few tickers (SPY is added for the clock)
 ```
 
-- Uses the production watchlist (the old testing list was deleted).
-- Startup takes ~30–60 s: SPY loads first (it drives the mock clock), then all other stocks in parallel so
-  the Alpaca client can batch them.
+- `quotes`: a list name from `QuotesConfig` (`producion`, `development`) or comma-separated tickers. Defaults to
+  `ActiveQuotesList`.
+- Conventions with the trader: while developing, replay a short list (~5 stocks). A "full run" means **all stocks**
+  (`producion`) starting **08:30**, the last hour before the bell. Then report the final board.
+- A full run loads for ~4–5 minutes, then 08:30 → bell takes ~3 minutes at 3 s per candle. Poll `GET /race` until
+  `phase` is `final` instead of waiting blindly. Don't start at 04:00 exactly (SPY has no candle yet; use 04:10).
+- Needs port 11111: stop the live server (`npm run dev`) first.
+- SPY loads first (it drives the mock clock), then all other stocks in parallel so the Alpaca client can batch them.
 - Clock: 5 minutes per tick, but 1 minute per tick inside the decision window (09:15–09:30) so the forming
   candle can be watched. Data is real: 5-minute SIP bars, plus 1-minute bars for the decision window.
-- To restart: kill the old process first. Match with a bracket pattern so the command doesn't match itself:
-  `ps aux | grep "[t]s-node scripts/mock" | awk '{print $2}' | xargs kill`
+- To restart: kill the old process first, **in its own command**: `pkill -f "ts-node scripts/mock-run"`.
+  Chained with the new `npx ts-node scripts/mock-run.ts ...` in one shell line, the kill matches and stops itself.
 - The board marks it "Simulation". Daily history ends the day before the replay date (no look-ahead).
 
 ## Alpaca market data (free plan)
@@ -64,6 +70,11 @@ removed. Unconfirmed with the trader: "amkt" (AMKR?) and "aap" (AAP vs AAPL).
 | `app/proxy/proxy-service.ts` | Mock/live switch, data clock, forming-candle window |
 | `app/proxy/client-service.ts` | Express + socket.io (`/race`, `raceUpdate`) |
 | `trade/src/race/` | React board: header, timing tower, side panel, filters, styles (`race.css`) |
+| `trade/src/race/badges.js`, `Badge.jsx` | Every badge's explanation (tooltip) in one place; colors are `badge--<id>` in `race.css` |
+| `app/engine/watchlist.ts` | The Watching list, saved to `data/watchlist.json` (gitignored) |
+
+`trade/` is its own git repo (`AngeiMachi/trade`, branch `master`), checked out inside this one (`algotrade`,
+branch `alpaca`). Both push over HTTPS.
 
 ## Working notes
 

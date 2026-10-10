@@ -1,0 +1,41 @@
+---
+description: Opening Bell Race — what the project is, where things live, and how the trader likes to work
+alwaysApply: true
+---
+
+# Opening Bell Race
+
+A premarket long-only ranking of stocks for the opening bell. Alpaca data (free plan: SIP 16 min delayed,
+live prices only from the bell). Backend `app/` (port 11111, `npm run dev`); React board `trade/` (port 3000,
+its own git repo). Read before changing anything:
+
+- `docs/premarket-race.md` — every rule, the score formula, badges, filters, and why each exists.
+- `docs/running-and-data.md` — running, replays, data quirks, code map, working notes.
+- `app/config/race-rules.config.ts` — every threshold and scoring dial, with its math and calibration dates.
+
+## How the trader works
+
+- Rules must stay **modular and humanly readable**: one rule per object in `app/engine/race-rules/`, numbers
+  only in the config, plain-language `describe()` text (it feeds the board's rule book).
+- When given rough numbers ("0.2% below the high"), derive the right math (usually in daily ATRs) and
+  calibrate on real days; put the calibration in the config comment.
+- Minimal verification: typecheck (`npx tsc --noEmit -p .`), one quick check, move on. Keep waits short.
+- Develop on a short list (~5 stocks). A **"full run"** = all stocks from 08:30:
+  `npx ts-node scripts/mock-run.ts <date> 3 08:30 producion`, then report the final board.
+- Stop a replay with `pkill -f "ts-node scripts/mock-run"` as a **separate** command before starting another.
+- Badges: each has its own color, icon and tooltip (`trade/src/race/badges.js`, `race.css` `badge--<id>`).
+  A solid fill = the strong form of a hue. Keep them distinct when adding new ones.
+- Screenshot times are usually Israel time (New York + 7 h in summer).
+- Never print or commit the Alpaca keys in `.env`.
+
+## Score today
+
+`100 × gapStrength × smaDistance × smaSlope (angle of the hourly 20 SMA) × holdQuality`, halved under the
+hourly 200 SMA, halved while trading under the 20 SMA. After the bell everything is judged on the open.
+
+## Open ideas the trader raised
+
+- Volume is part of the "optimal stock" (gap, volume, close to the hourly 20 SMA, angle up) but is not in the
+  score yet; today it only drives the Trending volume badge.
+- Sep 22 replay: stretched stocks still ranked high on a big gap day (6 of the top 10); maybe the distance
+  factor should bite harder.
