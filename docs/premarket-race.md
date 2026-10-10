@@ -262,8 +262,8 @@ candles so far it returns every event, with a stable id, so restarts and replays
 signal: write the file, add it to `signals/index.ts`; its `describe()` joins the rule book.
 
 Board: the bell in the header opens the notification center (what is being watched, every alert of the day, read
-marks, Desktop and Sound switches). Live alerts pop up bottom-right: bounce setups stay until closed and chime; the
-rest fade. Alerts older than 10 minutes on the data clock (rebuilt after a restart) only go to the center. Live, the
+marks, Desktop and Sound switches). Only buy setups pop up (bottom-right, stay until closed, chime); "Avoid" and
+"Wait" alerts go quietly to the center. Alerts older than 10 minutes on the data clock (rebuilt after a restart) only go to the center. Live, the
 forming candle of armed stocks is refetched every 20 s, so a touch shows within seconds (IEX prices live).
 Endpoints: `GET /market-watch`; socket `marketWatchUpdate` (state) and `marketAlert` (`{ alert, live }`).
 
@@ -274,13 +274,22 @@ the live daily chart draws it (last 19 closes + the price). It must have been �
 re-arms after a candle closes 0.15 ATR above. The verdict reads how the price got there (the trader's observation:
 slow slides keep sliding, fast drops jump back):
 
-| Verdict | Rule | Tone |
+| Verdict | Rule | Touch alert |
 |---|---|---|
-| Heavy selling | volume on the last 4 candles ≥ 1.5× the session's median candle | amber |
-| Opening dip | in the first 15 minutes | blue |
-| **Fast drop** | ≥ 0.3 ATR in the last 4 candles, ≥ 60% of the way down from the high, before 13:30 | **green, popup + chime** |
-| Slow slide | ≥ 8 candles since near the high, < 0.2 ATR in the last 4 | amber |
-| Touched | anything else | blue |
+| Heavy selling | volume on the last 4 candles ≥ 1.5× the session's median candle | Avoid |
+| Opening dip | in the first 15 minutes | Wait |
+| Fast drop | ≥ 0.3 ATR in the last 4 candles, ≥ 60% of the way down from the high, before 13:30 | Wait |
+| Slow slide | ≥ 8 candles since near the high, < 0.2 ATR in the last 4 | Avoid |
+| Touched | anything else | Wait |
+
+A touch under the hourly 50 SMA is Avoid whatever the verdict. **Buy setup ("Held the upper BB", popup + chime):**
+after a Wait touch, on a stock healthy with the hourly 20 SMA pre-market (no hourly close through it) and above the
+hourly 50 SMA at the touch, a 5-minute candle closes back above the touch within 30 minutes before any close 0.15 ATR
+under the band. The alert carries the trade: target halfway back to the high (≥ 0.3 ATR), out on a 5-minute close
+0.15 ATR under the band, break-even once it bounced 0.15 ATR. Traded that way over the year on the 30 highest-volume
+stocks (`scripts/bb-touch-health.ts`): 52 setups, 31% target, 29% break-even, 15% stopped, 25% still open after 2 hours
+(mostly up), +0.06 ATR a trade. Buying at the touch instead averages 0 ATR whatever the health; waiting for the close
+back above halves the losers. Holding the 50 SMA after breaking the 20 did not help; under the 50 was the worst group.
 
 Calibrated with `scripts/bb-touch-study.ts` (Oct 2025 – Oct 9 2026, trading list, 770 touches; outcome = first to
 move 0.15 ATR up or down within an hour; base 42% up / 44% down): fast drop 134 touches, 57% up / 38% down, stable

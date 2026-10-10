@@ -21,6 +21,15 @@ export const MarketWatchConfig = {
     //   Heavy volume on the way down (≥ 1.5×)    real selling: went further up than down only 32% of the time
     //   Slow slide (8+ candles, gentle arrival)  107 touches  went further up than down 40%; small moves both ways
     // The edge is real but modest: a fast-drop alert is a setup to look at, not a sure bounce.
+    //
+    // Traded the trader's way (scripts/bb-touch-health.ts, 30 highest-volume stocks, 205 touches): target halfway
+    // back to the high (≥ 0.3 ATR) within 2 hours, out on a 5-minute close 0.15 ATR under the band, break-even once
+    // it bounced 0.15 ATR. Buying at the touch averages 0 ATR whatever the health. Waiting for a 5-minute close back
+    // above the band halves the losers. The buy setup = that close, on a stock healthy with the hourly 20 SMA
+    // pre-market, above the hourly 50 SMA at the touch, not a slow slide or heavy selling:
+    //   52 trades: 31% target, 29% break-even, 15% stopped, 25% still open after 2 h (8 of 13 up); +0.06 ATR a trade.
+    //   Under the hourly 50 SMA at the touch: the worst group (27 touches, 11% target / 44% stopped at the touch).
+    //   Broke the 20 SMA pre-market but held the 50: no better than average (7% target on the confirmed entry).
     upperBandTouch: {
         // The price must have been at least this far above the band since it was armed, or it was only hugging the
         // band (227 such touches: 42% up / 58% down, no signal).
@@ -44,5 +53,17 @@ export const MarketWatchConfig = {
         slideMinCandles: 8,
         // ... and the last `recentCandles` candles fell less than this, in ATRs (arrived gently).
         slideMaxRecentDropAtr: 0.2,
+
+        // The buy setup: after the touch, a 5-minute candle closes back above the band within this many candles ...
+        confirmWithinCandles: 6,
+        // ... before any candle closes this far under the band, in ATRs (also the stop: bail out on such a close).
+        stopAtr: 0.15,
+        // Target: halfway back to the high it fell from, at least this far above the buy, in ATRs.
+        targetMinAtr: 0.3,
+        // Once it has bounced this far (ATRs), a return to the buy price is a break-even exit.
+        breakevenAfterAtr: 0.15,
+        // Health: no pre-market hourly candle closed through the race's hourly SMA (globals smaPeriod, 20), and at the
+        // touch the price is above this longer hourly SMA.
+        trendSmaPeriod: 50,
     },
 };

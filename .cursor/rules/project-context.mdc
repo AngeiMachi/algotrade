@@ -35,8 +35,8 @@ hourly 200 SMA, halved while trading under the 20 SMA. After the bell everything
 
 Keep rule: a stock above the daily upper BB (the open, after the bell) is never taken off the board.
 Market watch (`app/engine/market-watch/`, one pure file per signal): after the bell it alerts when those stocks come
-back to the band, judging the approach (fast drop → bounce setup; slow slide / heavy volume → caution). Bell icon =
-notification center. Dev replay for it: `npx ts-node scripts/mock-run.ts 2026-09-23 3 08:30 RKLB,IONQ,ALAB,MU,AMD`.
+back to the band. Buy setup (the only popup) = healthy with the hourly 20 SMA pre-market, above the hourly 50 SMA,
+not a slow slide / heavy volume, and a 5-minute close back above the band. Bell icon = notification center. Dev replay for it: `npx ts-node scripts/mock-run.ts 2026-09-23 3 08:30 RKLB,IONQ,ALAB,MU,AMD`.
 
 ## Open ideas the trader raised
 

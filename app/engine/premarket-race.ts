@@ -202,7 +202,12 @@ const addRacer = async (quote: string, intervals: IQuoteIntervals, metadata: IQu
         lapsInTopThree: 0,
         lastTopThreeCandle: '',
     };
-    marketWatch.track(quote, { atrPct: racers[quote].atrPct, priorDailyCloses: racers[quote].priorDailyCloses, intervals });
+    marketWatch.track(quote, {
+        atrPct: racers[quote].atrPct,
+        priorDailyCloses: racers[quote].priorDailyCloses,
+        priorHourlyCloses: racers[quote].priorHourlyCloses,
+        intervals,
+    });
     delete watchOnly[quote];
     scheduleRecompute(true);
 };

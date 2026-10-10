@@ -1,6 +1,7 @@
 import * as _ from 'lodash';
 import moment from 'moment-timezone';
 
+import * as globalConfig from '../../../config/globals.config';
 import { MarketWatchConfig } from '../../../config/market-watch.config';
 import { RaceRulesConfig } from '../../../config/race-rules.config';
 import { dailyBollingerBand } from '../../race-rules/race-facts';
@@ -156,35 +157,126 @@ const median = (values: number[]) => {
     return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2 || 1;
 };
 
-const VERDICT_TEXT: { [verdict in TouchVerdict]: { tone: IMarketAlert['tone']; title: string; outlook: string } } = {
-    fast: { tone: 'opportunity', title: 'Fast drop to the upper BB', outlook: 'Fell fast into the band: bounced first 57% of the time, kept falling 38%.' },
-    slow: { tone: 'caution', title: 'Slow slide to the upper BB', outlook: 'Slid slowly into the band: tends to keep sliding through it.' },
-    heavy: { tone: 'caution', title: 'Heavy selling into the upper BB', outlook: 'Heavy volume on the way down is real selling: rarely bounced.' },
-    opening: { tone: 'info', title: 'Opening dip to the upper BB', outlook: 'First 15 minutes after the bell: opening chop, no edge.' },
-    unclear: { tone: 'info', title: 'Touched the upper BB', outlook: 'Neither a fast drop nor a slow slide: no edge.' },
+// Slow slides and heavy selling are avoided whatever happens next; the others wait for the band to hold.
+const VERDICT_TEXT: { [verdict in TouchVerdict]: { avoid: boolean; title: string; outlook: string } } = {
+    fast: { avoid: false, title: 'Fast drop to the upper BB', outlook: 'Fell fast into the band: it often jumps, but bought right at the touch it fails as often as it works.' },
+    slow: { avoid: true, title: 'Slow slide to the upper BB', outlook: 'Slid slowly into the band: tends to keep sliding through it.' },
+    heavy: { avoid: true, title: 'Heavy selling into the upper BB', outlook: 'Heavy volume on the way down is real selling: rarely bounced.' },
+    opening: { avoid: false, title: 'Opening dip to the upper BB', outlook: 'First 15 minutes after the bell: opening chop.' },
+    unclear: { avoid: false, title: 'Touched the upper BB', outlook: 'Neither a fast drop nor a slow slide.' },
 };
 
 const candles = (count: number) => `${count} ${count === 1 ? 'candle' : 'candles'}`;
+const timeIsoOf = (bar: IWatchBar) => moment.tz(bar.key, 'YYYY-MM-DD HH:mm:ss', NEW_YORK).toISOString();
+const atrUnit = (facts: IWatchFacts, price: number) => (price * facts.atrPct) / 100;
 
-const toAlert = (facts: IWatchFacts, touch: IBandTouch): IMarketAlert => {
+// The hourly SMA at a candle: hourly closes completed before it, with `price` as the current hour's close.
+const hourlySmaAt = (facts: IWatchFacts, period: number, bar: IWatchBar, price: number): number | null => {
+    const hoursDone = facts.hours.filter((hour) => Number(hour.hour) + 1 <= Number(bar.time.substring(0, 2)));
+    const closes = [...facts.priorHourlyCloses, ...hoursDone.map((hour) => hour.close), price];
+    return closes.length >= period ? _.mean(_.takeRight(closes, period)) : null;
+};
+
+// Healthy before the bell, the race's rule: no pre-market hourly candle closed through the hourly 20 SMA.
+const healthyPremarket = (facts: IWatchFacts): boolean | null => {
+    const period = globalConfig.PremarketRace.smaPeriod;
+    const premarket = facts.hours.filter((hour) => hour.hour < '09' && hour.complete);
+    if (facts.priorHourlyCloses.length < period || premarket.length === 0) {
+        return null;
+    }
+    const closes = [...facts.priorHourlyCloses];
+    return premarket.every((hour) => {
+        closes.push(hour.close);
+        const sma = _.mean(_.takeRight(closes, period));
+        return ((hour.close - sma) / sma) * 100 >= -RaceRulesConfig.smaTolerancePct;
+    });
+};
+
+interface ITouchHealth {
+    healthy: boolean | null; // pre-market, with the hourly 20 SMA
+    trendSma: number | null; // the hourly 50 SMA at the touch
+    aboveTrend: boolean | null;
+}
+
+const healthAt = (facts: IWatchFacts, touch: IBandTouch): ITouchHealth => {
+    const trendSma = hourlySmaAt(facts, settings().trendSmaPeriod, touch.bar, touch.level);
+    return { healthy: healthyPremarket(facts), trendSma, aboveTrend: trendSma === null ? null : touch.level > trendSma };
+};
+
+const healthLines = (health: ITouchHealth) => [
+    health.healthy === null
+        ? 'Pre-market health with the hourly 20 SMA unknown'
+        : health.healthy
+        ? 'Healthy pre-market: no hourly close through the 20 SMA'
+        : 'Not healthy pre-market: an hourly candle closed through the 20 SMA',
+    health.trendSma === null
+        ? `Hourly ${settings().trendSmaPeriod} SMA unknown`
+        : `${health.aboveTrend ? 'Above' : 'Under'} the hourly ${settings().trendSmaPeriod} SMA (${health.trendSma.toFixed(2)}) at the touch`,
+];
+
+const touchAlert = (facts: IWatchFacts, touch: IBandTouch, health: ITouchHealth): IMarketAlert => {
     const text = VERDICT_TEXT[touch.verdict];
-    const { recentCandles } = settings();
+    const { recentCandles, trendSmaPeriod } = settings();
+    const underTrend = health.aboveTrend === false;
     return {
         id: `upper-band-touch:${facts.quote}:${touch.bar.key}`,
         signal: upperBandTouch.id,
         quote: facts.quote,
-        tone: text.tone,
+        tone: text.avoid || underTrend ? 'caution' : 'info',
         title: text.title,
-        summary: text.outlook,
+        summary: text.avoid
+            ? text.outlook
+            : underTrend
+            ? `Under the hourly ${trendSmaPeriod} SMA: the weakest touches, avoid.`
+            : `${text.outlook} Wait for a 5-minute close back above ${touch.level.toFixed(2)} before buying.`,
         message: `Came down to the daily upper BB at ${touch.level.toFixed(2)}: ${touch.dropAtr.toFixed(2)} ATR from its high in ${candles(touch.descentCandles)}.`,
         details: [
             `Fell ${touch.recentDropAtr.toFixed(2)} ATR in the last ${candles(Math.min(recentCandles, touch.index + 1))} (${Math.round(touch.recentShare * 100)}% of the way down)`,
             `High since the open or last re-arm ${touch.top.toFixed(2)}; ${Math.round(touch.lowerHighShare * 100)}% of the descent candles made a lower high`,
             touch.volumeRatio === null ? 'Too early in the session to compare volume' : `Volume on the way down ${touch.volumeRatio.toFixed(1)}× a typical candle today`,
+            ...healthLines(health),
         ],
         candle: touch.bar.time,
-        timeIso: moment.tz(touch.bar.key, 'YYYY-MM-DD HH:mm:ss', NEW_YORK).toISOString(),
+        timeIso: timeIsoOf(touch.bar),
         price: touch.level,
+    };
+};
+
+// The buy setup: a healthy stock above the hourly 50 SMA, not sliding or sold heavily, whose 5-minute candle closes
+// back above the touch within half an hour, before any close under the stop.
+const heldAlert = (facts: IWatchFacts, touch: IBandTouch, health: ITouchHealth): IMarketAlert | null => {
+    const { confirmWithinCandles, stopAtr, targetMinAtr, breakevenAfterAtr } = settings();
+    if (VERDICT_TEXT[touch.verdict].avoid || health.healthy !== true || health.aboveTrend !== true) {
+        return null;
+    }
+    const unit = atrUnit(facts, touch.level);
+    const stop = touch.level - stopAtr * unit;
+    const window = facts.bars.slice(touch.index + 1, touch.index + 1 + confirmWithinCandles).filter((bar) => !bar.forming);
+    const brokeAt = window.findIndex((bar) => bar.close < stop);
+    const heldAt = window.findIndex((bar) => bar.close > touch.level);
+    if (heldAt < 0 || (brokeAt >= 0 && brokeAt < heldAt)) {
+        return null;
+    }
+    const bar = window[heldAt];
+    const target = Math.max(touch.level + 0.5 * (touch.top - touch.level), bar.close + targetMinAtr * unit);
+    return {
+        id: `upper-band-touch:${facts.quote}:${touch.bar.key}:held`,
+        signal: upperBandTouch.id,
+        quote: facts.quote,
+        tone: 'opportunity',
+        title: 'Held the upper BB',
+        summary: `Buy setup: target ${target.toFixed(2)}, bail on a 5-minute close under ${stop.toFixed(2)}, out at your price if it bounces and comes back.`,
+        message: `Touched the band at ${touch.level.toFixed(2)} at ${touch.bar.time} and closed back above it at ${bar.close.toFixed(2)}.`,
+        details: [
+            `Target: halfway back to the high ${touch.top.toFixed(2)}, at least ${targetMinAtr} ATR (${(target - bar.close).toFixed(2)} above)`,
+            `Stop: a 5-minute close ${stopAtr} ATR under the band. Break-even once it bounced ${breakevenAfterAtr} ATR (${(bar.close + breakevenAfterAtr * unit).toFixed(2)})`,
+            `How it came down: ${VERDICT_TEXT[touch.verdict].title.toLowerCase()}`,
+            ...healthLines(health),
+            'Past year, 30 big stocks: 31% hit the target, 29% break-even, 15% stopped, the rest still open after 2 hours',
+        ],
+        candle: bar.time,
+        timeIso: timeIsoOf(bar),
+        price: bar.close,
     };
 };
 
@@ -192,21 +284,26 @@ export const upperBandTouch: IWatchSignal = {
     id: 'upper-band-touch',
     title: 'Back to the upper Bollinger band',
     describe: () => {
-        const { fastDropAtr, fastShare, fastFromMinute, fastUntilMinute, heavyVolumeRatio, recentCandles, slideMinCandles, slideMaxRecentDropAtr, minExcursionAtr, rearmAtr } =
+        const { slideMinCandles, heavyVolumeRatio, minExcursionAtr, rearmAtr, confirmWithinCandles, stopAtr, targetMinAtr, breakevenAfterAtr, trendSmaPeriod } =
             settings();
         return (
-            `Watches every stock that opened above the daily upper Bollinger band and alerts when the price comes back down to it ` +
-            `(after being at least ${minExcursionAtr} ATR above). Fast drop — at least ${fastDropAtr} ATR in the last ${recentCandles} candles, ` +
-            `${Math.round(fastShare * 100)}% of the way down or more, between ${fastFromMinute} and ${fastUntilMinute} minutes after the bell — tends to bounce ` +
-            `(popup and chime). Slow slide — ${slideMinCandles}+ candles down, under ${slideMaxRecentDropAtr} ATR in the last ${recentCandles} — tends to keep going. ` +
-            `Heavy volume on the way down (${heavyVolumeRatio}× a typical candle) is real selling. Re-arms after a candle closes ${rearmAtr} ATR above the band.`
+            `Watches every stock that opened above the daily upper Bollinger band and notes each time the price comes back down to it ` +
+            `(after being at least ${minExcursionAtr} ATR above). Avoid: a slow slide (${slideMinCandles}+ candles down, arriving gently), heavy selling ` +
+            `(${heavyVolumeRatio}× a typical candle's volume) or a touch under the hourly ${trendSmaPeriod} SMA. ` +
+            `Buy setup (popup and chime): a stock healthy with the hourly 20 SMA pre-market and above the hourly ${trendSmaPeriod} SMA whose 5-minute candle ` +
+            `closes back above the band within ${confirmWithinCandles * 5} minutes. Target halfway back to the high (at least ${targetMinAtr} ATR), out on a ` +
+            `5-minute close ${stopAtr} ATR under the band, break-even after a ${breakevenAfterAtr} ATR bounce. Re-arms after a candle closes ${rearmAtr} ATR above the band.`
         );
     },
     watches: opensAboveBand,
     detect: (facts) =>
-        findBandTouches(facts)
-            .filter((touch) => touch.meaningful)
-            .map((touch) => toAlert(facts, touch)),
+        _.flatMap(
+            findBandTouches(facts).filter((touch) => touch.meaningful),
+            (touch) => {
+                const health = healthAt(facts, touch);
+                return _.compact([touchAlert(facts, touch, health), heldAlert(facts, touch, health)]);
+            }
+        ),
     status: (facts) => {
         if (!opensAboveBand(facts)) {
             return null;

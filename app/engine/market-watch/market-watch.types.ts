@@ -15,12 +15,21 @@ export interface IWatchBar {
     forming: boolean;
 }
 
+// Today's 24-hour-chart hourly candle (from 04:00). Hours without trades carry the previous close.
+export interface IWatchHour {
+    hour: string; // 'HH' New York
+    close: number;
+    complete: boolean; // the hour has ended on the data clock
+}
+
 // Everything a signal may read about one stock. No judgement happens here.
 export interface IWatchFacts {
     quote: string;
     tradeDate: string;
     atrPct: number; // daily ATR14 as a percent of the price
     priorDailyCloses: number[]; // daily closes before today, oldest first
+    priorHourlyCloses: number[]; // 24-hour hourly closes before today's pre-market, oldest first
+    hours: IWatchHour[]; // today's hourly candles so far
     openingPrice: number | null; // first regular-session candle's open
     bars: IWatchBar[]; // today's regular-session candles so far, oldest first
 }

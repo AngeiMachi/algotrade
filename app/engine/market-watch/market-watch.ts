@@ -20,6 +20,7 @@ const RECOMPUTE_INTERVAL_MS = 300;
 export interface IWatchedStock {
     atrPct: number;
     priorDailyCloses: number[]; // daily closes before today, oldest first
+    priorHourlyCloses: number[]; // 24-hour hourly closes before today's pre-market, oldest first
     intervals: IQuoteIntervals;
 }
 
