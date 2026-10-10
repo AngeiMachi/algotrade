@@ -44,6 +44,15 @@ The UI's "How the race is ranked" panel is generated from the same `describe()` 
 `race-facts.ts` turns raw bars into plain numbers (gap, SMA, distances, hourly candles…). Rules only read
 facts; they never touch bars. All percentages are "directional": positive = good side for the direction.
 
+### 0. Keep — always on the board (`keep-rules.ts`)
+
+- **Opens outside the daily Bollinger band.** A stock above the daily upper BB (before the bell: its latest price;
+  after: the open) stays on the board whatever the elimination and qualification rules say (trader: "they don't have
+  to be healthy with the 20 SMA, they just need to open above the upper BB"). It is scored like the rest, so its
+  score and warnings still show its health. When a rule was overridden it carries a pink-outline **Kept: BB** badge
+  saying what it would have failed. Its elimination is still remembered: if it falls back inside the band before
+  the bell, it is out again. Sep 23 replay: MU, ALAB, AMD closed an hour under the 20 SMA and were kept.
+
 ### 1. Elimination — permanent (`elimination-rules.ts`)
 
 - **Hourly close through the 20 SMA.** Any pre-market hourly candle that *closes* more than
@@ -243,6 +252,44 @@ appeared at the bell itself — too late to act. Now, from `decisionWindowStart`
 - Movement arrows still compare to the previous *completed* candle. "Top-3 laps" counts once per candle.
   Hourly eliminations still wait for real hourly closes (none can close inside 09:15–09:30).
 - Header shows "Live candle" and the real minute.
+
+## Market watch (during the session)
+
+The infrastructure for intraday signals: `app/engine/market-watch/`, numbers in `app/config/market-watch.config.ts`.
+It follows the race's stocks after the bell (the race board itself stays frozen; the clock keeps running).
+Each signal is one file in `signals/` with `watches()`, `detect()` and `status()`, and is **pure**: from the day's
+candles so far it returns every event, with a stable id, so restarts and replays rebuild the same alerts. To add a
+signal: write the file, add it to `signals/index.ts`; its `describe()` joins the rule book.
+
+Board: the bell in the header opens the notification center (what is being watched, every alert of the day, read
+marks, Desktop and Sound switches). Live alerts pop up bottom-right: bounce setups stay until closed and chime; the
+rest fade. Alerts older than 10 minutes on the data clock (rebuilt after a restart) only go to the center. Live, the
+forming candle of armed stocks is refetched every 20 s, so a touch shows within seconds (IEX prices live).
+Endpoints: `GET /market-watch`; socket `marketWatchUpdate` (state) and `marketAlert` (`{ alert, live }`).
+
+### Signal: back to the upper Bollinger band (`upper-band-touch.ts`)
+
+Watches every stock that opened above the daily upper BB. A touch = a 5-minute candle's low reaches the band, drawn as
+the live daily chart draws it (last 19 closes + the price). It must have been ≥ 0.15 ATR above the band first, and
+re-arms after a candle closes 0.15 ATR above. The verdict reads how the price got there (the trader's observation:
+slow slides keep sliding, fast drops jump back):
+
+| Verdict | Rule | Tone |
+|---|---|---|
+| Heavy selling | volume on the last 4 candles ≥ 1.5× the session's median candle | amber |
+| Opening dip | in the first 15 minutes | blue |
+| **Fast drop** | ≥ 0.3 ATR in the last 4 candles, ≥ 60% of the way down from the high, before 13:30 | **green, popup + chime** |
+| Slow slide | ≥ 8 candles since near the high, < 0.2 ATR in the last 4 | amber |
+| Touched | anything else | blue |
+
+Calibrated with `scripts/bb-touch-study.ts` (Oct 2025 – Oct 9 2026, trading list, 770 touches; outcome = first to
+move 0.15 ATR up or down within an hour; base 42% up / 44% down): fast drop 134 touches, 57% up / 38% down, stable
+in both halves of the year; heavy selling up beat down 32%; opening touches 43% / 55%; slow slides up beat down 40%
+with small moves. A modest edge: a setup to look at, not a sure bounce. Finding against the classic "capitulation"
+idea: heavy volume into the band did *not* bounce. Sep 23 replay: IONQ 11:35 fast drop (bounced), RKLB 13:00 slow slide.
+
+Checked and dropped (no edge, Oct 2025 – Oct 2026): opening-range breakout (15-minute high, 1R target vs the range
+low) averages ~0 R whatever the gap.
 
 ## Ideas not built yet
 

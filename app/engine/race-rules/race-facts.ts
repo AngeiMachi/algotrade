@@ -171,7 +171,7 @@ const buildHourlyCandles = (input: IRaceFactsInput, toDirectional: (value: numbe
 };
 
 // Daily Bollinger band on the good side (upper for long, lower for short), with `price` standing in for today's close.
-const dailyBollingerBand = (priorCloses: number[], price: number, direction: RaceDirection): number | null => {
+export const dailyBollingerBand = (priorCloses: number[], price: number, direction: RaceDirection): number | null => {
     const { periodDays, stdDevs } = RaceRulesConfig.bollinger;
     if (priorCloses.length < periodDays - 1) {
         return null;

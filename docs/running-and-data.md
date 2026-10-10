@@ -27,6 +27,8 @@ npx ts-node scripts/mock-run.ts 2026-10-09 3 08:30 TSLA,AFRM,SNOW   # a few tick
   candle can be watched. Data is real: 5-minute SIP bars, plus 1-minute bars for the decision window.
 - To restart: kill the old process first, **in its own command**: `pkill -f "ts-node scripts/mock-run"`.
   Chained with the new `npx ts-node scripts/mock-run.ts ...` in one shell line, the kill matches and stops itself.
+- After the bell the replay keeps going to the close (5 minutes per tick) so the market watch can be tested; the header
+  clock keeps running ("Since the bell"). Good test day: `2026-09-23 3 08:30 RKLB,IONQ,ALAB,MU,AMD` (every verdict).
 - The board marks it "Simulation". Daily history ends the day before the replay date (no look-ahead).
 
 ## Alpaca market data (free plan)
@@ -72,6 +74,10 @@ removed. Unconfirmed with the trader: "amkt" (AMKR?) and "aap" (AAP vs AAPL).
 | `trade/src/race/` | React board: header, timing tower, side panel, filters, styles (`race.css`) |
 | `trade/src/race/badges.js`, `Badge.jsx` | Every badge's explanation (tooltip) in one place; colors are `badge--<id>` in `race.css` |
 | `app/engine/watchlist.ts` | The Watching list, saved to `data/watchlist.json` (gitignored) |
+| `app/engine/market-watch/` | Intraday signals after the bell: orchestrator, facts, one file per signal in `signals/` |
+| `app/config/market-watch.config.ts` | Market-watch dials and their calibration |
+| `scripts/bb-touch-study.ts` | Calibration study for the upper-BB touch: `npx ts-node scripts/bb-touch-study.ts 2026-10-09 345 producion` (bars cached in /tmp) |
+| `trade/src/race/NotificationCenter.jsx`, `useMarketWatch.js` | Bell, notification center, popups, desktop notifications |
 
 `trade/` is its own git repo (`AngeiMachi/trade`, branch `master`), checked out inside this one (`algotrade`,
 branch `alpaca`). Both push over HTTPS.

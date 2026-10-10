@@ -9,6 +9,8 @@ import * as  proxyService  from '../proxy/proxy-service';
 import { QuoteMonoRunner } from './quote-mono-reader';
 import * as behaviorManager from './behavior-manager';
 import * as premarketRace from './premarket-race';
+import * as marketWatch from './market-watch/market-watch';
+import { MarketWatchConfig } from '../config/market-watch.config';
 import { IQuotes, IQuoteFullIntervalData, IQuoteIntervals } from '../models/quote-data.model';
 
 
@@ -54,6 +56,7 @@ export const initiateQuotesWatch = ()=> {
 
     if (!globalConfig.Mock.IsMock) {
         schedule.scheduleJob(`*/${globalConfig.PremarketRace.formingCandleRefreshSeconds} * * * * *`, refreshFormingCandles);
+        schedule.scheduleJob(`*/${MarketWatchConfig.formingCandleRefreshSeconds} * * * * *`, refreshWatchedFormingCandles);
     }
 }
 
@@ -64,10 +67,25 @@ const refreshFormingCandles = () => {
     Object.keys(quotes).forEach((quoteName) => updateRace(quoteName, {}));
 };
 
+// During the session, the stocks a market-watch signal is waiting on get their forming candle every few seconds.
+const refreshWatchedFormingCandles = () => {
+    if (!marketWatch.getState().sessionOpen) {
+        return;
+    }
+    marketWatch.getArmedQuotes().forEach(async (quoteName) => {
+        try {
+            marketWatch.updateQuote(quoteName, await proxyService.getIntraday5MinuteWithFormingCandle(quoteName));
+        } catch (err) {
+            logger.error('error at quotes-iterator.refreshWatchedFormingCandles - quote=' + quoteName + ' err=' + err);
+        }
+    });
+};
+
 const updateRace = async (quoteName: string, completedIntervals: IQuoteIntervals) => {
     try {
         const intervals = proxyService.isFormingCandleWindow() ? await proxyService.getIntraday5MinuteWithFormingCandle(quoteName) : completedIntervals;
         premarketRace.updateQuote(quoteName, intervals);
+        marketWatch.updateQuote(quoteName, intervals);
     } catch (err) {
         logger.error('error at quotes-iterator.updateRace - quote=' + quoteName + ' err=' + err);
     }

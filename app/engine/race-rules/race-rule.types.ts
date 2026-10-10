@@ -117,8 +117,22 @@ export interface IHighlightRule extends IRaceRule {
     check: (facts: IRaceFacts) => IRaceHighlight | null;
 }
 
+// Overrides the elimination and qualification rules: a stock matching a keep rule stays on the board whatever they
+// say, scored like any other. Returns why it is kept, or null.
+export interface IKeepRule extends IRaceRule {
+    label: string; // a word or two for the badge, e.g. "Kept: above BB"
+    check: (facts: IRaceFacts) => string | null;
+}
+
+// A kept stock that a rule would otherwise have taken off the board.
+export interface IKeptBy {
+    id: string;
+    label: string;
+    message: string; // why it is kept, and what it would have been instead
+}
+
 export interface IRuleDescription {
-    kind: 'elimination' | 'qualification' | 'scoring' | 'warning' | 'highlight';
+    kind: 'keep' | 'elimination' | 'qualification' | 'scoring' | 'warning' | 'highlight' | 'watch';
     title: string;
     description: string;
 }

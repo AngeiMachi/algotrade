@@ -7,6 +7,7 @@ import * as PushAPI from './pushed-api';
 import * as quotesIterator from '../engine/quotes-iterator';
 import * as premarketRace from '../engine/premarket-race';
 import * as watchlist from '../engine/watchlist';
+import * as marketWatch from '../engine/market-watch/market-watch';
 import * as globalConfig from "../config/globals.config"
 import * as TwitterAPI from './twitter-api';
 
@@ -46,6 +47,10 @@ app.get('/getAllQuotes', (req, res) => {
 
 app.get('/race', (req, res) => {
     res.json(premarketRace.getSnapshot());
+});
+
+app.get('/market-watch', (req, res) => {
+    res.json(marketWatch.getState());
 });
 
 app.get('/watchlist', (req, res) => {
@@ -120,6 +125,14 @@ export const updateQuote = (quote: QuoteState,shouldSendPush:boolean) => {
 
 export const emitRaceUpdate = (snapshot: premarketRace.IRaceSnapshot) => {
     ioGlobal.emit('raceUpdate', snapshot);
+};
+
+export const emitMarketWatchUpdate = (state: marketWatch.IMarketWatchState) => {
+    ioGlobal.emit('marketWatchUpdate', state);
+};
+
+export const emitMarketAlert = (event: marketWatch.IMarketAlertEvent) => {
+    ioGlobal.emit('marketAlert', event);
 };
 
 const SignalToClients = async (quote: QuoteState) => {

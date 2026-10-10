@@ -10,6 +10,7 @@ import * as AlpacaAPI from '../proxy/alpaca-api';
 import * as proxyService from '../proxy/proxy-service';
 import * as behaviorManager from './behavior-manager';
 import * as watchlist from './watchlist';
+import * as marketWatch from './market-watch/market-watch';
 import { IQuoteIntervals, IQuoteMetadata } from '../models/quote-data.model';
 import {
     averageTrueRangePct,
@@ -27,6 +28,8 @@ import {
     describeRuleBook,
     eliminationRules,
     IElimination,
+    IKeptBy,
+    keepRules,
     IRaceWarning,
     IRuleDescription,
     IScoreFactor,
@@ -52,6 +55,7 @@ export interface IRaceEntry {
     scoreBreakdown: IScoreFactor[];
     warnings: IRaceWarning[];
     highlights: IRaceHighlight[];
+    keptBy: IKeptBy | null; // on the board by a keep rule, whatever elimination and qualification say
     price: number | null;
     previousClose: number | null;
     gapPct: number | null;
@@ -198,6 +202,7 @@ const addRacer = async (quote: string, intervals: IQuoteIntervals, metadata: IQu
         lapsInTopThree: 0,
         lastTopThreeCandle: '',
     };
+    marketWatch.track(quote, { atrPct: racers[quote].atrPct, priorDailyCloses: racers[quote].priorDailyCloses, intervals });
     delete watchOnly[quote];
     scheduleRecompute(true);
 };
@@ -267,10 +272,11 @@ export const updateQuote = (quote: string, intervals: IQuoteIntervals) => {
 export const getSnapshot = (): IRaceSnapshot | null => snapshot;
 
 // The final standings freeze once every open is known, except that a newly registered stock (engine started
-// after the bell) must still be added.
+// after the bell) must still be added. Frozen, only the clock moves on through the session.
+let fullRecomputeRequested = false;
 const scheduleRecompute = (newRacer: boolean = false) => {
-    if (snapshot?.phase === 'final' && !awaitingOpens && !newRacer) {
-        return;
+    if (!(snapshot?.phase === 'final' && !awaitingOpens && !newRacer)) {
+        fullRecomputeRequested = true;
     }
     // Throttle rather than debounce: with fast mock laps, updates never pause long enough for a debounce to fire.
     if (recomputeTimer) {
@@ -279,7 +285,11 @@ const scheduleRecompute = (newRacer: boolean = false) => {
     recomputeTimer = setTimeout(() => {
         recomputeTimer = null;
         try {
-            snapshot = computeSnapshot();
+            snapshot =
+                fullRecomputeRequested || !snapshot
+                    ? computeSnapshot()
+                    : { ...snapshot, clockIso: proxyService.getDataClock().toISOString(), updatedAt: new Date().toISOString() };
+            fullRecomputeRequested = false;
             clientService.emitRaceUpdate(snapshot);
         } catch (err) {
             logger.error('premarket-race recompute failed ' + err);
@@ -312,7 +322,7 @@ const computeSnapshot = (): IRaceSnapshot => {
     const raceEnd = isAfterBell ? toNewYork(bellKey) : raceCandle ? toNewYork(raceCandle).add(5, 'minutes') : null;
     const dataClock = proxyService.getDataClock();
     const candleForming = !isAfterBell && !!raceEnd && raceEnd.isAfter(dataClock);
-    const clock = candleForming ? dataClock : raceEnd;
+    const clock = candleForming || isAfterBell ? dataClock : raceEnd;
     const entries = allRacers.map((racer) => evaluateRacer(racer, premarketKeysOf(racer), bellKey, raceEnd, isAfterBell));
 
     const contenders = _.orderBy(
@@ -362,7 +372,10 @@ const computeSnapshot = (): IRaceSnapshot => {
         totalLaps,
         decisionLaps,
         rules: settings,
-        ruleBook: describeRuleBook(),
+        ruleBook: [
+            ...describeRuleBook(),
+            ...marketWatch.describeSignals().map((signal) => ({ kind: 'watch' as const, title: signal.title, description: signal.description })),
+        ],
         standings: contenders,
         waiting: _.orderBy(
             entries.filter((entry) => entry.status === 'waiting'),
@@ -458,21 +471,31 @@ const evaluateRacer = (racer: IRacer, premarketKeys: string[], bellKey: string, 
         lastCandle: facts.lastCandle,
     });
 
+    // An elimination is remembered for the day even while a keep rule holds the stock on the board: if the stock
+    // stops matching the keep rule (e.g. falls back inside the band before the bell), it is out again.
     racer.elimination = racer.elimination ?? firstResult(eliminationRules.map((rule) => () => rule.check(facts)));
-    if (racer.elimination) {
-        entry.status = 'out';
-        entry.reason = racer.elimination.reason;
-        entry.eliminatedAt = racer.elimination.time;
-        return entry;
-    }
-
     const failedQualification = firstResult(
         qualificationRules.map((rule) => () => {
             const reason = rule.check(facts);
             return reason ? { reason, listedAs: rule.listedAs } : null;
         })
     );
-    if (failedQualification) {
+    const keep = firstResult(
+        keepRules.map((rule) => () => {
+            const reason = rule.check(facts);
+            return reason ? { rule, reason } : null;
+        })
+    );
+
+    const overridden = racer.elimination?.reason ?? failedQualification?.reason;
+    if (keep && overridden) {
+        entry.keptBy = { id: keep.rule.id, label: keep.rule.label, message: `${keep.reason}. Kept on the board although: ${overridden}.` };
+    } else if (racer.elimination) {
+        entry.status = 'out';
+        entry.reason = racer.elimination.reason;
+        entry.eliminatedAt = racer.elimination.time;
+        return entry;
+    } else if (failedQualification) {
         entry.reason = failedQualification.reason;
         entry.status = failedQualification.listedAs;
         return entry;
@@ -484,7 +507,7 @@ const evaluateRacer = (racer: IRacer, premarketKeys: string[], bellKey: string, 
     entry.warnings = warningRules.map((rule) => rule.check(facts)).filter((warning): warning is IRaceWarning => warning !== null);
     entry.highlights = highlightRules.map((rule) => rule.check(facts)).filter((highlight): highlight is IRaceHighlight => highlight !== null);
     entry.status = entry.warnings.some((warning) => warning.id === tradingThroughSma.id) ? 'at-risk' : 'racing';
-    entry.reason = entry.warnings.map((warning) => warning.message).join(' · ');
+    entry.reason = [entry.keptBy?.message, ...entry.warnings.map((warning) => warning.message)].filter(Boolean).join(' · ');
     return entry;
 };
 
@@ -498,6 +521,7 @@ const emptyEntry = (racer: Pick<IRacer, 'quote' | 'previousClose' | 'dailySmas' 
     scoreBreakdown: [],
     warnings: [],
     highlights: [],
+    keptBy: null,
     price: null,
     previousClose: racer.previousClose,
     gapPct: null,
