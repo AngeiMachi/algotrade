@@ -13,7 +13,7 @@ export const opensOutsideBollinger: IKeepRule = {
     describe: () => {
         const band = globalConfig.PremarketRace.direction === 'long' ? 'upper' : 'lower';
         const { periodDays, stdDevs } = RaceRulesConfig.bollinger;
-        return `A stock ${raceWords(globalConfig.PremarketRace.direction).goodSide} the daily ${band} Bollinger band (${periodDays} days, ${stdDevs}σ) stays on the board even when it fails the hourly 20 SMA, yesterday's range or the volume rules. Before the bell it is judged on its latest price, after the bell on the open. The market watch follows these stocks through the session.`;
+        return `A stock ${raceWords(globalConfig.PremarketRace.direction).goodSide} the daily ${band} Bollinger band (${periodDays} days, ${stdDevs}σ) stays on the board even when it fails the hourly 20 SMA (its close or yesterday's angle), yesterday's range or the volume rules. Before the bell it is judged on its latest price, after the bell on the open. The market watch follows these stocks through the session.`;
     },
     check: (facts) => {
         if (facts.isAfterBell && facts.openingPrice === null) {

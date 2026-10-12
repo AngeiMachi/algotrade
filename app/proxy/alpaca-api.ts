@@ -218,7 +218,8 @@ export const getQuote24HourHourlyHistory = async (quote: string, tradeDate: stri
     }
 };
 
-// Pre-market (04:00 to the bell) 5-minute volume for the last `days` sessions before tradeDate.
+// 5-minute volume from 04:00 to the regular close for the last `days` sessions before tradeDate (pre-market RVOL for
+// the race, time-of-day RVOL for the market watch).
 export const getPremarketVolumeHistory = async (quote: string, tradeDate: string, days: number): Promise<IPremarketVolumeDay[]> => {
     try {
         const bars = await getBars(quote.toUpperCase(), {
@@ -229,7 +230,7 @@ export const getPremarketVolumeHistory = async (quote: string, tradeDate: string
         });
         const premarketBars = bars.filter((bar) => {
             const time = moment(bar.t).tz(NEW_YORK).format('HH:mm');
-            return time >= EXTENDED_SESSION_START && time < REGULAR_SESSION_START;
+            return time >= EXTENDED_SESSION_START && time < REGULAR_SESSION_END;
         });
         const byDate = _.groupBy(premarketBars, nyDate);
         return _.takeRight(Object.keys(byDate).sort(), days).map((date) => ({

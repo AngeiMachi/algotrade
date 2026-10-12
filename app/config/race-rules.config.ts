@@ -13,6 +13,14 @@
 export const RaceRulesConfig = {
     // An hourly close may sit this far through the 20 SMA and still count as holding it.
     smaTolerancePct: 0.05,
+    // Only the last this-many hourly candles before the bell are judged (05:00–09:00 for a 09:30 bell), and only hours
+    // with trades: an empty hour carries the previous close while the SMA keeps moving (ECHO Oct 5: no trade from
+    // Friday 16:00 to Monday 07:40, the rising SMA passed the frozen 93.02 at 05:00 and knocked it out).
+    hourlyCloseLookbackHours: 4,
+    // Yesterday's angle of the hourly 20 SMA (its change over scoring.smaSlope.lookbackHours at the last hourly candle
+    // before today's pre-market, in daily ATRs) under this = out for the day: a stock whose SMA pointed down the day
+    // before is a turn, not a trend. The keep rule (above the daily upper BB, a big jump like earnings) overrides it.
+    minPriorSmaSlopeAtr: 0,
 
     // Pre-market dollar volume below this is too thin to trust.
     minPremarketDollarVolume: 200000,
@@ -65,25 +73,47 @@ export const RaceRulesConfig = {
         // Conviction: at least a quarter of a normal day's move above yesterday's close (ATR 2% → +0.5%), or
         // unusual pre-market volume (RVOL ≥ relativeVolume.trendingAt).
         minGapAtr: 0.25,
+        // At most half the noise under the high (ATR 4% → 0.2%) it is at the high: no conviction needed (SHOP Oct 5:
+        // on the board all morning, opened 152.78, 0.15% = 0.035 ATR under Friday's 153.01, gap 0.21 ATR, quiet volume).
+        atHighAtr: 0.05,
     },
 
     // ATR used for the SMA distance when a stock has no daily history yet.
     fallbackAtrPct: 3,
 
     scoring: {
-        // gapStrength = tanh(gapInAtr ÷ scaleAtr): rises quickly at first, then flattens.
-        // With scaleAtr 1: 0.25 ATR → 0.24, 0.5 → 0.46, 1 → 0.76, 2 → 0.96. Bigger gaps add little,
-        // because large gap-ups fade more often in the first hour.
+        // The trader (Oct 12): closeness to the 20 SMA matters most, a gap matters (somewhat substantial, not
+        // huge), volume is a nice confirmation; far from the SMA is a clear "not first", and big volume there can be
+        // a warning. Oct 12 at the open: SHOP (gap 0.43 ATR, 0.26 ATR above the SMA, RVOL 2.4) was the clear
+        // winner (+3.7% by the close) but ranked 7th behind CRM, NOW and EBAY, all ~0.66 ATR above the SMA
+        // (CRM −1.6%, NOW −3.8%, EBAY flat). With these dials SHOP ranks 1st and those three ~20th.
+        //
+        // gapStrength = g² ÷ (g² + halfAtr²), g = gap in daily ATRs (a Hill curve: an S that saturates).
+        // With halfAtr 0.25: 0.1 ATR → 0.14, 0.2 → 0.39, 0.25 → 0.5, 0.35 → 0.66, 0.5 → 0.8, 1 → 0.94.
+        // A tiny gap is nearly worthless, a quarter of a day's move is half marks, and past ~0.5 ATR more gap adds
+        // little: a 1 ATR gap beats a 0.43 ATR one by only 1.25×, which closeness easily outweighs.
         gap: {
-            scaleAtr: 1,
+            halfAtr: 0.25,
         },
         // smaDistance = 1 within comfortAtr of the SMA; beyond it decays like a normal tail:
         //   exp(−½ × ((distance − comfortAtr) ÷ decayAtr)²)
-        //   → 0.5 ATR: 1, 0.75: 0.88, 1 ATR: 0.61, 1.5: 0.14, 2: 0.01 (with comfortAtr 0.5, decayAtr 0.5).
-        // Example: ATR 3%, 4.5% above the SMA = 1.5 ATR → keeps 14%. ATR 6%, 2.9% above = 0.48 ATR → full marks.
+        //   → 0.15 ATR: 1, 0.26: 0.93, 0.35: 0.80, 0.45: 0.61, 0.55 (stretched): 0.41, 0.66: 0.24, 1 ATR: 0.02.
+        // comfortAtr ≈ the noise of one or two 5-minute candles (one is ATR ÷ √78 ≈ 0.11 ATR).
         smaDistance: {
-            comfortAtr: 0.5,
-            decayAtr: 0.5,
+            comfortAtr: 0.15,
+            decayAtr: 0.3,
+        },
+        // volume = RVOL ^ (exponent × (2 × smaDistance − 1)), RVOL (pre-market, `relativeVolume`) kept between
+        // minRvol and maxRvol. The sign follows closeness: near the SMA (smaDistance ≈ 1) busy volume confirms and
+        // quiet volume costs; past the midpoint (smaDistance < 0.5, ≈ 0.5 ATR away) busy volume is a warning
+        // (buying climax) and quiet volume is not rewarded (RVOL under 1 counts as 1 there).
+        //   On the SMA: RVOL 4+ → 1.32, 2.4 → 1.19, 1 → 1, 0.5 → 0.87, 0.25 or less → 0.76.
+        //   0.66 ATR away (smaDistance 0.24): RVOL 4+ (CRM 6×) → 0.86, 1 or less → 1.
+        // No RVOL yet (no history, or before relativeVolume.fromTime): 1.
+        volume: {
+            exponent: 0.2,
+            minRvol: 0.25,
+            maxRvol: 4,
         },
         // smaSlope: which way the hourly 20 SMA points going into the open, from completed hourly candles only.
         //   slope = (SMA now − SMA lookbackHours ago) ÷ ATR14, in daily ATRs.

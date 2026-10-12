@@ -12,7 +12,7 @@ export interface INearPreviousExtreme {
 }
 
 export const nearPreviousExtreme = (facts: IRaceFacts): INearPreviousExtreme | null => {
-    const { maxShortfallAtr, minGapAtr } = RaceRulesConfig.nearPreviousExtreme;
+    const { maxShortfallAtr, minGapAtr, atHighAtr } = RaceRulesConfig.nearPreviousExtreme;
     // After the bell `price` is the open, so this is the opening shortfall.
     if (facts.previousExtremeCushionPct === null || facts.previousExtremeCushionPct > 0) {
         return null;
@@ -28,10 +28,12 @@ export const nearPreviousExtreme = (facts: IRaceFacts): INearPreviousExtreme | n
     const { trendingAt, fromTime } = RaceRulesConfig.relativeVolume;
     const strongGap = facts.gapPct / atrPct >= minGapAtr;
     const unusualVolume = facts.relativeVolume !== null && facts.relativeVolume >= trendingAt && facts.lastCandle >= fromTime;
-    if (!strongGap && !unusualVolume) {
+    const atTheHigh = shortfallAtr <= atHighAtr;
+    if (!strongGap && !unusualVolume && !atTheHigh) {
         return null;
     }
     const reasons = [
+        atTheHigh ? `only ${shortfallAtr.toFixed(2)} ATR under yesterday's high` : null,
         strongGap ? `${formatPct(facts.gapPct)} from yesterday's close (${(facts.gapPct / atrPct).toFixed(2)} ATR)` : null,
         unusualVolume ? `${(facts.relativeVolume as number).toFixed(1)}× normal pre-market volume` : null,
     ].filter(Boolean);

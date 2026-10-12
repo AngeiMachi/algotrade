@@ -49,6 +49,13 @@ let mockNow = '';
 
 export const getMockNow = (): moment.Moment | null => (mockNow ? moment.tz(mockNow, KEY_FORMAT, NEW_YORK) : null);
 
+// Paused from the board: the replay laps are skipped, so the clock and every stock stand still.
+let paused = false;
+export const isPaused = () => paused;
+export const setPaused = (next: boolean) => {
+    paused = next;
+};
+
 export async function prepareMockDataAlphaVantage(quote: string): Promise<any> {
     const mockData = {} as IAlphaVantageIntervals;
     const mockQuote = (mockQuotes[quote] = mockQuotesFactory(quote));

@@ -205,7 +205,9 @@ const addRacer = async (quote: string, intervals: IQuoteIntervals, metadata: IQu
     marketWatch.track(quote, {
         atrPct: racers[quote].atrPct,
         priorDailyCloses: racers[quote].priorDailyCloses,
+        dailySmas: racers[quote].dailySmas,
         priorHourlyCloses: racers[quote].priorHourlyCloses,
+        volumeHistory: premarketVolumeHistory,
         intervals,
     });
     delete watchOnly[quote];
@@ -335,6 +337,8 @@ const computeSnapshot = (): IRaceSnapshot => {
         [(entry) => entry.score, (entry) => entry.gapPct],
         ['desc', 'desc']
     );
+
+    marketWatch.setBoard(contenders.map((entry) => entry.quote));
 
     latestRanks = {};
     contenders.forEach((entry, index) => {

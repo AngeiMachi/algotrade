@@ -30,17 +30,19 @@ its own git repo). Read before changing anything:
 
 ## Score today
 
-`100 × gapStrength × smaDistance × smaSlope (angle of the hourly 20 SMA) × holdQuality`, halved under the
-hourly 200 SMA, halved while trading under the 20 SMA. After the bell everything is judged on the open.
+`100 × gapStrength × smaDistance × volume × smaSlope (angle of the hourly 20 SMA) × holdQuality`, halved under the
+hourly 200 SMA, halved while trading under the 20 SMA. Weighting (Oct 12, SHOP): closeness to the 20 SMA matters
+most (bites hard past 0.15 ATR), a somewhat substantial gap (S curve, half marks at 0.25 ATR), volume as a light
+confirmation that turns into a warning far from the SMA. After the bell everything is judged on the open.
 
 Keep rule: a stock above the daily upper BB (the open, after the bell) is never taken off the board.
 Market watch (`app/engine/market-watch/`, one pure file per signal): after the bell it alerts when those stocks come
 back to the band. Buy setup (the only popup) = healthy with the hourly 20 SMA pre-market, above the hourly 50 SMA,
-not a slow slide / heavy volume, and a 5-minute close back above the band. Bell icon = notification center. Dev replay for it: `npx ts-node scripts/mock-run.ts 2026-09-23 3 08:30 RKLB,IONQ,ALAB,MU,AMD`.
+not a slow slide / heavy volume, and a 5-minute close back above the band. Second signal: hourly 20 SMA reclaim (first
+two hourly candles, dip under the rising SMA, close above; board or healthy stocks in an uptrend). Alerts live on the
+board's Alerts tab, by stock and group (each event's stages in one row). Dev replay for it, fast intraday:
+`npx ts-node scripts/mock-run.ts 2026-10-09 1 09:25 META,RKLB,IONQ,ALAB,MU,AMD,AFRM`.
 
 ## Open ideas the trader raised
 
-- Volume is part of the "optimal stock" (gap, volume, close to the hourly 20 SMA, angle up) but is not in the
-  score yet; today it only drives the Trending volume badge.
-- Sep 22 replay: stretched stocks still ranked high on a big gap day (6 of the top 10); maybe the distance
-  factor should bite harder.
+- The Oct 12 weighting is calibrated on one day only: replay Sep 22 and Oct 5–9 to check it holds.

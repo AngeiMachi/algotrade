@@ -9,6 +9,7 @@ import * as premarketRace from '../engine/premarket-race';
 import * as watchlist from '../engine/watchlist';
 import * as marketWatch from '../engine/market-watch/market-watch';
 import * as globalConfig from "../config/globals.config"
+import * as mockService from './mock-service';
 import * as TwitterAPI from './twitter-api';
 
 const app = express();
@@ -51,6 +52,22 @@ app.get('/race', (req, res) => {
 
 app.get('/market-watch', (req, res) => {
     res.json(marketWatch.getState());
+});
+
+// Replay control, mock only: pause or play the replay clock.
+app.get('/mock', (req, res) => {
+    res.json({ isMock: globalConfig.Mock.IsMock, paused: mockService.isPaused() });
+});
+
+app.post('/mock', jsonParser, (req, res) => {
+    if (!globalConfig.Mock.IsMock) {
+        res.status(400).json({ error: 'Not a replay' });
+        return;
+    }
+    mockService.setPaused(!!req.body?.paused);
+    const next = { isMock: true, paused: mockService.isPaused() };
+    ioGlobal.emit('mockUpdate', next);
+    res.json(next);
 });
 
 app.get('/watchlist', (req, res) => {

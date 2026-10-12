@@ -77,7 +77,7 @@ removed. Unconfirmed with the trader: "amkt" (AMKR?) and "aap" (AAP vs AAPL).
 | `app/engine/market-watch/` | Intraday signals after the bell: orchestrator, facts, one file per signal in `signals/` |
 | `app/config/market-watch.config.ts` | Market-watch dials and their calibration |
 | `scripts/bb-touch-study.ts` | Calibration study for the upper-BB touch: `npx ts-node scripts/bb-touch-study.ts 2026-10-09 345 producion` (bars cached in /tmp) |
-| `trade/src/race/NotificationCenter.jsx`, `useMarketWatch.js` | Bell, notification center, popups, desktop notifications |
+| `trade/src/race/AlertsTab.jsx`, `useMarketWatch.js`, `alertActions.js` | Alerts tab (by stock and group), popups, desktop notifications, the calls |
 
 `trade/` is its own git repo (`AngeiMachi/trade`, branch `master`), checked out inside this one (`algotrade`,
 branch `alpaca`). Both push over HTTPS.

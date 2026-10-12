@@ -56,7 +56,7 @@ export const Notifications = {
 };
 
 // Which list in QuotesConfig the engine follows. 'development' is a handful of stocks so restarts load fast.
-export const ActiveQuotesList: keyof typeof QuotesConfig = 'development';
+export const ActiveQuotesList: keyof typeof QuotesConfig = 'producion';
 
 export const QuotesConfig = {
     development: {
@@ -90,7 +90,7 @@ export const QuotesConfig = {
             signals:[],
             names:[
                 "SPCX","MA","AAP","SKHY","AMKR","NXPI","CBRS","CRWV","NBIS","ALAB","GLW","SNDK","APLD",
-                "WOLF","ECHO","CRCL","BE","EBAY","HIMS","ASTS","IREN","TEM","RTX","NNE","OKLO","RKLB","VKTX","NET","V","RH","XYZ"
+                "WOLF","ECHO","CRCL","BE","EBAY","HIMS","ASTS","IREN","TEM","RTX","NNE","OKLO","RKLB","VKTX","NET","V","RH","XYZ","RDDT"
             ],
         },
         smallcap:{

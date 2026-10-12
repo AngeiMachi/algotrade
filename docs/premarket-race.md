@@ -55,10 +55,15 @@ facts; they never touch bars. All percentages are "directional": positive = good
 
 ### 1. Elimination — permanent (`elimination-rules.ts`)
 
-- **Hourly close through the 20 SMA.** Any pre-market hourly candle that *closes* more than
-  `smaTolerancePct` (0.05%) below the hourly 20 SMA knocks the stock out for the day. Wicks touching or
-  dipping below are allowed. (Trader's words: "it may touch or close a tiny bit through, but an hourly close
-  below = out.")
+- **Hourly 20 SMA pointed down yesterday.** Its angle at yesterday's last hourly candle (the score's smaSlope
+  measure) under `minPriorSmaSlopeAtr` (0) = out for the day: a turn, not a trend. Only the keep rule (above the
+  daily upper BB, a massive jump like earnings) keeps it on the board. The market watch's 20 SMA reclaim uses the same rule.
+- **Hourly close through the 20 SMA.** One of the last `hourlyCloseLookbackHours` (4: the 05:00–08:00 candles)
+  pre-market hourly candles that *closes* more than `smaTolerancePct` (0.05%) below the hourly 20 SMA knocks the
+  stock out for the day. Wicks touching or dipping below are allowed. (Trader's words: "it may touch or close a tiny
+  bit through, but an hourly close below = out.") An hour without trades does not count: it carries the previous
+  close while the SMA keeps moving (ECHO Oct 5: no trade from Friday 16:00 to Monday 07:40; the rising SMA passed
+  the frozen 93.02 at 05:00).
 - **Opened inside yesterday's range.** At the bell, the open must be **above yesterday's high** (long).
   Opening at or below it = out. This replaced "opened below yesterday's close", which it covers.
   **Exception — reclaimers:** a stock with "MA reclaimed" (reclaimed the hourly 200 SMA on the open) may stay
@@ -68,7 +73,9 @@ facts; they never touch bars. All percentages are "directional": positive = good
   Only `tradingThroughSma` marks a stock at risk; other `danger` warnings just show red.
   **Exception — near high** (`near-previous-extreme.ts`, settings `RaceRulesConfig.nearPreviousExtreme`): a
   stock at most **0.1 daily ATR** under yesterday's high stays eligible when it holds the hourly 20 SMA and shows
-  conviction: at least **0.25 ATR** above yesterday's close, or unusual volume (RVOL ≥ 1.5×). Amber "Near high"
+  conviction: at least **0.25 ATR** above yesterday's close, or unusual volume (RVOL ≥ 1.5×). Within **0.05 ATR**
+  (`atHighAtr`, half the noise) it is at the high and needs no conviction (SHOP Oct 5: on the board all morning,
+  opened 0.15% = 0.035 ATR under Friday's high on a 0.21 ATR gap and quiet volume, and was dropped). Amber "Near high"
   badge. Measured in ATRs so calm and wild stocks get the same allowance (ATR 2% → 0.2% under / +0.5% gap; ATR
   5% → 0.5% / +1.25%). Why 0.1 ATR: one 5-minute candle typically ranges ATR ÷ √78 ≈ 0.11 ATR, so less than that
   under the high is noise. Checked on daily candles of the trading list, Sep 28 – Oct 9 (open→close, in ATRs):
@@ -90,15 +97,23 @@ Each rule has `listedAs: 'out' | 'waiting'`, which decides which side list the s
 ### 3. Score — ranks the race (`scoring-rules.ts`)
 
 ```
-score = 100 × gapStrength × smaDistance × smaSlope × underLongSma × holdQuality × underSmaNow      (each factor 0..1)
+score = 100 × gapStrength × smaDistance × volume × smaSlope × underLongSma × holdQuality × underSmaNow
 ```
 
-Multiplying (not adding) means one bad trait drags the score down however strong the rest is.
+Multiplying (not adding) means one bad trait drags the score down however strong the rest is. Each factor is 0..1
+except volume (0.76..1.32).
+
+The trader's weighting (Oct 12): closeness to the 20 SMA matters most, a gap matters (somewhat substantial, not
+huge), volume is a nice confirmation; far from the SMA is a clear "not first", and big volume there can be a
+warning. Oct 12 at the open SHOP (gap 0.43 ATR, 0.26 ATR above the SMA, RVOL 2.4×) was the clear winner (+3.7% by
+the close) but ranked 7th behind CRM, NOW and EBAY (all ~0.66 ATR above the SMA). With the curves below SHOP ranks
+1st and those three ~20th.
 
 | Factor | Formula | Why |
 |---|---|---|
-| Gap strength | `tanh(gapInAtr ÷ 1)`, where `gapInAtr = gap% ÷ daily ATR14%` | Gap measured in the stock's own volatility. Rises fast for the first ATR, then flattens: a huge gap is not automatically better (big gaps fade more often) |
-| Distance from the 20 SMA | `1` within 0.5 ATR, then `exp(−½((d − 0.5) ÷ 0.5)²)`, where `d = (price − SMA20₁ₕ)% ÷ ATR14%` | Close to the SMA is healthy; far from it tends to pull back. 1 ATR keeps 61%, 1.5 ATR keeps 14% |
+| Gap strength | `g² ÷ (g² + 0.25²)`, where `g = gapInAtr = gap% ÷ daily ATR14%` | Gap measured in the stock's own volatility. An S curve: 0.1 ATR → 0.14, 0.25 → 0.5, 0.5 → 0.8, 1 → 0.94. A tiny gap is worth little, past ~0.5 ATR more gap adds little (big gaps fade more often) |
+| Distance from the 20 SMA | `1` within 0.15 ATR, then `exp(−½((d − 0.15) ÷ 0.3)²)`, where `d = (price − SMA20₁ₕ)% ÷ ATR14%` | The most important trait. 0.35 ATR keeps 80%, 0.55 (stretched) 41%, 0.66 24%, 1 ATR 2% |
+| Volume | `RVOL ^ (0.2 × (2 × smaDistance − 1))`, RVOL (pre-market) kept in 0.25..4 | Read through the distance: near the SMA busy volume confirms (RVOL 2.4 → 1.19, 4+ → 1.32) and quiet costs (0.5 → 0.87); past ~0.5 ATR away busy volume is a warning (a buying climax: down to 0.76) and quiet is not rewarded. No RVOL yet → 1 |
 | Angle of the 20 SMA | `0.25 + 0.75 × ½(1 + tanh((s − 0.1) ÷ 0.1))`, where `s = SMA20₁ₕ change over the last 10 completed hours ÷ ATR14%` | Which way the SMA points going into the open. Over 10 hours its change compares the last 10 hourly closes with those 20-30 hours back, so it reads the day before into the pre-market. Rising 0.3 ATR+ keeps ~100%, 0.2 → 91%, 0.1 → 63%, flat → 34%, falling → 25%. Oct 9: AFRM +0.51, SNOW +0.36, TSLA +0.24 (up), META +0.06 (flat, 48%) |
 | Under the hourly 200 SMA | `0.5` when the price (the open, after the bell) is under the hourly 200 SMA in both readings | Outweighs the angle: a gently rising 20 SMA above the 200 (0.1 ATR → 0.63) beats a steep one under it (1 × 0.5) |
 | Clean hold | `0.85 ^ touches` | Each pre-market hourly wick that dipped below the SMA costs 15%. Clean (never touched) is best |
@@ -261,11 +276,64 @@ Each signal is one file in `signals/` with `watches()`, `detect()` and `status()
 candles so far it returns every event, with a stable id, so restarts and replays rebuild the same alerts. To add a
 signal: write the file, add it to `signals/index.ts`; its `describe()` joins the rule book.
 
-Board: the bell in the header opens the notification center (what is being watched, every alert of the day, read
-marks, Desktop and Sound switches). Only buy setups pop up (bottom-right, stay until closed, chime); "Avoid" and
-"Wait" alerts go quietly to the center. Alerts older than 10 minutes on the data clock (rebuilt after a restart) only go to the center. Live, the
-forming candle of armed stocks is refetched every 20 s, so a touch shows within seconds (IEX prices live).
+Board: the **Alerts** tab (next to Race) has one headed section per group (signal). Each ranks its stocks like the
+race: buy setups and "Get ready" carry a score (100 × factors, each shown with its note), a stock's score adds its live
+setups (a reclaim in both hours adds both), and stocks without a live setup follow, newest first. So a strong setup
+that came early stays on top. Search, group and call filters, read marks, Desktop and Sound switches, and who each
+signal is watching. The stages of one event (`eventId`: a touch and its hold, a reclaim forming and closing) form one
+row, judged by the latest stage. Calls: Buy setup (popup that stays, chime), Get ready (quiet popup that fades), Avoid
+and Wait (tab only). Alerts of one update are collected for 0.8 s; at most 3 reclaim popups are on screen, the best
+scores (many stocks reclaim at the same hour close). Clicking a popup opens the tab. Alerts older than 10 minutes on the data clock (rebuilt after a restart) only go to
+the tab. Live, the forming candle of armed stocks is refetched every 20 s, so a touch shows within seconds (IEX prices live).
 Endpoints: `GET /market-watch`; socket `marketWatchUpdate` (state) and `marketAlert` (`{ alert, live }`).
+
+### Signal: reclaim of the hourly 20 SMA (`sma-reclaim.ts`)
+
+The trader's setup, not back-tested. Watches stocks on the final board or healthy pre-market (no pre-market hourly
+close through the 20 SMA; stocks dismissed by hand count, the engine ignores dismissals), in the board's daily
+uptrend. In the first two hourly candles of the session (clock hours on the 24-hour chart: 09:00–10:00, whose last
+half is the first half hour, and 10:00–11:00), when the candle dips under the hourly 20 SMA and buyers take it back
+while the SMA points up (≥ 0.1 ATR over 10 hours, the score's "rising").
+
+The candle must be a **hammer or a cross on the SMA** (daily ATRs): the low at least 0.1 ATR under the SMA (a real
+test, not a tick through), the close at most 0.4 ATR above it (still close: further up it has run away and may come
+back down, like UBER on Oct 9 at 0.81 ATR), and a fight: at least 0.4 ATR from high to low with the body at most 55%
+of it, the rest wicks (a small full-body green candle says nothing, it may just as well stay put). On the Oct 9 full
+run this kept AFRM, GME, PLTR 10:00, ABNB, GM and ECHO (HPE is out: its 09:00 candle closed under).
+
+| Stage | When | Call |
+|---|---|---|
+| Forming | at hh:55 the candle dipped under the SMA and is back above it, close to it | Get ready |
+| Closed above | the hourly candle closes above the SMA, close to it | **Buy setup** (below the hour's low the setup is wrong) |
+| No setup | closed above the SMA, but the close ran away, the hour barely moved or it is mostly body | Wait |
+
+A low less than 0.1 ATR under the SMA never touched it (ETSY Oct 12: 6 cents, 0.02 ATR, not under it on the trader's
+chart): no entry at all.
+| Lost it | it was Forming but closed under the SMA | Avoid |
+
+Nothing triggers before 10:00 (first Get ready 09:55). Both hours can trigger, but once a watched hourly candle has
+closed under the SMA the stock is out for the day (HPE Oct 9: the 09:00 candle closed at 71.40 under 71.84).
+A stock whose hourly 20 SMA pointed down yesterday (its angle at yesterday's last hourly candle under
+`minPriorSlopeAtr`, 0) is out too: that is a turn, not a trend (ECHO Oct 9). Only opening above the daily upper
+Bollinger band (a massive jump, earnings) lets it in.
+
+Every reclaim close is rated, buy or not: 100 × angle × dip depth × closeness to the SMA × **volume**. Volume = today's volume from 04:00 through the alert's candle ÷ the 10-session average up
+to the same time (RVOL, which projects the day), as RVOL^0.5 between 0.5 and 1.5: quiet halves the score at most,
+busy lifts it by half at most. The BB buy setup gets the same volume factor. Live, volume older than 15 minutes is
+SIP and the last 15 minutes are IEX scaled per stock, so no second data source is needed. On the tab each column
+lists every stock as a card: live setups first, then the rest, by rating.
+
+Decision badges on each card (`alert-badges.ts`, thresholds in `MarketWatchConfig.badges`), beside the score because
+the ranking is not always right, drawn in the race board's language (same icons and hues for the same idea): On the
+board, a **live volume badge** (updated through the session, not frozen at the alert: Trending volume when RVOL ≥ 1.5,
+Volume when normal, Quiet volume, its dim dashed form, under 0.7; with the trend arrow ↑ rising / → steady / ↓ fading =
+the last 30 minutes against normal for those minutes, compared with the 30 before, ≥ 1.2× or ≤ 0.8×, so the normal fade
+after the opening rush reads steady), Steep 20 SMA
+(≥ 0.3 ATR, Clean's light blue), Deep test (reclaim dipped ≥ 0.3 ATR under: the solid form of Touched), Tight stop
+(≤ 0.25 ATR to where the setup is wrong) or Wide stop (≥ 0.6 ATR: smaller size, Stretched's yellow), Room to the high
+(today's high ≥ 0.5 ATR above, with yesterday's-high's arrow). Each card has an × to dismiss the stock from that
+column (no popups from it there); a "Dismissed" fold at the bottom brings it back. Saved per day in the browser. Oct 9 replay: AFRM Get ready 09:55,
+buy setup 10:00 at 78.66.
 
 ### Signal: back to the upper Bollinger band (`upper-band-touch.ts`)
 

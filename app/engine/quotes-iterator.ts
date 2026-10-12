@@ -6,6 +6,7 @@ import * as globalConfig from '../config/globals.config';
 import { logger } from '../config/winston.config';
 
 import * as  proxyService  from '../proxy/proxy-service';
+import * as mockService from '../proxy/mock-service';
 import { QuoteMonoRunner } from './quote-mono-reader';
 import * as behaviorManager from './behavior-manager';
 import * as premarketRace from './premarket-race';
@@ -51,6 +52,9 @@ export const initiateQuotesWatch = ()=> {
     } 
     
     schedule.scheduleJob(runCron, async () => {
+        if (globalConfig.Mock.IsMock && mockService.isPaused()) {
+            return;
+        }
         await iterateQuotes();
     });
 
@@ -139,6 +143,9 @@ export const initiateQuoteWatch=(quoteName: string)=> {
     } 
     
     schedule.scheduleJob(runCron, async () => {
+        if (globalConfig.Mock.IsMock && mockService.isPaused()) {
+            return;
+        }
         await iterateQuote(quoteName);
     });
 }

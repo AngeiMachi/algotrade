@@ -14,7 +14,7 @@ export interface IHourlyCandleFacts {
 
 export interface IPremarketVolumeDay {
     date: string; // New York 'YYYY-MM-DD'
-    bars: { time: string; volume: number }[]; // 5-minute pre-market bars, 'HH:mm' New York, sorted
+    bars: { time: string; volume: number }[]; // 5-minute bars from 04:00 to 16:00, 'HH:mm' New York, sorted
 }
 
 export interface IRaceFacts {
@@ -41,6 +41,7 @@ export interface IRaceFacts {
     smaStretchAtr: number; // distance from the 20 SMA in daily ATRs (Keltner-style units)
     smaSlopePct: number | null; // how far the 20 SMA moved over the last scoring.smaSlope.lookbackHours completed hours
     smaSlopeAtr: number | null; // the same in daily ATRs; positive = pointing the good way (up for long)
+    priorSmaSlopeAtr: number | null; // the same angle at yesterday's last hourly candle, before today's pre-market
     hourlyCandles: IHourlyCandleFacts[];
     smaTouches: number;
 

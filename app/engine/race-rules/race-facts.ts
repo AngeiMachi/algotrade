@@ -61,6 +61,7 @@ export const buildRaceFacts = (input: IRaceFactsInput): IRaceFacts => {
     const completedClosesSoFar = [...input.priorHourlyCloses, ...completedCloses(hourlyCandles)];
     const rawSlopePct = smaChangePct(completedClosesSoFar, input.smaPeriod, RaceRulesConfig.scoring.smaSlope.lookbackHours);
     const smaSlopePct = rawSlopePct === null ? null : toDirectional(rawSlopePct);
+    const priorSlopePct = smaChangePct(input.priorHourlyCloses, input.smaPeriod, RaceRulesConfig.scoring.smaSlope.lookbackHours);
 
     const previousExtreme = direction === 'long' ? input.previousHigh : input.previousLow;
 
@@ -97,6 +98,7 @@ export const buildRaceFacts = (input: IRaceFactsInput): IRaceFacts => {
         smaStretchAtr: smaCushionPct / atrPct,
         smaSlopePct,
         smaSlopeAtr: smaSlopePct === null ? null : smaSlopePct / atrPct,
+        priorSmaSlopeAtr: priorSlopePct === null ? null : toDirectional(priorSlopePct) / atrPct,
         hourlyCandles,
         smaTouches: hourlyCandles.filter((candle) => candle.wickVsSmaPct < 0).length,
 
@@ -185,7 +187,7 @@ export const dailyBollingerBand = (priorCloses: number[], price: number, directi
 const completedCloses = (candles: IHourlyCandleFacts[]) => candles.filter((candle) => candle.complete).map((candle) => candle.close);
 
 // Percent change of the `period` SMA over the last `lookback` closes. Null without enough history.
-const smaChangePct = (closes: number[], period: number, lookback: number): number | null => {
+export const smaChangePct = (closes: number[], period: number, lookback: number): number | null => {
     if (closes.length < period + lookback) {
         return null;
     }

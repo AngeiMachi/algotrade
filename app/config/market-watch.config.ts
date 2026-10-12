@@ -65,5 +65,95 @@ export const MarketWatchConfig = {
         // Health: no pre-market hourly candle closed through the race's hourly SMA (globals smaPeriod, 20), and at the
         // touch the price is above this longer hourly SMA.
         trendSmaPeriod: 50,
+        // Score of a buy setup (ranks the BB section of the Alerts tab; not back-tested):
+        //   100 × angle of the hourly 20 SMA at the touch (the race's factor) × quick hold × reward × volume
+        //   quick hold = 1 if the first candle after the touch closes back above, down to slowestHoldFactor at the
+        //   last allowed one. reward = tanh((target − buy) ÷ (buy − stop) ÷ rewardRiskScale): 1:1 → 0.46, 2:1 → 0.76.
+        score: {
+            slowestHoldFactor: 0.5,
+            rewardRiskScale: 1,
+        },
+    },
+
+    // "Hourly 20 SMA reclaim" (the trader's setup, not back-tested): in the first hours of the session an hourly
+    // candle (24-hour chart, clock hours) dips under the hourly 20 SMA, buyers take it back and it closes above,
+    // while the SMA points up. Watched on stocks on the final board or healthy pre-market (no pre-market hourly close
+    // through the 20 SMA), in the board's daily uptrend.
+    // Volume factor in both setup scores. RVOL = today's volume from 04:00 through the alert's candle ÷ the average of
+    // the race's relativeVolume.days sessions up to the same time; the same ratio projects the day's volume.
+    //   factor = RVOL ^ exponent, kept between minFactor and maxFactor
+    //   → 0.25× normal: 0.5, 0.5×: 0.71, normal: 1, 1.5×: 1.22, 2×: 1.41, 2.25× or more: 1.5.
+    // A quiet stock loses up to half its score; a busy one gains up to half. Live, volume older than 15 minutes is SIP
+    // (every exchange) and the last 15 minutes are IEX scaled by the stock's SIP/IEX ratio: good enough for a ratio.
+    volume: {
+        exponent: 0.5,
+        minFactor: 0.5,
+        maxFactor: 1.5,
+        minDays: 3,
+        // The live volume badge's trend: the last `trendWindowMinutes` against a normal day's same minutes, compared
+        // with the window before. Both are against normal for their time of day, so the usual fade after the opening
+        // rush reads as steady, not fading. At least `risingRatio` = rising, at most `fadingRatio` = fading.
+        trendWindowMinutes: 30,
+        risingRatio: 1.2,
+        fadingRatio: 0.8,
+    },
+
+    // Decision badges on setups (alert-badges.ts), not part of the score: they say why a lower score may still be
+    // worth a look, or a high one is not.
+    badges: {
+        // Busy: RVOL at least this (the race's Trending volume bar); quiet: under this.
+        busyVolume: 1.5,
+        quietVolume: 0.7,
+        // Steep 20 SMA: rising this many ATRs over 10 hours (the score's angle is maxed out here).
+        steepSlopeAtr: 0.3,
+        // Deep test (reclaim): the hour went this far under the SMA and was bought back.
+        deepDipAtr: 0.3,
+        // Stop size, buy to the level where the setup is wrong (the hour's low; the BB stop): tight at most this ...
+        tightStopAtr: 0.25,
+        // ... wide from this on (a smaller position for the same risk).
+        wideStopAtr: 0.6,
+        // Room to the high: today's high (from 04:00) is at least this far above the buy, a natural first target.
+        roomToHighAtr: 0.5,
+    },
+
+    smaReclaim: {
+        // The hourly candles watched, by their start hour in New York. 09 = 09:00–10:00, whose last half is the first
+        // half hour of the session: nothing triggers before 10:00. 10 = the second hour; both may trigger.
+        hours: ['09', '10'],
+        // "Get ready" once this many minutes of the hour have closed (55 = at hh:55, 25 minutes after the bell for the
+        // first hour), if the candle dipped under the SMA and is back above it.
+        prepareAtMinute: 55,
+        // The SMA must point up: its rise over the race's lookback (10 hours), in daily ATRs. 0.1 is where the
+        // score's angle factor calls it rising (META Oct 9 at +0.06 was flat on the trader's chart).
+        minSlopeAtr: 0.1,
+        // Yesterday's angle of the hourly 20 SMA must not be under RaceRulesConfig.minPriorSmaSlopeAtr, the race's own
+        // rule (ECHO Oct 9, a perfect cross that fell); only opening above the daily upper Bollinger band skips it.
+        // The candle, in daily ATRs (the trader: close above the SMA and close to it; a hammer or a cross, where the
+        // body sits does not matter): the low went at least `minDipAtr` under the SMA (a real test, not a tick through) ...
+        minDipAtr: 0.1,
+        // ... and the close is at most `maxCloseAboveAtr` above it (still close to it: further up it has run away and
+        // may come back down).
+        maxCloseAboveAtr: 0.4,
+        // The fight (the trader: a hammer or a cross shows the struggle; a small green candle may just as well stay
+        // put): the hour moved at least `minRangeAtr` from high to low ...
+        minRangeAtr: 0.4,
+        // ... and its body (open to close) is at most this share of that range, the rest wicks. 0.55, not 0.5, so a
+        // borderline hammer passes (ABNB Oct 9: 51%, +0.8% two hours later).
+        maxBodyShare: 0.55,
+        // Oct 9 full run, 16 reclaims. Kept: AFRM (hammer, body 22%), GME (46%), PLTR 10:00 (cross, +2.4%), ABNB
+        // (51%), GM (cross, flat) and ECHO (cross, −1.3%). Dropped: PYPL (0.32 ATR range, +0.6%), IOT and NOW (dipped
+        // 0.00–0.08 ATR), UBER (0.81 ATR above, dip 0.10), PINS (0.97) and SNOW (0.68) ran away from the SMA.
+
+        // Score (ranks the 20 SMA section of the Alerts tab and picks the popups; not back-tested):
+        //   100 × angle (the race's factor) × dip × closeness × volume (the shared factor above)
+        //   dip = ½ + ½ × min(1, dip ÷ fullDipAtr): the minimum 0.1 ATR → 0.67, 0.3 ATR or deeper → 1.
+        //   closeness = 1 − closenessWeight × close above ÷ maxCloseAboveAtr: on the SMA 1, at the limit 0.7.
+        // "No setup" closes are rated the same way (closeness floored at minFactor) so every stock ranks. A stock that
+        // does it in both hours adds both scores, so it climbs the list.
+        score: {
+            fullDipAtr: 0.3,
+            closenessWeight: 0.3,
+            minFactor: 0.2,
+        },
     },
 };

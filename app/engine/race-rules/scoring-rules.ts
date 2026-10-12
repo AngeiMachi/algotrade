@@ -3,7 +3,7 @@ import * as globalConfig from '../../config/globals.config';
 import { IRaceFacts, IScoreFactor, IScoringRule } from './race-rule.types';
 import { formatPct, raceWords } from './race-words';
 
-// Each scoring rule returns a factor between 0 and 1. The race ranks by score = 100 × all factors multiplied.
+// Each scoring rule returns a factor between 0 and 1 (volume can lift up to its cap above 1). The race ranks by score = 100 × all factors multiplied.
 
 const config = RaceRulesConfig.scoring;
 
@@ -11,23 +11,54 @@ export const gapStrength: IScoringRule = {
     id: 'gap-strength',
     title: 'Gap strength',
     describe: () =>
-        `How far the stock moved from yesterday's close, in daily ATRs: tanh(gap ÷ ${config.gap.scaleAtr} ATR). Grows fast for the first ATR, then flattens — a huge gap is not automatically better.`,
-    factor: (facts) => ({
-        factor: Math.tanh(Math.max(0, facts.gapInAtr) / config.gap.scaleAtr),
-        note: `${formatPct(facts.gapPct)} = ${facts.gapInAtr.toFixed(2)} ATR (ATR ${facts.atrPct.toFixed(2)}%)`,
-    }),
+        `How far the stock moved from yesterday's close, in daily ATRs: gap² ÷ (gap² + ${config.gap.halfAtr}²). A tiny gap is worth little, ${config.gap.halfAtr} ATR is half marks, 0.5 ATR keeps 80%, and past that more gap adds little — a huge gap is not automatically better.`,
+    factor: (facts) => {
+        const gap = Math.max(0, facts.gapInAtr);
+        return {
+            factor: gap ** 2 / (gap ** 2 + config.gap.halfAtr ** 2),
+            note: `${formatPct(facts.gapPct)} = ${facts.gapInAtr.toFixed(2)} ATR (ATR ${facts.atrPct.toFixed(2)}%)`,
+        };
+    },
+};
+
+const closeness = (facts: IRaceFacts) => {
+    const beyondComfort = Math.max(0, facts.smaStretchAtr - config.smaDistance.comfortAtr) / config.smaDistance.decayAtr;
+    return Math.exp(-0.5 * beyondComfort ** 2);
 };
 
 export const smaDistance: IScoringRule = {
     id: 'sma-distance',
     title: 'Distance from the 20 SMA',
     describe: () =>
-        `How stretched the price is from the hourly 20 SMA, in daily ATRs. Full marks within ${config.smaDistance.comfortAtr} ATR, then it fades like a bell curve: 1 ATR keeps 61%, 1.5 ATR keeps 14%. Close to the SMA is healthy; far from it tends to pull back.`,
+        `How stretched the price is from the hourly 20 SMA, in daily ATRs. Full marks within ${config.smaDistance.comfortAtr} ATR, then it fades fast like a bell curve: 0.35 ATR keeps 80%, 0.55 ATR (stretched) 41%, 0.66 ATR 24%, 1 ATR 2%. Close to the SMA is the most important trait; far from it tends to pull back.`,
+    factor: (facts) => ({
+        factor: closeness(facts),
+        note: `${formatPct(facts.smaCushionPct)} ${raceWords(facts.direction).goodSide} the SMA = ${facts.smaStretchAtr.toFixed(2)} ATR`,
+    }),
+};
+
+export const volume: IScoringRule = {
+    id: 'volume',
+    title: 'Volume',
+    describe: () => {
+        const { exponent, minRvol, maxRvol } = config.volume;
+        return (
+            `Pre-market volume against normal (RVOL), read through the distance from the SMA: RVOL ^ (${exponent} × (2 × distance factor − 1)), RVOL kept between ${minRvol} and ${maxRvol}. ` +
+            `Close to the SMA busy volume confirms (up to +32%) and quiet volume costs (up to −24%); far from it (distance factor under ½) busy volume is a warning (up to −24%) and quiet volume is not rewarded.`
+        );
+    },
     factor: (facts) => {
-        const beyondComfort = Math.max(0, facts.smaStretchAtr - config.smaDistance.comfortAtr) / config.smaDistance.decayAtr;
+        const { trendingAt, fromTime } = RaceRulesConfig.relativeVolume;
+        if (facts.relativeVolume === null || facts.lastCandle < fromTime) {
+            return { factor: 1, note: 'No relative volume yet' };
+        }
+        const { exponent, minRvol, maxRvol } = config.volume;
+        const power = exponent * (2 * closeness(facts) - 1);
+        const rvol = Math.min(maxRvol, Math.max(minRvol, facts.relativeVolume));
+        const reading = facts.relativeVolume >= trendingAt ? 'busy' : facts.relativeVolume < 1 ? 'quiet' : 'normal';
         return {
-            factor: Math.exp(-0.5 * beyondComfort ** 2),
-            note: `${formatPct(facts.smaCushionPct)} ${raceWords(facts.direction).goodSide} the SMA = ${facts.smaStretchAtr.toFixed(2)} ATR`,
+            factor: (power < 0 ? Math.max(1, rvol) : rvol) ** power,
+            note: `${facts.relativeVolume.toFixed(1)}× normal (${reading})${power < 0 && facts.relativeVolume > 1 ? ', far from the SMA: a warning' : ''}`,
         };
     },
 };
@@ -92,7 +123,7 @@ export const underSmaNow: IScoringRule = {
             : { factor: 1, note: 'Holding the SMA' },
 };
 
-export const scoringRules: IScoringRule[] = [gapStrength, smaDistance, smaSlope, underLongSma, holdQuality, underSmaNow];
+export const scoringRules: IScoringRule[] = [gapStrength, smaDistance, volume, smaSlope, underLongSma, holdQuality, underSmaNow];
 
 export const scoreRacer = (facts: IRaceFacts): { score: number; breakdown: IScoreFactor[] } => {
     const breakdown = scoringRules.map((rule) => ({ rule: rule.title, ...rule.factor(facts) }));

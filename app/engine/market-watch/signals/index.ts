@@ -1,6 +1,6 @@
-// The market watch's signals. To add one: write it in its own file here (see market-watch.types for the shape)
-// and add it to this list. Its describe() text shows in the board's rule book.
 import { IWatchSignal } from '../market-watch.types';
+import { smaReclaim } from './sma-reclaim';
 import { upperBandTouch } from './upper-band-touch';
 
-export const watchSignals: IWatchSignal[] = [upperBandTouch];
+// Every market-watch signal, in the order the board lists their groups. To add one: write its file, add it here.
+export const watchSignals: IWatchSignal[] = [smaReclaim, upperBandTouch];
