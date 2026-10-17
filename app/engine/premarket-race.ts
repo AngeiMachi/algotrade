@@ -30,6 +30,7 @@ import {
     IElimination,
     IKeptBy,
     keepRules,
+    IRaceFacts,
     IRaceWarning,
     IRuleDescription,
     IScoreFactor,
@@ -110,6 +111,7 @@ interface IRacer {
     elimination: IElimination | null;
     lapsInTopThree: number;
     lastTopThreeCandle: string;
+    facts: IRaceFacts | null; // as last judged
 }
 
 interface IWatchOnly {
@@ -201,6 +203,7 @@ const addRacer = async (quote: string, intervals: IQuoteIntervals, metadata: IQu
         elimination: null,
         lapsInTopThree: 0,
         lastTopThreeCandle: '',
+        facts: null,
     };
     marketWatch.track(quote, {
         atrPct: racers[quote].atrPct,
@@ -338,7 +341,7 @@ const computeSnapshot = (): IRaceSnapshot => {
         ['desc', 'desc']
     );
 
-    marketWatch.setBoard(contenders.map((entry) => entry.quote));
+    marketWatch.setBoard(contenders.map((entry) => ({ quote: entry.quote, facts: racers[entry.quote].facts as IRaceFacts })));
 
     latestRanks = {};
     contenders.forEach((entry, index) => {
@@ -464,6 +467,7 @@ const evaluateRacer = (racer: IRacer, premarketKeys: string[], bellKey: string, 
         raceEnd,
         isAfterBell,
     });
+    racer.facts = facts;
 
     Object.assign(entry, {
         price: facts.price,

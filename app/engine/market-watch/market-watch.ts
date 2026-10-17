@@ -8,9 +8,9 @@ import * as clientService from '../../proxy/client-service';
 import * as proxyService from '../../proxy/proxy-service';
 import { IQuoteIntervals } from '../../models/quote-data.model';
 import { IDailySmas } from '../race-rules/race-facts';
-import { IPremarketVolumeDay } from '../race-rules/race-rule.types';
+import { IPremarketVolumeDay, IRaceFacts } from '../race-rules/race-rule.types';
 import { volumeBadge } from './alert-badges';
-import { IAlertBadge, IMarketAlert, IWatchStatus } from './market-watch.types';
+import { IAlertBadge, IMarketAlert, IWatchSignal, IWatchStatus } from './market-watch.types';
 import { watchSignals } from './signals';
 import { buildWatchFacts } from './watch-facts';
 
@@ -47,7 +47,7 @@ export interface IMarketAlertEvent {
 }
 
 const stocks: { [quote: string]: IWatchedStock } = {};
-let boardQuotes = new Set<string>();
+let board = new Map<string, IRaceFacts>();
 const alerts = new Map<string, IMarketAlert>();
 let state: IMarketWatchState | null = null;
 let recomputeTimer: NodeJS.Timeout | null = null;
@@ -65,14 +65,16 @@ export const updateQuote = (quote: string, intervals: IQuoteIntervals) => {
     scheduleRecompute();
 };
 
-// The race's standings (after the bell: the final board). Some signals only watch stocks on it.
-export const setBoard = (quotes: string[]) => {
-    const next = new Set(quotes);
-    if (next.size === boardQuotes.size && quotes.every((quote) => boardQuotes.has(quote))) {
-        return;
+// The race's standings (after the bell: the final board) with the facts each was judged on. Some signals only
+// watch stocks on it.
+export const setBoard = (standings: { quote: string; facts: IRaceFacts }[]) => {
+    const signature = (facts: IRaceFacts) => `${facts.isAfterBell}:${facts.price}`;
+    const unchanged =
+        standings.length === board.size && standings.every(({ quote, facts }) => board.has(quote) && signature(board.get(quote)!) === signature(facts));
+    board = new Map(standings.map(({ quote, facts }) => [quote, facts]));
+    if (!unchanged) {
+        scheduleRecompute();
     }
-    boardQuotes = next;
-    scheduleRecompute();
 };
 
 export const getState = (): IMarketWatchState => state ?? computeState().state;
@@ -82,6 +84,19 @@ export const getArmedQuotes = (): string[] => (state?.watching || []).filter((st
 
 export const describeSignals = () =>
     watchSignals.map((signal) => ({ id: signal.id, title: signal.title, shortTitle: signal.shortTitle, description: signal.describe() }));
+
+// The board's group order: a signal with a lead time comes first until that long after the bell, then goes last.
+const orderedSignals = (clock: moment.Moment, tradeDate: string, sessionStart: string) => {
+    const bell = moment.tz(`${tradeDate} ${sessionStart}`, 'YYYY-MM-DD HH:mm', 'America/New_York');
+    const rank = (signal: IWatchSignal) => {
+        if (!signal.leadsForMinutes) {
+            return 1;
+        }
+        return clock.isBefore(bell.clone().add(signal.leadsForMinutes(), 'minutes')) ? 0 : 2;
+    };
+    const order = new Map(watchSignals.map((signal) => [signal.id, rank(signal)]));
+    return _.sortBy(describeSignals(), (signal) => order.get(signal.id));
+};
 
 const scheduleRecompute = () => {
     if (recomputeTimer) {
@@ -119,7 +134,16 @@ const computeState = (): { state: IMarketWatchState; newAlerts: IMarketAlert[] }
     const alertedQuotes = new Set(Array.from(alerts.values()).map((alert) => alert.quote));
 
     Object.entries(stocks).forEach(([quote, stock]) => {
-        const facts = buildWatchFacts({ quote, tradeDate, ...stock, sessionStart, sessionEnd, dataClock: clock, onBoard: boardQuotes.has(quote) });
+        const facts = buildWatchFacts({
+            quote,
+            tradeDate,
+            ...stock,
+            sessionStart,
+            sessionEnd,
+            dataClock: clock,
+            onBoard: board.has(quote),
+            race: board.get(quote) ?? null,
+        });
         watchSignals
             .filter((signal) => signal.watches(facts))
             .forEach((signal) => {
@@ -146,7 +170,7 @@ const computeState = (): { state: IMarketWatchState; newAlerts: IMarketAlert[] }
             tradeDate,
             clockIso: clock.toISOString(),
             sessionOpen: clock.format('YYYY-MM-DD') === tradeDate && now >= sessionStart && now < sessionEnd,
-            signals: describeSignals(),
+            signals: orderedSignals(clock, tradeDate, sessionStart),
             watching: _.sortBy(watching, 'quote'),
             alerts: _.orderBy(Array.from(alerts.values()), ['timeIso', 'quote'], ['desc', 'asc']),
             volume,

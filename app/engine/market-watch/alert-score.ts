@@ -49,6 +49,16 @@ const relativeVolumeBetween = (facts: IWatchFacts, from: string, until: string):
     return typical > 0 ? today / typical : null;
 };
 
+// One 5-minute candle's volume ('HH:mm' start) against the same candle in the recent sessions.
+export const candleRelativeVolume = (facts: IWatchFacts, time: string): number | null => {
+    const bar = facts.allBars.find((candidate) => candidate.time === time);
+    if (!bar || facts.volumeHistory.length < MarketWatchConfig.volume.minDays) {
+        return null;
+    }
+    const typical = _.meanBy(facts.volumeHistory, (day) => day.bars.find((candidate) => candidate.time === time)?.volume ?? 0);
+    return typical > 0 ? bar.volume / typical : null;
+};
+
 export interface IVolumeNow {
     until: string; // the last closed 5-minute candle read
     rvol: number; // the day so far against normal

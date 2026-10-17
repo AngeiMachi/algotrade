@@ -279,13 +279,33 @@ signal: write the file, add it to `signals/index.ts`; its `describe()` joins the
 Board: the **Alerts** tab (next to Race) has one headed section per group (signal). Each ranks its stocks like the
 race: buy setups and "Get ready" carry a score (100 × factors, each shown with its note), a stock's score adds its live
 setups (a reclaim in both hours adds both), and stocks without a live setup follow, newest first. So a strong setup
-that came early stays on top. Search, group and call filters, read marks, Desktop and Sound switches, and who each
+that came early stays on top. Search, group and call filters, the race's own filters (`raceFilters.jsx`: Trending
+volume, MA reclaimed, Above upper BB, daily trend, Clean/Touched; judged on the stock's race entry, a stock the race
+never scored passes none; saved apart from the Race tab's), read marks, Desktop and Sound switches, and who each
 signal is watching. The stages of one event (`eventId`: a touch and its hold, a reclaim forming and closing) form one
 row, judged by the latest stage. Calls: Buy setup (popup that stays, chime), Get ready (quiet popup that fades), Avoid
-and Wait (tab only). Alerts of one update are collected for 0.8 s; at most 3 reclaim popups are on screen, the best
-scores (many stocks reclaim at the same hour close). Clicking a popup opens the tab. Alerts older than 10 minutes on the data clock (rebuilt after a restart) only go to
+and Wait (tab only). Alerts of one update are collected for 0.8 s; at most 3 reclaim popups and 3 first-candle popups
+are on screen, the best scores (many stocks reclaim at the same hour close; every first candle lands at 09:35). A
+signal can lead the tab for a while (`leadsForMinutes`): the first candle is listed first until 20 minutes after the
+bell, then last. Clicking a popup opens the tab. Alerts older than 10 minutes on the data clock (rebuilt after a restart) only go to
 the tab. Live, the forming candle of armed stocks is refetched every 20 s, so a touch shows within seconds (IEX prices live).
 Endpoints: `GET /market-watch`; socket `marketWatchUpdate` (state) and `marketAlert` (`{ alert, live }`).
+
+### Signal: green first candle (`first-candle.ts`)
+
+The trader's idea (Oct 17), not back-tested. At 09:35, the stocks on the final board that were healthy pre-market
+(no hourly close through the 20 SMA) and opened above the hourly 20 SMA, whose first 5-minute candle closed above its
+open. A red first candle is out for good; a stock kept on the board under the 20 SMA (e.g. above the daily upper BB)
+is not watched. A stock dismissed on the Race tab never shows in it, nor pops up (the board filters it: the engine
+ignores dismissals). Why: many healthy stocks get smashed in the first 5 minutes, others run so far from the 20 SMA that
+buying is late; the best went up a little and still have room. Rated with the race's own `scoreRacer` on the race's
+facts at the open, with the price moved to the candle's close (gap, SMA, distance follow it), so the distance factor
+decides most. The race's pre-market volume factor is swapped for the first candle's volume against a normal first
+candle (ratio ^ 0.3, between 0.8 and 1.3): unusual volume lifts a stock but never past one much closer to the SMA.
+0.8 ATR or more above the SMA is a "Wait" instead of a buy setup (looser than the race's 0.55: UNH Oct
+15 at 0.61 is the trader's good example). Oct 15: UNH 51 at the open → 27 (+0.18 ATR candle, 0.61 ATR from the
+SMA), ADBE 38 → 1.2 (+0.61 ATR, 1.02 ATR: ran away). The race hands its board with each stock's facts to the market
+watch (`setBoard`), so `IWatchFacts.race` carries them.
 
 ### Signal: reclaim of the hourly 20 SMA (`sma-reclaim.ts`)
 

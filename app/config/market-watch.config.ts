@@ -116,6 +116,32 @@ export const MarketWatchConfig = {
         roomToHighAtr: 0.5,
     },
 
+    // "Green first candle" (the trader's idea, Oct 17): at 09:35, the race's healthy board stocks above the hourly 20 SMA
+    // whose first 5-minute candle closed above the open. Many healthy stocks get smashed in those 5 minutes (out), others
+    // run so far from the 20 SMA that buying is late. The best ones went up a little and still have room, so the list
+    // is ranked by the race's own score with the price moved to that candle's close: the distance factor bites past
+    // 0.15 ATR from the SMA, so a stock that ran away (ADBE Oct 15) sinks under one that stayed close (UNH Oct 15).
+    // Oct 15 replay: both opened 0.44 ATR above the 20 SMA. UNH closed the candle +0.18 ATR at 0.61 ATR from the SMA
+    // (score 51 at the open → 27); ADBE ran +0.61 ATR to 1.02 ATR (38 → 1.2).
+    firstCandle: {
+        // Listed first on the Alerts tab until this long after the bell, then moved to the bottom.
+        leadMinutes: 20,
+        // At or past this distance from the 20 SMA at 09:35 (daily ATRs) it is a "Wait", not a buy setup. Looser than
+        // the race's "stretched" 0.55: one green candle adds distance, and UNH at 0.61 is the trader's good example.
+        // 0.8 sits between UNH (0.61) and ADBE (1.02).
+        stretchedAtr: 0.8,
+        // Unusual volume in the first candle, in place of the race's pre-market volume factor: the 09:30 candle's
+        // volume ÷ the same candle's average over the race's relativeVolume.days sessions, factor = ratio ^ exponent
+        // kept between minFactor and maxFactor → ½× normal 0.81, normal 1, 2× 1.23, 2.4× or more 1.3. At most ±25-30%,
+        // so the distance from the 20 SMA (1 down to 0.02) still decides: on Oct 15 it only swapped UNH (1.9×) over
+        // ABNB (1.5×), and WMT at 4.3× stayed last.
+        volume: {
+            exponent: 0.3,
+            minFactor: 0.8,
+            maxFactor: 1.3,
+        },
+    },
+
     smaReclaim: {
         // The hourly candles watched, by their start hour in New York. 09 = 09:00–10:00, whose last half is the first
         // half hour of the session: nothing triggers before 10:00. 10 = the second hour; both may trigger.

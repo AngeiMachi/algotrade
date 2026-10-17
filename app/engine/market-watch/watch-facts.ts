@@ -3,7 +3,7 @@ import moment from 'moment-timezone';
 
 import { IQuoteIntervals } from '../../models/quote-data.model';
 import { IDailySmas } from '../race-rules/race-facts';
-import { IPremarketVolumeDay } from '../race-rules/race-rule.types';
+import { IPremarketVolumeDay, IRaceFacts } from '../race-rules/race-rule.types';
 import { IWatchBar, IWatchFacts, IWatchHour } from './market-watch.types';
 
 const NEW_YORK = 'America/New_York';
@@ -23,6 +23,7 @@ export interface IWatchFactsInput {
     sessionEnd: string; // 'HH:mm', the close
     dataClock: moment.Moment; // the time the data reflects; a candle ending after it is still forming
     onBoard?: boolean;
+    race?: IRaceFacts | null;
 }
 
 // Today's candles as the signals read them.
@@ -60,6 +61,7 @@ export const buildWatchFacts = (input: IWatchFactsInput): IWatchFacts => {
         openingPrice: bars.length > 0 && bars[0].key === from ? bars[0].open : null,
         bars,
         onBoard: !!input.onBoard,
+        race: input.race ?? null,
     };
 };
 

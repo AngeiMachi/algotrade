@@ -1,5 +1,5 @@
 import { IDailySmas } from '../race-rules/race-facts';
-import { IPremarketVolumeDay } from '../race-rules/race-rule.types';
+import { IPremarketVolumeDay, IRaceFacts } from '../race-rules/race-rule.types';
 
 // The market watch follows the race's stocks through the regular session and raises alerts.
 // Each signal is a small object in ./signals: it says which stocks it watches and finds its events in the day's bars.
@@ -41,6 +41,7 @@ export interface IWatchFacts {
     openingPrice: number | null; // first regular-session candle's open
     bars: IWatchBar[]; // today's regular-session candles so far, oldest first
     onBoard: boolean; // in the race's standings (after the bell: the final board)
+    race: IRaceFacts | null; // the race's facts for a stock on the board, as last judged (after the bell: on the open)
 }
 
 // opportunity = a buy setup, prepare = a buy setup may complete in minutes, caution = avoid buying here,
@@ -93,6 +94,7 @@ export interface IWatchSignal {
     title: string;
     shortTitle: string; // the group's name on the board, e.g. "BB touch"
     describe: () => string; // plain language, shown in the board's rule book
+    leadsForMinutes?: () => number; // listed first on the board until this long after the bell, then last
     watches: (facts: IWatchFacts) => boolean; // is this stock part of the signal today?
     detect: (facts: IWatchFacts) => IMarketAlert[]; // every event of the day so far
     status: (facts: IWatchFacts) => IWatchStatus | null;
