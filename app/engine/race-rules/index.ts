@@ -32,6 +32,7 @@ export {
     IYesterdayBelowSma,
 } from './race-facts';
 export * from './race-rule.types';
+export { IDailyCandle } from './chart-patterns';
 
 export const describeRuleBook = (): IRuleDescription[] => [
     ...keepRules.map((rule) => ({ kind: 'keep' as const, title: rule.title, description: rule.describe() })),

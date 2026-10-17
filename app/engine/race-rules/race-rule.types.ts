@@ -1,3 +1,5 @@
+import { IDailyCandle } from './chart-patterns';
+
 export type RaceDirection = 'long' | 'short';
 
 // All percentages are "directional": positive means the good side for the chosen direction
@@ -53,6 +55,7 @@ export interface IRaceFacts {
 
     bollingerBand: number | null; // daily upper band for long (lower for short), with today's price as the latest close
     bollingerCushionPct: number | null; // price (the open, after the bell) vs that band; positive = outside it
+    priorDailyCandles: IDailyCandle[]; // daily candles before today, oldest first (chart patterns)
 
     openingPrice: number | null; // first regular-session bar's open, once the bell rang
     openingGapPct: number | null; // first regular-session bar's open vs yesterday's close, once the bell rang

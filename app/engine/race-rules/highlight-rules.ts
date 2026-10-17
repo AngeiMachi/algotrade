@@ -1,5 +1,6 @@
 import { RaceRulesConfig } from '../../config/race-rules.config';
 import * as globalConfig from '../../config/globals.config';
+import { findChartPatterns, PATTERN_NAMES } from './chart-patterns';
 import { IHighlightRule } from './race-rule.types';
 import { formatPct, raceWords } from './race-words';
 
@@ -83,4 +84,38 @@ export const aboveBollinger: IHighlightRule = {
     },
 };
 
-export const highlightRules: IHighlightRule[] = [maReclaimed, trendingVolume, aboveBollinger];
+export const chartPattern: IHighlightRule = {
+    id: 'chart-pattern',
+    title: 'Chart pattern breakout',
+    describe: () => {
+        const { lookbackDays, minTouches, breakoutAtr, nearAtr } = RaceRulesConfig.chartPatterns;
+        return (
+            `Classic bullish patterns on the last ${lookbackDays} daily candles, drawn from swing highs and lows: a resistance line from a swing high, ` +
+            `touched at least ${minTouches} times, that no close crossed until yesterday (a breakout counts on its first day and the day after, then not again for ${RaceRulesConfig.chartPatterns.quietDays} sessions), named by its shape and the support under it ` +
+            `(falling trendline, falling wedge, descending, symmetrical or ascending triangle, range, resistance), plus bull flags and double bottoms. ` +
+            `"Breakout" when the price (the open, after the bell) is at least ${breakoutAtr} ATR above the line, the flag top or the neckline; ` +
+            `"Near breakout" up to ${nearAtr} ATR under it. Detection only, not back-tested; it does not change the score.`
+        );
+    },
+    check: (facts) => {
+        if (facts.direction !== 'long') {
+            return null;
+        }
+        const [best, ...others] = findChartPatterns(facts.priorDailyCandles, facts.price, facts.atrPct);
+        if (!best) {
+            return null;
+        }
+        const name = PATTERN_NAMES[best.kind];
+        const where = best.distanceAtr >= 0 ? `${best.distanceAtr.toFixed(2)} ATR above` : `${(-best.distanceAtr).toFixed(2)} ATR under`;
+        return {
+            id: best.state === 'breakout' ? 'pattern-breakout' : 'pattern-near',
+            label: best.state === 'breakout' ? `${name} breakout${best.day === 2 ? ' (day 2)' : ''}` : `Near: ${name.toLowerCase()}`,
+            message:
+                (best.day === 2 ? 'Second day of the breakout. ' : '') +
+                `${name}, ${best.days} days. ${best.description}. ${facts.isAfterBell ? 'Opened' : 'Trading'} ${where} it.` +
+                (others.length > 0 ? ` Also: ${others.map((pattern) => `${PATTERN_NAMES[pattern.kind].toLowerCase()} (${pattern.state})`).join(', ')}.` : ''),
+        };
+    },
+};
+
+export const highlightRules: IHighlightRule[] = [maReclaimed, trendingVolume, aboveBollinger, chartPattern];

@@ -63,6 +63,61 @@ export const RaceRulesConfig = {
         stdDevs: 2,
     },
 
+    // "Breakout" / "Near breakout" highlights (race-rules/chart-patterns.ts): classic bullish patterns on the daily
+    // chart, drawn from swing highs and lows. Detection only, not back-tested (the trader's call, Oct 17). Distances in
+    // daily ATRs at yesterday's close. Reference: AVGO Oct 6, a falling trendline from the September highs broken on
+    // a gap up.
+    chartPatterns: {
+        // Daily candles read (about 6 months).
+        lookbackDays: 120,
+        // A swing high (low) is the highest (lowest) of this many candles on each side.
+        pivotSpan: 3,
+        // The resistance: a line through two swing highs, touched at least `minTouches` times (any candle's high within
+        // `touchAtr` of it, touches at least pivotSpan days apart: CSCO's line from the Aug 10 top touches Sep 21 and
+        // Oct 1, which is not a swing high) ...
+        minTouches: 3,
+        touchAtr: 0.25,
+        // Every valid line is kept (the most touched first, at most maxLines); the one today's price breaks counts.
+        maxLines: 20,
+        // A breakout counts on its first day and the day after (the trader: CSCO Oct 2 + Oct 5, AVGO Oct 5 + Oct 6),
+        // then nothing until quietDays sessions passed since a breakout that opened above and closed above its line.
+        quietDays: 5,
+        // ... from its first to its last touch at least this many days, the last touch at most `maxStaleDays` ago ...
+        minSpanDays: 10,
+        maxStaleDays: 30,
+        // ... and unbroken until yesterday: no close more than `closeAtr` above it, no wick more than `wickAtr`. A
+        // candle testing the line is not the break yet: CSCO Oct 1 closed 0.35 ATR / wicked 0.47 ATR over the line
+        // from its Aug 10 top, "pretty much on it" (the trader), and broke out Oct 2.
+        closeAtr: 0.4,
+        wickAtr: 0.5,
+        // Bullish patterns only: the resistance may rise at most this much over 20 days.
+        maxRiseAtrPer20Days: 0.5,
+        // A line moving less than this over 20 days is flat (range, ascending triangle's top, descending triangle's
+        // floor); steeper is falling or rising.
+        flatAtrPer20Days: 0.5,
+        // Today's price (the open, after the bell) this far above the breakout level = Breakout; up to `nearAtr` under
+        // it = Near breakout (≈ 3 normal 5-minute candles).
+        breakoutAtr: 0.1,
+        nearAtr: 0.3,
+        // Bull flag: a rise of at least minPoleAtr within maxPoleDays, then minFlagDays–maxFlagDays under its top giving
+        // back at most maxRetrace of it. Breakout = above the flag's highest high.
+        bullFlag: {
+            minPoleAtr: 3,
+            maxPoleDays: 8,
+            minFlagDays: 3,
+            maxFlagDays: 15,
+            maxRetrace: 0.5,
+        },
+        // Double bottom: two swing lows at least minGapDays apart within sameLowAtr of each other, the second at most
+        // maxRecentDays ago, a bounce of minDepthAtr between them; breakout = above that bounce's high (the neckline).
+        doubleBottom: {
+            minGapDays: 8,
+            maxRecentDays: 25,
+            sameLowAtr: 0.5,
+            minDepthAtr: 1.5,
+        },
+    },
+
     // "Near high" exception: a healthy stock a hair under yesterday's high stays eligible. In daily ATRs, so a calm
     // and a wild stock get the same allowance.
     nearPreviousExtreme: {

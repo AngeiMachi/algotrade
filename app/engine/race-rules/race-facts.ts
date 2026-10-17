@@ -3,6 +3,7 @@ import moment from 'moment-timezone';
 
 import { RaceRulesConfig } from '../../config/race-rules.config';
 import { IQuoteIntervals } from '../../models/quote-data.model';
+import { IDailyCandle } from './chart-patterns';
 import { IHourlyCandleFacts, IPremarketVolumeDay, IRaceFacts, RaceDirection } from './race-rule.types';
 
 const NEW_YORK = 'America/New_York';
@@ -21,6 +22,7 @@ export interface IRaceFactsInput {
     yesterdayBelowReclaimSma: IYesterdayBelowSma | null;
     premarketVolumeHistory: IPremarketVolumeDay[]; // recent sessions' pre-market 5-minute volume
     priorDailyCloses: number[]; // daily closes before today, oldest first
+    priorDailyCandles: IDailyCandle[]; // daily candles before today, oldest first (chart patterns)
     intervals: IQuoteIntervals; // 5-minute bars keyed by New York time
     premarketKeys: string[]; // today's pre-market bar keys, sorted
     bellKey: string;
@@ -110,6 +112,7 @@ export const buildRaceFacts = (input: IRaceFactsInput): IRaceFacts => {
 
         bollingerBand,
         bollingerCushionPct,
+        priorDailyCandles: input.priorDailyCandles,
 
         openingPrice: openingBar ? openingBar.open : null,
         openingGapPct: openingBar ? toDirectional(pctFrom(openingBar.open, previousClose)) : null,

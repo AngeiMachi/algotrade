@@ -164,6 +164,7 @@ A solid fill is the strong form of a hue.
 | Opened below high (reclaimer) / Near high | orange / cyan | down arrow / arrow to top line |
 | Stretched / Very stretched | yellow / solid yellow | warning |
 | MA reclaimed / Trending volume / Above upper BB | violet / fuchsia / pink | graph / bar chart / expand |
+| Pattern breakout / Near breakout | solid teal / dashed teal outline | chart line |
 | Watch | white dashed outline | eye |
 
 - **MA reclaimed** — yesterday the stock opened below the hourly 200 SMA (24-hour candles, the orange line on
@@ -185,6 +186,24 @@ A solid fill is the strong form of a hue.
   2σ, population σ). The band is drawn as the daily chart shows it at the open: the last 19 daily closes plus
   today's price as the 20th. Before the bell it means the stock is set to open outside the band. Pink badge.
   Settings in `RaceRulesConfig.bollinger`.
+- **Chart pattern breakout** (`race-rules/chart-patterns.ts`, the trader's idea Oct 17; detection only, not
+  back-tested) — classic bullish patterns on the last 120 daily candles. Swing highs/lows = the extreme of 3
+  candles each side. The resistance = a line from a swing high touched ≥ 3 times (any candle within 0.25 ATR, at
+  least 3 days apart), ≥ 10 days long, last touch ≤ 30 days ago, unbroken until yesterday. A candle testing the line
+  is not the break yet: a close up to 0.4 ATR / a wick up to 0.5 ATR over it is allowed (CSCO Oct 1 sat on the line
+  from its Aug 10 top, then opened 0.94 ATR above it Oct 2 — the trader's breakout). Every valid line is kept and the
+  one today's price breaks counts. A breakout counts on its first day and the day after ("(day 2)" on the badge:
+  yesterday's lines still ≥ 0.1 ATR under the price, plus any new line broken today), then no badge until 5 sessions
+  passed since a breakout that opened above and closed above its line (CSCO: Oct 2, day 2 Oct 5, nothing Oct 6). A
+  breakout that closed back under the line failed and does not count (AVGO Sep 29; the real one Oct 5, through the
+  line from its Aug 10 top; day 2 Oct 6, through the Aug 28 line as well). The support under it and the two slopes name it: falling trendline, falling
+  wedge, descending / symmetrical / ascending triangle, range, resistance. Plus bull flag (≥ 3 ATR pole in ≤ 8 days,
+  3–15 days of flag giving back ≤ half) and double bottom (two lows within 0.5 ATR, ≥ 8 days apart, neckline ≥ 1.5
+  ATR above). "Breakout" (solid teal) when the price (the open, after the bell) is ≥ 0.1 ATR above the line / flag
+  top / neckline; "Near breakout" (dashed) up to 0.3 ATR under it. The tooltip says how it is drawn. Checks
+  (before the line rework): Oct 15, 20 big names:
+  only ADBE (symmetrical triangle) and NFLX (falling wedge). Patterns are drawn once per stock and day (cached).
+  "Breakout" toggle on the Race and Alerts tabs. Settings in `RaceRulesConfig.chartPatterns`.
 
 ## The 20 SMA must match the trader's chart
 
