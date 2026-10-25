@@ -24,6 +24,8 @@ export interface IWatchFactsInput {
     dataClock: moment.Moment; // the time the data reflects; a candle ending after it is still forming
     onBoard?: boolean;
     race?: IRaceFacts | null;
+    shineOn?: boolean;
+    prior5MinCloses?: { closes: number[]; filledCloses: number[] } | null;
 }
 
 // Today's candles as the signals read them.
@@ -62,6 +64,8 @@ export const buildWatchFacts = (input: IWatchFactsInput): IWatchFacts => {
         bars,
         onBoard: !!input.onBoard,
         race: input.race ?? null,
+        shineOn: !!input.shineOn,
+        prior5MinCloses: input.prior5MinCloses ?? null,
     };
 };
 

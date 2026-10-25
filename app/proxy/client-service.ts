@@ -54,6 +54,12 @@ app.get('/market-watch', (req, res) => {
     res.json(marketWatch.getState());
 });
 
+// The header's "Shine alert" switch; the new state reaches every board with the next marketWatchUpdate.
+app.post('/shine', jsonParser, (req, res) => {
+    marketWatch.switchShine(!!req.body?.on);
+    res.json({ on: !!req.body?.on });
+});
+
 // Replay control, mock only: pause or play the replay clock.
 app.get('/mock', (req, res) => {
     res.json({ isMock: globalConfig.Mock.IsMock, paused: mockService.isPaused() });

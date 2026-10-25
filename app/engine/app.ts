@@ -8,6 +8,7 @@ import * as quotesIterator from './quotes-iterator';
 import * as quoteCache from './quotes-cache';
 import * as behaviorManager from './behavior-manager';
 import * as premarketRace from './premarket-race';
+import * as marketWatch from './market-watch/market-watch';
 import * as watchlist from './watchlist';
 
 
@@ -19,6 +20,7 @@ export default async function startApp() {
         await Promise.all([
             quoteCache.cacheQuoteList(quotesTofollow),
             premarketRace.preloadRaceHistory(quotesTofollow),
+            marketWatch.preloadShineHistory(quotesTofollow),
         ]);
 
         const initTime = calculateInitializationTime();

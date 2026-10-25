@@ -160,6 +160,7 @@ const addRacer = async (quote: string, intervals: IQuoteIntervals, metadata: IQu
     if (averageDailyVolume < RaceRulesConfig.minAverageDailyVolume) {
         logger.info(`premarket-race dropping ${quote}: averages ${Math.round(averageDailyVolume).toLocaleString()} shares a day`);
         leaveOutOfRace(quote, intervals, metadata, `Too thin for the race: averages ${Math.round(averageDailyVolume).toLocaleString()} shares a day`);
+        await trackForShineOnly(quote, intervals, metadata);
         return;
     }
 
@@ -169,6 +170,7 @@ const addRacer = async (quote: string, intervals: IQuoteIntervals, metadata: IQu
     } catch (err) {
         logger.error(`premarket-race could not load hourly history for ${quote}, leaving it out of the race: ${err}`);
         leaveOutOfRace(quote, intervals, metadata, 'Hourly history could not be loaded');
+        await trackForShineOnly(quote, intervals, metadata);
         return;
     }
     const premarketVolumeHistory = await loadPremarketVolumeHistory(quote).catch((err) => {
@@ -223,6 +225,27 @@ const addRacer = async (quote: string, intervals: IQuoteIntervals, metadata: IQu
     });
     delete watchOnly[quote];
     scheduleRecompute(true);
+};
+
+// A stock out of the race (too thin, no hourly history) is still a stock: the market watch follows it for the Shine
+// alert only, which watches every stock.
+const trackForShineOnly = async (quote: string, intervals: IQuoteIntervals, metadata: IQuoteMetadata) => {
+    const history = metadata.fullYearDailyHistory || [];
+    const [volumeHistory, hourlyCandles] = await Promise.all([
+        loadPremarketVolumeHistory(quote).catch(() => [] as IPremarketVolumeDay[]),
+        loadPriorHourlyCandles(quote).catch(() => [] as IPriorHourlyCandle[]),
+    ]);
+    marketWatch.track(quote, {
+        atrPct: averageTrueRangePct(history, RaceRulesConfig.atrPeriodDays),
+        priorDailyCloses: history
+            .filter((candle) => moment(candle.datetime).tz(NEW_YORK).format('YYYY-MM-DD') < quoteUtils.getCurrentTradingDate())
+            .map((candle) => candle.close),
+        dailySmas: null,
+        priorHourlyCloses: hourlyCandles.map((candle) => candle.close),
+        volumeHistory,
+        intervals,
+        shineOnly: true,
+    });
 };
 
 // The engine tried and failed to load this stock (unknown symbol, no trades, broker error).

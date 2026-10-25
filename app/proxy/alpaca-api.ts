@@ -243,6 +243,47 @@ export const getPremarketVolumeHistory = async (quote: string, tradeDate: string
     }
 };
 
+export interface IPrior5MinuteCloses {
+    closes: number[]; // the candles there are, oldest first
+    filledCloses: number[]; // the same with every empty overnight slot carrying the last close
+}
+
+// The last `count` 5-minute closes before tradeDate's 04:00 on the 24-hour chart: SIP 04:00–20:00 plus the overnight
+// (boats) 20:00–04:00. As they are, they match the trader's 5-minute 200 SMA on a stock traded all night (MU Oct 20
+// 10:05: 891.00 vs 890.99). Where the overnight is thin his chart has candles Alpaca lacks, and his 200 SMA sat between
+// ours and the same with the empty overnight slots filled (PANW Oct 20 09:55: 346.56 < 347.38 < 347.71; XYZ Oct 20
+// 03:45: 77.35 < 77.69 < 78.26), so both are returned.
+export const getPrior5MinuteCloses = async (quote: string, tradeDate: string, count: number, calendarDaysBack: number): Promise<IPrior5MinuteCloses> => {
+    const symbol = quote.toUpperCase();
+    const until = nyTime(tradeDate, EXTENDED_SESSION_START);
+    const query = {
+        timeframe: '5Min',
+        start: moment.tz(tradeDate, NEW_YORK).subtract(calendarDaysBack, 'days').toISOString(),
+        end: until.clone().subtract(1, 'second').toISOString(),
+    };
+    const [sipBars, overnightBars] = await Promise.all([getBars(symbol, { ...query, feed: 'sip' }), getBars(symbol, { ...query, feed: 'boats' })]);
+    const bars = _.sortBy([...sipBars.filter((bar) => isInSession(bar, true)), ...overnightBars.filter((bar) => !isInSession(bar, true))], 't');
+    if (bars.length === 0) {
+        return { closes: [], filledCloses: [] };
+    }
+    const tradingDates = new Set([...sipBars.map(nyDate), tradeDate]);
+    const closeAt = new Map(bars.map((bar) => [moment(bar.t).valueOf(), bar.c] as [number, number]));
+    const filled: number[] = [];
+    let last = bars[0].c;
+    for (let slot = moment(bars[0].t); slot.isBefore(until); slot.add(5, 'minutes')) {
+        const close = closeAt.get(slot.valueOf());
+        const time = slot.clone().tz(NEW_YORK).format('HH:mm');
+        const overnight = time >= EXTENDED_SESSION_END || time < EXTENDED_SESSION_START;
+        if (close !== undefined) {
+            last = close;
+            filled.push(close);
+        } else if (overnight && tradingDates.has(sessionDateOf(slot))) {
+            filled.push(last);
+        }
+    }
+    return { closes: _.takeRight(bars, count).map((bar) => bar.c), filledCloses: _.takeRight(filled, count) };
+};
+
 // The broker chart has a candle for every hour of the 24-hour session, carrying the last close through hours with
 // no trades (common overnight for thinner stocks). Without them a 200-hour SMA reaches days further back and drifts
 // from the chart. The 20:00-04:00 overnight belongs to the next trading day, so weekends and holidays stay empty.

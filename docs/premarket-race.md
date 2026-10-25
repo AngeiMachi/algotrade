@@ -310,6 +310,44 @@ bell, then last. Clicking a popup opens the tab. Alerts older than 10 minutes on
 the tab. Live, the forming candle of armed stocks is refetched every 20 s, so a touch shows within seconds (IEX prices live).
 Endpoints: `GET /market-watch`; socket `marketWatchUpdate` (state) and `marketAlert` (`{ alert, live }`).
 
+### Signal: Shine, red to green (`shine.ts`)
+
+The trader's red-day alert (Oct 24), not back-tested. **Off until he switches it on** with the "Shine alert" button
+in the header (left of the clocks), on days the whole market opens red and the board is nearly empty. The switch is
+saved per trade date on the engine (`data/shine.json`, `POST /shine { on }`), so every board shares it and a restart
+keeps it; switched off, its alerts leave the tab (switched on again they are rebuilt). While on it watches **every
+stock** the engine follows (on the board or not) and is the first group on the Alerts tab, across both columns.
+On the 5-minute chart: a stock that **lost the 200 SMA** (opened, or a candle since the bell closed, at least 0.04 ATR
+under it; closer is sitting on the line, since the trader's chart provider's 200 SMA can be a few cents off ours: DKNG
+Oct 23 closed 0.028 ATR under ours and never under his)
+and then **closes a candle above both the 200 SMA and the 10 SMA** (the chart's red line) alerts as a buy setup.
+Only candles starting in the first 90 minutes after the bell, and not the first 10 minutes (from the 09:40 candle; a
+stock that wins both back earlier must lose the 200 again first); once per stock per day. It must be **tight and slow
+with real volume**, or the stock is out for the day with no alert: since the bell the low never went more than 0.45 ATR
+under the 200 SMA (MRNA Oct 23: 0.63, a big first 15 minutes), the candle back is at most 0.38 ATR high to low (no
+jump), and its volume is at least 0.6× the same candle on recent days (0.7 at first, but on Oct 20 and 23 the stocks
+under 0.7× did better than the ones kept: UAL, DAL, MU, S). And it must **not be in a clear, steady slide** (Oct 25):
+out when the hourly 20 SMA (the alert candle's close as the hour's close) fell 0.75 ATR or more over 20 hours while
+falling in at least 13 of the last 15 hourly steps. The trader's examples: ORCL Oct 22 (−0.79, 15 of 15) is out, PANW
+Oct 23 (a few hours of easing, +0.33 over 20 hours) passes. On Oct 20–23 (85 alerts) steep slides were a mixed lot:
+out also SMCI Oct 22 (failed), MSFT Oct 23 (rose 0.45 ATR), SPCX and AMKR (flat); BABA, COIN and CBRS Oct 20 (−0.62 to
+−0.70, all rose) stay. It only removes the most drastic, the trader judges the rest; the alert shows the angle.
+Stocks the race leaves out (too thin, no hourly history;
+not its excluded ETF group) are followed for Shine only (`shineOnly`). Oct 20 full list: 37 alerts, MU on its 09:45
+candle, plus HON, FSLR, BIDU, AAP and DDOG from outside the race. Green on the day (above yesterday's close) is a `green-day` badge
+on the alert, or a later "Turned green" stage of the same event. The tab lists it as a **stack**:
+newest on top, alerts of the same candle by that candle's volume against the same candle on recent days (also the
+order of its popups, at most 3 at once). The 200 SMA is the trader's 24-hour chart: switching on loads each stock's last
+250 5-minute closes before 04:00 (SIP 04:00–20:00 plus the overnight `boats` feed, one batched load). Checked on his
+charts: MU Oct 20 10:05 → 5 SMA 898.355, 10 SMA 892.654 (exact), 200 SMA 891.00 vs 890.99; MU fires on the 09:45
+candle as on his chart. **Where the overnight is thin the 200 SMA is a band.** His provider has overnight candles
+Alpaca lacks, so our 200 reaches further back in time: XYZ Oct 20 had 3 overnight candles on Alpaca, our 200 was 78.26
+at 03:45 vs his 77.69 (same candle, same 10 SMA), and it "lost" the 200 at 09:40 only on ours (he: never lost it).
+Filling the empty overnight slots with the last close doesn't match him either (77.35), but his value sat between the
+two on XYZ and PANW (346.56 < 347.38 < 347.71), so both are computed: **lost = closed under the band's bottom, won back
+= closed above its top**, and the 10 SMA from the candles as they are. On a stock traded all night (MU) the two are one
+line. Cost: DAL Oct 20 and S Oct 23 clear the top one candle later, a quieter one, and drop out on volume.
+
 ### Signal: green first candle (`first-candle.ts`)
 
 The trader's idea (Oct 17), not back-tested. At 09:35, the stocks on the final board that were healthy pre-market

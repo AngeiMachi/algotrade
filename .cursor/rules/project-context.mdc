@@ -40,7 +40,10 @@ Market watch (`app/engine/market-watch/`, one pure file per signal): after the b
 back to the band. Buy setup (the only popup) = healthy with the hourly 20 SMA pre-market, above the hourly 50 SMA,
 not a slow slide / heavy volume, and a 5-minute close back above the band. Second signal: hourly 20 SMA reclaim (first
 two hourly candles, dip under the rising SMA, close above; board or healthy stocks in an uptrend). Alerts live on the
-board's Alerts tab, by stock and group (each event's stages in one row). Dev replay for it, fast intraday:
+board's Alerts tab, by stock and group (each event's stages in one row). Shine (red-day alert, off until the header
+button switches it on): every stock that lost the 5-minute 200 SMA (24-hour chart) and closes back above it and the
+10 SMA from the 09:40 candle to 11:00, tight (≤ 0.45 ATR under the 200) and slow (candle ≤ 0.38 ATR) with candle
+volume ≥ 0.6× and no steady hourly 20 SMA slide (≥ 0.75 ATR over 20 h, down 13 of 15 h) (else out for the day); every stock, the race's dropped ones too; once a day, a stack on top of the Alerts tab, green-on-the-day badge. Dev replay for it, fast intraday:
 `npx ts-node scripts/mock-run.ts 2026-10-09 1 09:25 META,RKLB,IONQ,ALAB,MU,AMD,AFRM`.
 
 ## Open ideas the trader raised

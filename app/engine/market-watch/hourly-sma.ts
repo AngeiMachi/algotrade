@@ -19,6 +19,16 @@ export const smaAtHour = (facts: IWatchFacts, period: number, hour: string, clos
     return closes.length >= period ? _.mean(_.takeRight(closes, period)) : null;
 };
 
+// The SMA at each of the last `hours` hourly candles before `hour` and at `hour` itself (`close` as its close), oldest
+// first; null without enough closes.
+export const smaPathAtHour = (facts: IWatchFacts, period: number, hour: string, close: number, hours: number): number[] | null => {
+    const closes = [...closesBefore(facts, hour), close];
+    if (closes.length < period + hours) {
+        return null;
+    }
+    return _.range(hours, -1, -1).map((back) => _.mean(closes.slice(closes.length - back - period, closes.length - back)));
+};
+
 // The race's angle of the hourly 20 SMA (scoring.smaSlope): its change over the lookback hours, in daily ATRs.
 export const smaSlopeAtrAtHour = (facts: IWatchFacts, hour: string, close: number): number | null => {
     const pct = smaChangePct([...closesBefore(facts, hour), close], globalConfig.PremarketRace.smaPeriod, RaceRulesConfig.scoring.smaSlope.lookbackHours);

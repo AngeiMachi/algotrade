@@ -142,6 +142,63 @@ export const MarketWatchConfig = {
         },
     },
 
+    // "Shine" (the trader's red-day alert, Oct 24): off until the trader switches it on from the board's header, on days
+    // the whole market opens red. Then every stock is watched, on or off the board. On the 5-minute chart (24-hour, like
+    // his broker's), a stock that lost the 200 SMA (opened under it, or a candle since the bell closed under it) and
+    // then closes a candle above both the 200 SMA and the fast SMA is turning from red to green: alert, once a day.
+    // Checked against his charts: green = 5 SMA, red = 10 SMA, orange = 200 SMA over every 5-minute candle including the
+    // overnight session (MU Oct 20 10:05: 5 → 898.355, 10 → 892.654, 200 → 891.00, chart 898.355 / 892.654 / 890.991).
+    //   MU Oct 20: opened 884.13 under the 200 (891.36); 09:45 closed 892.05 over the 200 (891.12) and the 10 (888.36).
+    //   PANW Oct 23: 09:35 closed 352.31 under both; 09:40 closed 355.47 over the 10 (354.57) and our 200 (353.20).
+    //   The trader's chart has PANW's 200 slightly over 355.47 (it fired at 09:45 there): his provider's thin
+    //   pre-market and overnight candles differ from Alpaca's (its 50 and 200 SMAs, and volume, don't match ours there).
+    shine: {
+        // Development: in a replay it is on by itself (no time to press the button); the button still switches it off.
+        autoOnInSimulation: true,
+        // Alerts only from candles that start within this long after the bell: later is too late.
+        windowMinutes: 90,
+        // The opening chop doesn't count: no alert from a candle starting in the first this-many minutes (10 = from the
+        // third candle, 09:40). A stock that wins the SMAs back in them must lose the 200 SMA again and win it back later.
+        ignoreFirstMinutes: 10,
+        // Lost = opened or closed at least this far under the 200 SMA, in daily ATRs (a third of a normal candle).
+        // Closer is sitting on the line: the trader's chart provider has slightly different pre-market and overnight
+        // candles, so its 200 SMA can sit a few cents off ours. DKNG Oct 23: closed 20.75 under our 20.777 (0.028 ATR),
+        // never under on his chart (his 200 SMA 20.70 at 08:00, ours 20.77): out. PANW closed 0.047 ATR under: kept.
+        minLossAtr: 0.04,
+        // The trader's filters (Oct 24). A candle that wins the SMAs back but fails one takes the stock out for the day:
+        // no alert, nothing later. Calibrated on the Oct 23 full list (61 alerts before them; scripts/shine-study.ts).
+        // Volume: the candle's volume against the same candle on recent days, at least this (quieter = no buyers).
+        // The trader's 0.7 cut more good alerts than bad on both test days: Oct 20 the 31 stocks under 0.7× did better
+        // than the 23 kept (median best next hour +0.42 vs +0.38 ATR; UAL 0.62× +1.43, DAL 0.49× +1.34, MU 0.68× +0.55),
+        // Oct 23 it cut S (0.60×, +0.64). Lowered to 0.6 (Oct 24); volume still orders alerts of the same candle.
+        minCandleVolume: 0.6,
+        // Tight (stayed close to the 200 SMA): since the bell the low went at most this far under it, in daily ATRs.
+        // The four best of Oct 23 went 0.11–0.36 under (PANW, CRWD, FTNT, S: +0.64 to +1.08 ATR the next hour);
+        // MRNA went 0.63 under in its big first 15 minutes (loose, +0.26). Also out at 0.45: PLTR, NVDA, MMM, META,
+        // TWLO, CSCO (all +0.14 ATR or less).
+        maxDipAtr: 0.45,
+        // Slow (crept back, no jump): the winning candle's high to low at most this, in daily ATRs (a normal candle is
+        // 0.11). The four best: 0.24–0.35; out: MRNA 0.40, MMM 0.42.
+        maxTriggerRangeAtr: 0.38,
+        // Not in a clear, steady slide: out when the hourly 20 SMA (24-hour chart, the alert candle's close as the
+        // hour's close) fell at least slideDropAtr daily ATRs over the last slideHours hours AND fell in at least
+        // slideFallingHours of the last slideRecentHours hourly steps. A few hours of easing is not a slide (PANW
+        // Oct 23: +0.33 ATR, 4 of 15 falling); ORCL Oct 22 is (−0.79, 15 of 15). Oct 20–23, 85 alerts: also out SMCI
+        // Oct 22 (−0.85, failed), MSFT (−0.84, rose 0.45), SPCX and AMKR Oct 23 (about flat); kept BABA, COIN, CBRS Oct 20
+        // (−0.62 to −0.70, all rose): the steep ones were a mixed lot, so the bar only takes out the most drastic.
+        slideHours: 20,
+        slideDropAtr: 0.75,
+        slideRecentHours: 15,
+        slideFallingHours: 13,
+        // The trend line it must lose and win back, and the fast line it must also close above (the chart's red line).
+        slowSmaPeriod: 200,
+        fastSmaPeriod: 10,
+        // History loaded when it is switched on: the last closes before today's 04:00, from this many calendar days
+        // (a Tuesday after a Monday holiday still reaches Friday).
+        priorCloses: 250,
+        priorCalendarDays: 6,
+    },
+
     smaReclaim: {
         // The hourly candles watched, by their start hour in New York. 09 = 09:00–10:00, whose last half is the first
         // half hour of the session: nothing triggers before 10:00. 10 = the second hour; both may trigger.

@@ -42,6 +42,10 @@ export interface IWatchFacts {
     bars: IWatchBar[]; // today's regular-session candles so far, oldest first
     onBoard: boolean; // in the race's standings (after the bell: the final board)
     race: IRaceFacts | null; // the race's facts for a stock on the board, as last judged (after the bell: on the open)
+    shineOn: boolean; // the trader switched the Shine alert on for today
+    // 5-minute closes before today's 04:00 (24-hour chart), oldest first, as they are and with the empty overnight slots
+    // filled; null = not loaded
+    prior5MinCloses: { closes: number[]; filledCloses: number[] } | null;
 }
 
 // opportunity = a buy setup, prepare = a buy setup may complete in minutes, caution = avoid buying here,
@@ -67,6 +71,8 @@ export interface IMarketAlert {
     scoreParts?: IAlertScorePart[];
     // Facts that help decide beyond the score (volume, stop size, room to the high...), shown as badges.
     badges?: IAlertBadge[];
+    // The alert candle's volume against the same candle on recent days (orders alerts of the same candle).
+    candleVolumeRatio?: number;
 }
 
 export interface IAlertBadge {
@@ -95,6 +101,7 @@ export interface IWatchSignal {
     shortTitle: string; // the group's name on the board, e.g. "BB touch"
     describe: () => string; // plain language, shown in the board's rule book
     leadsForMinutes?: () => number; // listed first on the board until this long after the bell, then last
+    switchable?: boolean; // the trader switches it on from the board: listed first (a stack, newest on top) while on, hidden while off
     watches: (facts: IWatchFacts) => boolean; // is this stock part of the signal today?
     detect: (facts: IWatchFacts) => IMarketAlert[]; // every event of the day so far
     status: (facts: IWatchFacts) => IWatchStatus | null;
