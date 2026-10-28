@@ -102,6 +102,7 @@ export interface IWatchSignal {
     describe: () => string; // plain language, shown in the board's rule book
     leadsForMinutes?: () => number; // listed first on the board until this long after the bell, then last
     switchable?: boolean; // the trader switches it on from the board: listed first (a stack, newest on top) while on, hidden while off
+    refreshesBadges?: boolean; // a listed alert takes the badges of its later readings, quietly (no new alert)
     watches: (facts: IWatchFacts) => boolean; // is this stock part of the signal today?
     detect: (facts: IWatchFacts) => IMarketAlert[]; // every event of the day so far
     status: (facts: IWatchFacts) => IWatchStatus | null;

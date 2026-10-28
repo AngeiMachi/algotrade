@@ -247,10 +247,13 @@ const computeState = (): { state: IMarketWatchState; newAlerts: IMarketAlert[] }
                     watching.push(status);
                 }
                 signal.detect(facts).forEach((alert) => {
-                    if (!alerts.has(alert.id)) {
+                    const listed = alerts.get(alert.id);
+                    if (!listed) {
                         alerts.set(alert.id, alert);
                         newAlerts.push(alert);
                         alertedQuotes.add(quote);
+                    } else if (signal.refreshesBadges && !_.isEqual(listed.badges, alert.badges)) {
+                        alerts.set(alert.id, { ...listed, badges: alert.badges });
                     }
                 });
             });

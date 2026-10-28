@@ -212,7 +212,13 @@ const alertsOf = (facts: IWatchFacts, day: IShineDay, winBack: IWinBack): IMarke
     const dayChange = previousClose ? `${signed(pct(bar.close, previousClose))}% on the day` : null;
     const fromOpen = facts.openingPrice ? signed(pct(bar.close, facts.openingPrice)) : null;
     const greenAtWinBack = !!previousClose && bar.close > previousClose;
-    const alerts: IMarketAlert[] = [
+    const green = previousClose && !greenAtWinBack ? turnedGreen(facts, bar.time, previousClose) : null;
+    const greenBadges = greenAtWinBack
+        ? [greenBadge(previousClose!, bar.close, 'Closed')]
+        : green
+          ? [greenBadge(previousClose!, green.close, `Turned green later: the ${green.time} candle closed`)]
+          : [];
+    return [
         {
             id: eventId,
             signal: shine.id,
@@ -239,27 +245,9 @@ const alertsOf = (facts: IWatchFacts, day: IShineDay, winBack: IWinBack): IMarke
             timeIso: closedAt.toISOString(),
             price: bar.close,
             ...(volumeRatio !== null ? { candleVolumeRatio: Math.round(volumeRatio * 100) / 100 } : {}),
-            ...(greenAtWinBack ? { badges: [greenBadge(previousClose!, bar.close, 'Closed')] } : {}),
+            ...(greenBadges.length > 0 ? { badges: greenBadges } : {}),
         },
     ];
-    const green = previousClose && !greenAtWinBack ? turnedGreen(facts, bar.time, previousClose) : null;
-    if (green && previousClose) {
-        const greenAt = moment.tz(green.key, 'YYYY-MM-DD HH:mm:ss', NEW_YORK).add(5, 'minutes');
-        alerts.push({
-            ...alerts[0],
-            id: `${eventId}:green`,
-            stage: 'Turned green',
-            title: `Won back the 5-minute ${slowSmaPeriod} SMA, now green on the day`,
-            summary: `Turned green: the ${green.time} candle closed ${green.close.toFixed(2)}, above yesterday's close (${previousClose.toFixed(2)}).`,
-            message: `Another good sign: it crossed yesterday's close after winning back the ${slowSmaPeriod} SMA.`,
-            details: [`Won back the ${slowSmaPeriod} SMA at ${bar.close.toFixed(2)} (${bar.time} candle)`, ...alerts[0].details],
-            candle: greenAt.format('HH:mm'),
-            timeIso: greenAt.toISOString(),
-            price: green.close,
-            badges: [greenBadge(previousClose, green.close, `The ${green.time} candle closed`)],
-        });
-    }
-    return alerts;
 };
 
 export const shine: IWatchSignal = {
@@ -267,6 +255,7 @@ export const shine: IWatchSignal = {
     title: 'Shine: red to green',
     shortTitle: 'Shine',
     switchable: true,
+    refreshesBadges: true,
     describe: () => {
         const {
             windowMinutes,
@@ -293,7 +282,7 @@ export const shine: IWatchSignal = {
             `Failing one takes the stock out for the day, no alert. ` +
             `Only candles in the first ${windowMinutes} minutes after the bell count, later is too late, and not the first ${ignoreFirstMinutes} minutes ` +
             `(the opening chop): a stock that wins them back that early must lose the ${slowSmaPeriod} SMA again and win it back later. ` +
-            `Once per stock per day. Green on the day (above yesterday's close) shows as a badge, or as a "Turned green" step when it crosses later. ` +
+            `Once per stock per day. Green on the day (above yesterday's close) shows as a badge on the alert, added quietly (no new alert) when it crosses later. ` +
             `Listed as a stack, newest on top; alerts of the same candle are ordered by that candle's volume against normal.`
         );
     },

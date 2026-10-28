@@ -335,7 +335,8 @@ out also SMCI Oct 22 (failed), MSFT Oct 23 (rose 0.45 ATR), SPCX and AMKR (flat)
 Stocks the race leaves out (too thin, no hourly history;
 not its excluded ETF group) are followed for Shine only (`shineOnly`). Oct 20 full list: 37 alerts, MU on its 09:45
 candle, plus HON, FSLR, BIDU, AAP and DDOG from outside the race. Green on the day (above yesterday's close) is a `green-day` badge
-on the alert, or a later "Turned green" stage of the same event. The tab lists it as a **stack**:
+on the alert; when it crosses later the badge is added to the same alert quietly (no popup, no new alert; Oct 27,
+the trader wants the sign, not another alert). The tab lists it as a **stack**:
 newest on top, alerts of the same candle by that candle's volume against the same candle on recent days (also the
 order of its popups, at most 3 at once). The 200 SMA is the trader's 24-hour chart: switching on loads each stock's last
 250 5-minute closes before 04:00 (SIP 04:00–20:00 plus the overnight `boats` feed, one batched load). Checked on his
