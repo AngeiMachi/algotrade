@@ -53,9 +53,10 @@ export const healthyPremarket = (facts: IWatchFacts): boolean | null => {
     if (facts.priorHourlyCloses.length < period || premarket.length === 0) {
         return null;
     }
+    const atrPct = facts.atrPct > 0 ? facts.atrPct : RaceRulesConfig.fallbackAtrPct;
     return premarket.filter((hour) => hour.traded).every((hour) => {
         const sma = smaAtHour(facts, period, hour.hour, hour.close) as number;
-        return ((hour.close - sma) / sma) * 100 >= -RaceRulesConfig.smaTolerancePct;
+        return ((hour.close - sma) / sma) * 100 / atrPct >= -RaceRulesConfig.hourlyCloseToleranceAtr;
     });
 };
 

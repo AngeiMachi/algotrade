@@ -11,8 +11,16 @@
 // breakout out of that tight range would look "3σ stretched" when it is really a small move for the stock.
 
 export const RaceRulesConfig = {
-    // An hourly close may sit this far through the 20 SMA and still count as holding it.
+    // The price (now, or the open) may sit this far through the 20 SMA and still count as holding it.
     smaTolerancePct: 0.05,
+    // A pre-market hourly close may sit this far through the 20 SMA, in daily ATRs, and still count as holding it (the
+    // board's "hourly close through the 20 SMA" and the market watch's healthy pre-market). Oct 30, the trader: a close
+    // a few cents under should not take a stock out (NXPI Oct 29: 08:00 closed 0.11% = 0.03 ATR under on 1,685 shares,
+    // then a hammer reclaim at 10:00 and +1.7 ATR by the close). 10 days (Oct 14–29, 1,487 stock-days,
+    // scripts/sma-tolerance-study.ts), deepest judged close under the SMA → open to close, 10:00 hourly close above it:
+    //   held (within 0.05%) +0.05 ATR, 66% · under 0.10 ATR +0.11, 63% · 0.10–0.20 −0.02, 44% · over 0.20 −0.08, 35%.
+    // Under 0.10 ATR they behave like the ones that held; past it they really broke.
+    hourlyCloseToleranceAtr: 0.1,
     // Only the last this-many hourly candles before the bell are judged (05:00–09:00 for a 09:30 bell), and only hours
     // with trades: an empty hour carries the previous close while the SMA keeps moving (ECHO Oct 5: no trade from
     // Friday 16:00 to Monday 07:40, the rising SMA passed the frozen 93.02 at 05:00 and knocked it out).

@@ -59,9 +59,13 @@ facts; they never touch bars. All percentages are "directional": positive = good
   measure) under `minPriorSmaSlopeAtr` (0) = out for the day: a turn, not a trend. Only the keep rule (above the
   daily upper BB, a massive jump like earnings) keeps it on the board. The market watch's 20 SMA reclaim uses the same rule.
 - **Hourly close through the 20 SMA.** One of the last `hourlyCloseLookbackHours` (4: the 05:00–08:00 candles)
-  pre-market hourly candles that *closes* more than `smaTolerancePct` (0.05%) below the hourly 20 SMA knocks the
-  stock out for the day. Wicks touching or dipping below are allowed. (Trader's words: "it may touch or close a tiny
-  bit through, but an hourly close below = out.") An hour without trades does not count: it carries the previous
+  pre-market hourly candles that *closes* more than `hourlyCloseToleranceAtr` (0.10 daily ATR) below the hourly 20
+  SMA knocks the stock out for the day. Wicks touching or dipping below are allowed. (Trader's words: "it may touch or
+  close a tiny bit through, but an hourly close below = out.") Until Oct 30 the tolerance was 0.05%; the trader: a
+  close a few cents under shouldn't take it out (NXPI Oct 29: 0.03 ATR under on 1,685 shares, then a hammer reclaim
+  and +1.7 ATR by the close). On Oct 14–29 (1,487 stock-days) stocks that closed under by less than 0.10 ATR did like
+  the ones that held (+0.11 ATR open to close vs +0.05); past 0.10 they broke (−0.02 to −0.08, the 10:00 hourly close
+  back above the SMA 35–44% vs 63–66%). The market watch's healthy pre-market uses the same tolerance. An hour without trades does not count: it carries the previous
   close while the SMA keeps moving (ECHO Oct 5: no trade from Friday 16:00 to Monday 07:40; the rising SMA passed
   the frozen 93.02 at 05:00).
 - **Opened inside yesterday's range.** At the bell, the open must be **above yesterday's high** (long).

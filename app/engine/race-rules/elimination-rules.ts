@@ -6,7 +6,7 @@ import { nearPreviousExtreme } from './near-previous-extreme';
 
 // Elimination rules are permanent: the first one that fires knocks the stock out for the rest of the day.
 
-const tolerance = () => RaceRulesConfig.smaTolerancePct;
+const tolerance = () => RaceRulesConfig.hourlyCloseToleranceAtr;
 const smaPeriod = () => globalConfig.PremarketRace.smaPeriod;
 
 // The pre-market hours judged: the last hourlyCloseLookbackHours before the bell's hour, with trades.
@@ -16,10 +16,11 @@ export const hourlyCloseThroughSma: IEliminationRule = {
     id: 'hourly-close-through-sma',
     title: 'Hourly close through the 20 SMA',
     describe: () =>
-        `Out for the day once one of the last ${RaceRulesConfig.hourlyCloseLookbackHours} pre-market hourly candles closes more than ${tolerance()}% ${raceWords(globalConfig.PremarketRace.direction).badSide} the ${smaPeriod()} SMA. Touching it is fine; closing through it is not. An hour without trades does not count.`,
+        `Out for the day once one of the last ${RaceRulesConfig.hourlyCloseLookbackHours} pre-market hourly candles closes more than ${tolerance()} daily ATR ${raceWords(globalConfig.PremarketRace.direction).badSide} the ${smaPeriod()} SMA. Touching it is fine, and so is a close a few cents through it; closing clearly through it is not. An hour without trades does not count.`,
     check: (facts) => {
+        const atrPct = facts.atrPct > 0 ? facts.atrPct : RaceRulesConfig.fallbackAtrPct;
         const brokenCandle = facts.hourlyCandles.find(
-            (candle) => candle.complete && candle.traded && judgedHour(facts.bellTime, candle.hour) && candle.closeVsSmaPct < -tolerance()
+            (candle) => candle.complete && candle.traded && judgedHour(facts.bellTime, candle.hour) && candle.closeVsSmaPct / atrPct < -tolerance()
         );
         if (!brokenCandle) {
             return null;
